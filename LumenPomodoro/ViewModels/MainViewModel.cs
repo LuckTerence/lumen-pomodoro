@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using LumenPomodoro.Models;
@@ -12,7 +13,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly CameraService _cameraService;
     private readonly StorageService _storageService;
     private readonly SoundService _soundService;
-    
+
     private TimerMode _currentStatus = TimerMode.Idle;
     private string _remainingTime = "25:00";
     private int _progress = 100;
@@ -25,112 +26,112 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
     private bool _shouldSuggestLongBreak;
-    
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public TimerMode CurrentStatus
     {
         get => _currentStatus;
-        set { _currentStatus = value; OnPropertyChanged(); }
+        set { if (_currentStatus != value) { _currentStatus = value; OnPropertyChanged(); } }
     }
 
     public string RemainingTime
     {
         get => _remainingTime;
-        set { _remainingTime = value; OnPropertyChanged(); }
+        set { if (_remainingTime != value) { _remainingTime = value; OnPropertyChanged(); } }
     }
 
     public int Progress
     {
         get => _progress;
-        set { _progress = value; OnPropertyChanged(); }
+        set { if (_progress != value) { _progress = value; OnPropertyChanged(); } }
     }
 
     public TaskItem? SelectedTask
     {
         get => _selectedTask;
-        set { _selectedTask = value; OnPropertyChanged(); }
+        set { if (!ReferenceEquals(_selectedTask, value)) { _selectedTask = value; OnPropertyChanged(); } }
     }
 
     public List<TaskItem> Tasks
     {
         get => _tasks;
-        set { _tasks = value; OnPropertyChanged(); }
+        set { if (!ReferenceEquals(_tasks, value)) { _tasks = value; OnPropertyChanged(); } }
     }
 
     public DailyStats TodayStats
     {
         get => _todayStats;
-        set { _todayStats = value; OnPropertyChanged(); }
+        set { if (!ReferenceEquals(_todayStats, value)) { _todayStats = value; OnPropertyChanged(); } }
     }
 
     public string CameraStatus
     {
         get => _cameraStatus;
-        set { _cameraStatus = value; OnPropertyChanged(); }
+        set { if (_cameraStatus != value) { _cameraStatus = value; OnPropertyChanged(); } }
     }
 
     public bool IsCameraAlertActive
     {
         get => _isCameraAlertActive;
-        set { _isCameraAlertActive = value; OnPropertyChanged(); }
+        set { if (_isCameraAlertActive != value) { _isCameraAlertActive = value; OnPropertyChanged(); } }
     }
 
     public bool IsFocusCompleted
     {
         get => _isFocusCompleted;
-        set { _isFocusCompleted = value; OnPropertyChanged(); }
+        set { if (_isFocusCompleted != value) { _isFocusCompleted = value; OnPropertyChanged(); } }
     }
 
     public bool IsBreakCompleted
     {
         get => _isBreakCompleted;
-        set { _isBreakCompleted = value; OnPropertyChanged(); }
+        set { if (_isBreakCompleted != value) { _isBreakCompleted = value; OnPropertyChanged(); } }
     }
 
     public bool IsPendingBreak
     {
         get => _isPendingBreak;
-        set { _isPendingBreak = value; OnPropertyChanged(); }
+        set { if (_isPendingBreak != value) { _isPendingBreak = value; OnPropertyChanged(); } }
     }
 
     public bool ShouldSuggestLongBreak
     {
         get => _shouldSuggestLongBreak;
-        set { _shouldSuggestLongBreak = value; OnPropertyChanged(); }
+        set { if (_shouldSuggestLongBreak != value) { _shouldSuggestLongBreak = value; OnPropertyChanged(); } }
     }
 
-    public Settings AppSettings { get; private set; }
-    
+    public Settings AppSettings { get; private set; } = new();
+
     public CameraService CameraService => _cameraService;
     public StorageService StorageService => _storageService;
-    
+
     private FocusSession? _currentSession;
     private System.Windows.Forms.NotifyIcon? _notifyIcon;
     private bool _disposed;
     private System.Timers.Timer? _trayUpdateTimer;
-    
+
     public event Action? TrayMenuNeedsUpdate;
 
-    public MainViewModel()
+    public MainViewModel(StorageService storageService)
     {
+        _storageService = storageService;
         _timerService = new TimerService();
         _cameraService = new CameraService();
-        _storageService = new StorageService();
         _soundService = new SoundService();
-        
+
         _timerService.TimerTick += TimerService_TimerTick;
         _timerService.TimerCompleted += TimerService_TimerCompleted;
         _timerService.ModeChanged += TimerService_ModeChanged;
-        
+
         _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback);
-        
+
         _trayUpdateTimer = new System.Timers.Timer(2000);
         _trayUpdateTimer.Elapsed += (s, e) => TrayMenuNeedsUpdate?.Invoke();
         _trayUpdateTimer.Start();
-        
+
         LoadData();
-        
+
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         CurrentStatus = TimerMode.Idle;
         Progress = 100;
@@ -141,7 +142,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         AppSettings = _storageService.LoadSettings();
         Tasks = _storageService.LoadTasks();
         TodayStats = _storageService.GetTodayStats();
-        
+
         if (Tasks.Any())
         {
             SelectedTask = Tasks.First();
@@ -153,7 +154,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         Application.Current.Dispatcher.BeginInvoke(() =>
         {
             RemainingTime = FormatTime(e.RemainingSeconds);
-            
+
             if (e.TotalSeconds > 0)
             {
                 Progress = (int)((double)e.RemainingSeconds / e.TotalSeconds * 100);
@@ -175,7 +176,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                     TodayStats = _storageService.GetTodayStats();
                     _currentSession = null;
                 }
-                
+
                 IsFocusCompleted = true;
                 ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
                                          TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
@@ -240,14 +241,17 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                     "摄像头错误",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
-                
+
                 if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
                 {
                     try
                     {
                         System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MainViewModel] 打开摄像头隐私设置失败: {ex.Message}");
+                    }
                 }
             }
         });
@@ -260,7 +264,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             MessageBox.Show("请先选择一个任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        
+
         _currentSession = new FocusSession
         {
             TaskId = SelectedTask.Id,
@@ -268,7 +272,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             StartTime = DateTime.Now,
             FocusMinutes = AppSettings.WorkMinutes
         };
-        
+
         IsFocusCompleted = false;
         IsBreakCompleted = false;
         IsPendingBreak = false;
@@ -305,12 +309,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         int breakMinutes = isLongBreak ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
         _timerService.StartBreak(breakMinutes);
-        
+
         if (AppSettings.CameraAlertMode == CameraAlertMode.FollowBreak && AppSettings.CameraAlertEnabled)
         {
-            _ = _cameraService.StartCameraAsync();
+            FireAndForget(_cameraService.StartCameraAsync(), "启动摄像头(跟随休息)");
         }
-        
+
         IsFocusCompleted = false;
         IsBreakCompleted = false;
         IsPendingBreak = false;
@@ -360,16 +364,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             AppSettings.HasShownCameraPrivacyNotice = true;
             _storageService.SaveSettings(AppSettings);
         }
-        
+
         try
         {
             switch (AppSettings.CameraAlertMode)
             {
                 case CameraAlertMode.FixedDuration:
-                    _ = _cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds);
+                    FireAndForget(_cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds), "摄像头固定时长提醒");
                     break;
                 case CameraAlertMode.UntilConfirm:
-                    _ = _cameraService.StartCameraAsync();
+                    FireAndForget(_cameraService.StartCameraAsync(), "摄像头直到确认提醒");
                     break;
                 case CameraAlertMode.FollowBreak:
                     break;
@@ -393,28 +397,31 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void ForceStopCameraAlert()
     {
-        _ = _cameraService.StopCameraAsync();
+        FireAndForget(_cameraService.StopCameraAsync(), "停止摄像头");
         IsCameraAlertActive = false;
     }
 
     private void PlayNotificationSound(string soundName)
     {
         if (!AppSettings.SoundEnabled) return;
-        
+
         Task.Run(() =>
         {
             try
             {
                 _soundService.PlaySound(soundName);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainViewModel] 播放音效失败: {ex.Message}");
+            }
         });
     }
 
     private void ShowSystemNotification(string title, string message)
     {
         if (!AppSettings.SystemNotificationEnabled) return;
-        
+
         try
         {
             if (_notifyIcon == null)
@@ -429,7 +436,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             _notifyIcon.BalloonTipText = message;
             _notifyIcon.ShowBalloonTip(3000);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainViewModel] 系统通知失败: {ex.Message}");
+        }
     }
 
     private void ShowFocusCompleteDialog()
@@ -442,7 +452,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         };
         dialog.SetLongBreakSuggestion(ShouldSuggestLongBreak);
         var result = dialog.ShowDialog();
-        
+
         if (result == true)
         {
             if (dialog.ShouldStartBreak)
@@ -465,7 +475,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             Owner = Application.Current.MainWindow,
             WindowStartupLocation = WindowStartupLocation.CenterOwner
         };
-        dialog.ShowDialog();
+        var result = dialog.ShowDialog();
+
+        if (result == true && dialog.ShouldStartNext)
+        {
+            StartFocus();
+        }
     }
 
     private string FormatTime(int seconds)
@@ -483,7 +498,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void UpdateSettings(Settings settings)
     {
         AppSettings = settings;
-        
+
         if (CurrentStatus == TimerMode.Idle)
         {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
@@ -493,12 +508,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void ReloadSettings()
     {
         AppSettings = _storageService.LoadSettings();
-        
+
         if (CurrentStatus == TimerMode.Idle)
         {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
-        
+
         _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback);
     }
 
@@ -506,10 +521,22 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         Tasks = tasks;
         _storageService.SaveTasks(tasks);
-        
+
         if (SelectedTask == null && Tasks.Any())
         {
             SelectedTask = Tasks.First();
+        }
+    }
+
+    private static async void FireAndForget(Task task, string operationName)
+    {
+        try
+        {
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainViewModel] FireAndForget [{operationName}] 异常: {ex.Message}");
         }
     }
 
@@ -517,13 +544,26 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        
+
         _trayUpdateTimer?.Stop();
         _trayUpdateTimer?.Dispose();
+
+        _timerService.TimerTick -= TimerService_TimerTick;
+        _timerService.TimerCompleted -= TimerService_TimerCompleted;
+        _timerService.ModeChanged -= TimerService_ModeChanged;
         _timerService.Dispose();
         _soundService.Dispose();
         _notifyIcon?.Dispose();
-        _ = _cameraService.StopCameraAsync();
+
+        // 同步停止摄像头（不再 fire-and-forget）
+        try
+        {
+            _cameraService.StopCameraAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainViewModel] Dispose 停止摄像头异常: {ex.Message}");
+        }
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

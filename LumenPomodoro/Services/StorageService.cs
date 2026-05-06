@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using Newtonsoft.Json;
 using LumenPomodoro.Models;
@@ -10,7 +11,7 @@ public class StorageService
     private readonly string _settingsFile;
     private readonly string _tasksFile;
     private readonly string _sessionsFile;
-    
+
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
     private readonly object _fileLock = new object();
@@ -19,7 +20,7 @@ public class StorageService
     {
         _appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LumenPomodoro");
         Directory.CreateDirectory(_appDataPath);
-        
+
         _settingsFile = Path.Combine(_appDataPath, "settings.json");
         _tasksFile = Path.Combine(_appDataPath, "tasks.json");
         _sessionsFile = Path.Combine(_appDataPath, "sessions.json");
@@ -27,7 +28,7 @@ public class StorageService
 
     public Settings LoadSettings()
     {
-        if (File.Exists(_settingsFile))
+        lock (_fileLock)
         {
             try
             {
@@ -39,7 +40,6 @@ public class StorageService
                 return new Settings();
             }
         }
-        return new Settings();
     }
 
     public void SaveSettings(Settings settings)
@@ -53,7 +53,7 @@ public class StorageService
 
     public List<TaskItem> LoadTasks()
     {
-        if (File.Exists(_tasksFile))
+        lock (_fileLock)
         {
             try
             {
@@ -65,7 +65,6 @@ public class StorageService
                 return GetDefaultTasks();
             }
         }
-        return GetDefaultTasks();
     }
 
     public void SaveTasks(List<TaskItem> tasks)
@@ -90,7 +89,7 @@ public class StorageService
                     Id = $"default_{index++}",
                     Name = taskName,
                     Category = category.Key,
-                    Color = GetCategoryColor(category.Key),
+                    Color = TaskCategories.GetCategoryColor(category.Key),
                     CreatedAt = DateTime.Now
                 });
             }
@@ -98,39 +97,34 @@ public class StorageService
         return tasks;
     }
 
-    private string GetCategoryColor(string category)
-    {
-        return category switch
-        {
-            "数学" => "#3B82F6",
-            "英语" => "#10B981",
-            "政治" => "#EF4444",
-            "专业课" => "#8B5CF6",
-            _ => "#6B7280"
-        };
-    }
-
     public List<FocusSession> LoadSessions()
     {
-        if (File.Exists(_sessionsFile))
+        lock (_fileLock)
         {
-            try
-            {
-                var content = File.ReadAllText(_sessionsFile);
-                return JsonConvert.DeserializeObject<List<FocusSession>>(content) ?? new List<FocusSession>();
-            }
-            catch
-            {
-                return new List<FocusSession>();
-            }
+            return LoadSessionsCore();
         }
-        return new List<FocusSession>();
+    }
+
+    private List<FocusSession> LoadSessionsCore()
+    {
+        try
+        {
+            var content = File.ReadAllText(_sessionsFile);
+            return JsonConvert.DeserializeObject<List<FocusSession>>(content) ?? new List<FocusSession>();
+        }
+        catch
+        {
+            return new List<FocusSession>();
+        }
     }
 
     public void SaveSessions(List<FocusSession> sessions)
     {
-        var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
-        File.WriteAllText(_sessionsFile, content);
+        lock (_fileLock)
+        {
+            var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
+            File.WriteAllText(_sessionsFile, content);
+        }
         InvalidateStatsCache();
     }
 
@@ -138,7 +132,7 @@ public class StorageService
     {
         lock (_fileLock)
         {
-            var sessions = LoadSessions();
+            var sessions = LoadSessionsCore();
             sessions.Add(session);
             SaveSessionsWithTransaction(sessions);
         }
@@ -153,21 +147,21 @@ public class StorageService
     public void SaveSessionsWithTransaction(List<FocusSession> sessions)
     {
         var backupFile = _sessionsFile + ".bak";
-        
+
         try
         {
             var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
-            
+
             // Create backup if original exists
             if (File.Exists(_sessionsFile))
             {
                 File.Copy(_sessionsFile, backupFile, true);
             }
-            
+
             // Write to temp file first
             var tempFile = _sessionsFile + ".tmp";
             File.WriteAllText(tempFile, content);
-            
+
             // Replace original file with temp file
             if (File.Exists(_sessionsFile))
             {
@@ -175,7 +169,6 @@ public class StorageService
             }
             else
             {
-                // First time save - just move temp to original
                 File.Move(tempFile, _sessionsFile);
             }
         }
@@ -192,19 +185,27 @@ public class StorageService
 
     public DailyStats GetTodayStats()
     {
-        if (_cachedTodayStats != null && _cacheDate == DateTime.Today)
+        lock (_fileLock)
         {
-            return _cachedTodayStats;
+            if (_cachedTodayStats != null && _cacheDate == DateTime.Today)
+            {
+                return _cachedTodayStats;
+            }
         }
 
-        var sessions = LoadSessions();
+        List<FocusSession> sessions;
+        lock (_fileLock)
+        {
+            sessions = LoadSessionsCore();
+        }
+
         var today = DateTime.Today;
         var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
 
         var stats = new DailyStats();
         stats.CompletedPomodoros = todaySessions.Count;
         stats.TotalFocusMinutes = todaySessions.Sum(s => s.FocusMinutes);
-        
+
         foreach (var session in todaySessions)
         {
             if (!stats.TaskStats.ContainsKey(session.TaskName))
@@ -215,10 +216,13 @@ public class StorageService
         }
 
         stats.CurrentStreak = CalculateStreak(sessions);
-        
-        _cachedTodayStats = stats;
-        _cacheDate = DateTime.Today;
-        
+
+        lock (_fileLock)
+        {
+            _cachedTodayStats = stats;
+            _cacheDate = DateTime.Today;
+        }
+
         return stats;
     }
 
@@ -229,15 +233,15 @@ public class StorageService
                                        .Distinct()
                                        .OrderByDescending(d => d)
                                        .ToList();
-        
+
         if (completedSessions.Count == 0) return 0;
-        
+
         var startDate = completedSessions[0];
         if (startDate != DateTime.Today && startDate != DateTime.Today.AddDays(-1))
         {
             return 0;
         }
-        
+
         int streak = 1;
         for (int i = 1; i < completedSessions.Count; i++)
         {
@@ -250,7 +254,7 @@ public class StorageService
                 break;
             }
         }
-        
+
         return streak;
     }
 }

@@ -13,12 +13,14 @@ public partial class FocusCompleteDialog : Window
         InitializeComponent();
         ShouldStartBreak = false;
         ShouldStartLongBreak = false;
-        
+
         KeyDown += FocusCompleteDialog_KeyDown;
     }
 
     public void SetLongBreakSuggestion(bool suggest)
     {
+        if (!IsInitialized) return;
+
         LongBreakButton.Visibility = suggest ? Visibility.Visible : Visibility.Collapsed;
         if (suggest)
         {

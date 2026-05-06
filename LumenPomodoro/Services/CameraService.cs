@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
@@ -34,23 +35,24 @@ public class CameraService
     public async Task StartCameraAsync()
     {
         if (_isRunning) return;
-        
+
         _isRunning = true;
         _startTime = DateTime.Now;
-        
+
+        // 先创建新的 CTS，再取消旧的，避免旧 token 在使用中被 Dispose
+        var newCts = new CancellationTokenSource();
         var oldCts = _cancellationTokenSource;
-        _cancellationTokenSource = new CancellationTokenSource();
+        _cancellationTokenSource = newCts;
         oldCts?.Cancel();
-        oldCts?.Dispose();
-        
+
         try
         {
             _statusCallback?.Invoke("正在初始化摄像头...");
-            
+
             await Task.Run(() => InitializeCameraDevice(), _cancellationTokenSource.Token);
-            
+
             _statusCallback?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
-            
+
             _cameraTask = KeepCameraActiveAsync(_cancellationTokenSource.Token);
         }
         catch (Exception ex)
@@ -60,7 +62,7 @@ public class CameraService
         }
     }
 
-    private void InitializeCameraDevice()
+    private async Task InitializeCameraDevice()
     {
         try
         {
@@ -73,8 +75,8 @@ public class CameraService
             var deviceIndex = Math.Min(_cameraIndex, devices.Count - 1);
             _cameraDevice = new MediaFoundationCamera(devices[deviceIndex].SymbolicLink);
             _cameraDevice.Start();
-            
-            Thread.Sleep(500);
+
+            await Task.Delay(500);
         }
         catch (Exception ex)
         {
@@ -86,7 +88,7 @@ public class CameraService
     {
         await StartCameraAsync();
         if (!_isRunning) return;
-        
+
         try
         {
             await Task.Delay(seconds * 1000, _cancellationTokenSource?.Token ?? CancellationToken.None);
@@ -100,9 +102,9 @@ public class CameraService
     public async Task StopCameraAsync()
     {
         if (!_isRunning) return;
-        
+
         _cancellationTokenSource?.Cancel();
-        
+
         if (_cameraTask != null)
         {
             try
@@ -112,11 +114,18 @@ public class CameraService
             catch (OperationCanceledException)
             {
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CameraService] 停止摄像头任务异常: {ex.Message}");
+            }
         }
-        
+
         StopCameraDevice();
-        
-        _isRunning = false;
+
+        lock (_lockObject)
+        {
+            _isRunning = false;
+        }
         _statusCallback?.Invoke("摄像头已关闭");
     }
 
@@ -129,10 +138,15 @@ public class CameraService
                 try
                 {
                     _cameraDevice.Stop();
-                    _cameraDevice = null;
+                    _cameraDevice.Dispose();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.WriteLine($"[CameraService] 停止摄像头设备异常: {ex.Message}");
+                }
+                finally
+                {
+                    _cameraDevice = null;
                 }
             }
         }
@@ -142,21 +156,35 @@ public class CameraService
     {
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(100, token);
-
-            if (_startTime.HasValue && (DateTime.Now - _startTime.Value).TotalMinutes >= MaxRunMinutes)
+            try
             {
-                StopCameraDevice();
-                _isRunning = false;
-                _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
+                await Task.Delay(100, token);
+            }
+            catch (OperationCanceledException)
+            {
                 break;
             }
-            
-            if (_cameraDevice != null && !_cameraDevice.IsRunning)
+
+            lock (_lockObject)
             {
-                _isRunning = false;
-                _errorCallback?.Invoke("摄像头意外断开");
-                break;
+                if (_startTime.HasValue && (DateTime.Now - _startTime.Value).TotalMinutes >= MaxRunMinutes)
+                {
+                    if (_cameraDevice != null)
+                    {
+                        try { _cameraDevice.Stop(); } catch { }
+                        _cameraDevice = null;
+                    }
+                    _isRunning = false;
+                    _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
+                    return;
+                }
+
+                if (_cameraDevice != null && !_cameraDevice.IsRunning)
+                {
+                    _isRunning = false;
+                    _errorCallback?.Invoke("摄像头意外断开");
+                    return;
+                }
             }
         }
     }
@@ -164,7 +192,7 @@ public class CameraService
     public List<string> GetAvailableCameras()
     {
         if (_cachedCameraNames != null) return _cachedCameraNames;
-        
+
         try
         {
             var devices = GetAvailableCameraDevices();
@@ -172,8 +200,9 @@ public class CameraService
             _cachedCameraCount = _cachedCameraNames.Count;
             return _cachedCameraNames;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[CameraService] 获取摄像头列表失败: {ex.Message}");
             _cachedCameraNames = new List<string> { "默认摄像头" };
             _cachedCameraCount = 1;
             return _cachedCameraNames;
@@ -183,14 +212,15 @@ public class CameraService
     public int GetCameraCount()
     {
         if (_cachedCameraCount >= 0) return _cachedCameraCount;
-        
+
         try
         {
             _cachedCameraCount = GetAvailableCameraDevices().Count;
             return _cachedCameraCount;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[CameraService] 获取摄像头数量失败: {ex.Message}");
             _cachedCameraCount = 1;
             return _cachedCameraCount;
         }
@@ -199,31 +229,35 @@ public class CameraService
     private List<CameraInfo> GetAvailableCameraDevices()
     {
         var devices = new List<CameraInfo>();
-        
+
         try
         {
             using var searcher = new System.Management.ManagementObjectSearcher(
                 "SELECT * FROM Win32_PnPEntity WHERE (PNPClass = 'Camera' OR PNPClass = 'Image')");
-            
+
             foreach (var device in searcher.Get())
             {
-                var name = device["Name"]?.ToString() ?? "Unknown Camera";
-                var deviceId = device["DeviceID"]?.ToString() ?? "";
-                
-                var symbolicLink = GetSymbolicLinkFromDeviceId(deviceId);
-                devices.Add(new CameraInfo(name, symbolicLink));
+                using (device)
+                {
+                    var name = device["Name"]?.ToString() ?? "Unknown Camera";
+                    var deviceId = device["DeviceID"]?.ToString() ?? "";
+
+                    var symbolicLink = GetSymbolicLinkFromDeviceId(deviceId);
+                    devices.Add(new CameraInfo(name, symbolicLink));
+                }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[CameraService] WMI 查询摄像头失败: {ex.Message}");
             devices.Add(new CameraInfo("默认摄像头", ""));
         }
-        
+
         if (devices.Count == 0)
         {
             devices.Add(new CameraInfo("默认摄像头", ""));
         }
-        
+
         return devices;
     }
 
@@ -231,13 +265,13 @@ public class CameraService
     {
         if (string.IsNullOrEmpty(deviceId))
             return "";
-        
+
         var escaped = deviceId.Replace('\\', '#');
         return $@"\\?\{escaped}";
     }
 }
 
-internal class MediaFoundationCamera
+internal class MediaFoundationCamera : IDisposable
 {
     private readonly string _symbolicLink;
     private volatile bool _isRunning;
@@ -254,10 +288,10 @@ internal class MediaFoundationCamera
     public void Start()
     {
         if (_isRunning) return;
-        
+
         _isRunning = true;
         _internalToken = new CancellationTokenSource();
-        
+
         _captureThread = new Thread(() => CaptureLoop(_internalToken.Token));
         _captureThread.IsBackground = true;
         _captureThread.Start();
@@ -278,7 +312,7 @@ internal class MediaFoundationCamera
 
             var sourceType = NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
             sourceAttributes.SetGUID(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, ref sourceType);
-            
+
             if (!string.IsNullOrEmpty(_symbolicLink))
             {
                 sourceAttributes.SetString(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, _symbolicLink);
@@ -287,12 +321,16 @@ internal class MediaFoundationCamera
             hr = NativeMethods.MFCreateDeviceSource(sourceAttributes, out mediaSource);
             Marshal.ReleaseComObject(sourceAttributes);
 
-            if (hr < 0 || mediaSource == null) return;
+            if (hr < 0 || mediaSource == null)
+            {
+                if (mediaSource != null) Marshal.ReleaseComObject(mediaSource);
+                return;
+            }
 
             var readerAttributes = NativeMethods.CreateAttributes();
-            
+
             hr = NativeMethods.MFCreateSourceReaderFromMediaSource(mediaSource, readerAttributes, out sourceReader);
-            
+
             if (readerAttributes != null) Marshal.ReleaseComObject(readerAttributes);
             Marshal.ReleaseComObject(mediaSource);
             mediaSource = null;
@@ -326,19 +364,21 @@ internal class MediaFoundationCamera
                     break;
                 }
 
-                Thread.Sleep(33);
+                // 仅点亮指示灯，1fps 足够，降低 CPU 和 USB 带宽消耗
+                token.WaitHandle.WaitOne(1000);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[MediaFoundationCamera] CaptureLoop 异常: {ex.Message}");
         }
         finally
         {
             if (sourceReader != null) Marshal.ReleaseComObject(sourceReader);
             if (mediaSource != null) Marshal.ReleaseComObject(mediaSource);
-            
+
             try { NativeMethods.MFShutdown(); } catch { }
-            
+
             _isRunning = false;
         }
     }
@@ -348,6 +388,13 @@ internal class MediaFoundationCamera
         _internalToken?.Cancel();
         _captureThread?.Join(3000);
         _isRunning = false;
+    }
+
+    public void Dispose()
+    {
+        Stop();
+        _internalToken?.Dispose();
+        _internalToken = null;
     }
 }
 

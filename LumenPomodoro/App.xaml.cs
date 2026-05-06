@@ -9,21 +9,21 @@ namespace LumenPomodoro;
 
 public partial class App : Application
 {
-    private StorageService? _storageService;
+    public StorageService StorageService { get; private set; } = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        
-        _storageService = new StorageService();
-        
+
+        StorageService = new StorageService();
+
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-        
+
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
-        
+
         SoundService.GenerateDefaultWavFiles();
-        
+
         ApplyThemeOnStartup();
     }
 
@@ -35,7 +35,7 @@ public partial class App : Application
                 "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch { }
-        
+
         e.Handled = true;
     }
 
@@ -67,7 +67,7 @@ public partial class App : Application
 
     private void ApplyThemeOnStartup()
     {
-        var settings = _storageService.LoadSettings();
+        var settings = StorageService.LoadSettings();
         ApplyTheme(settings.Theme);
     }
 
@@ -78,31 +78,22 @@ public partial class App : Application
         var themeDictionaries = resources
             .Where(r => r.Source?.ToString().Contains("Themes/") == true)
             .ToList();
-        
+
+        var newTheme = theme.ToLower() switch
+        {
+            "dark" => new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) },
+            "light" => new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) },
+            _ => IsSystemDarkMode()
+                ? new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) }
+                : new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) }
+        };
+
+        // 先添加新主题，再移除旧主题，避免 DynamicResource 查找空窗
+        resources.Add(newTheme);
         foreach (var dict in themeDictionaries)
         {
             resources.Remove(dict);
         }
-
-        ResourceDictionary themeDictionary;
-        switch (theme.ToLower())
-        {
-            case "dark":
-                themeDictionary = new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) };
-                break;
-            case "light":
-                themeDictionary = new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) };
-                break;
-            case "system":
-            default:
-                var isDark = IsSystemDarkMode();
-                themeDictionary = isDark 
-                    ? new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) }
-                    : new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) };
-                break;
-        }
-
-        resources.Add(themeDictionary);
     }
 
     private bool IsSystemDarkMode()

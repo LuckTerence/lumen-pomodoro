@@ -185,13 +185,6 @@ public partial class TaskManagerWindow : Window
 
     private string GetCategoryColor(string category)
     {
-        return category switch
-        {
-            "数学" => "#3B82F6",
-            "英语" => "#10B981",
-            "政治" => "#EF4444",
-            "专业课" => "#8B5CF6",
-            _ => "#6B7280"
-        };
+        return TaskCategories.GetCategoryColor(category);
     }
 }

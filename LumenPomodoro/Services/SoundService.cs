@@ -1,18 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Media;
 using System.Windows;
 
 namespace LumenPomodoro.Services;
 
-public class SoundService
+public class SoundService : IDisposable
 {
     private readonly Dictionary<string, SoundPlayer> _players;
     private readonly string _soundsDirectory;
     private double _volume = 1.0;
     private bool _isMuted;
 
+    /// <summary>
+    /// 占位属性 — System.Media.SoundPlayer 不支持音量控制，此属性无实际效果。
+    /// </summary>
     public double Volume
     {
         get => _volume;
@@ -33,7 +37,7 @@ public class SoundService
         _players = new Dictionary<string, SoundPlayer>();
         _soundsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds");
         Directory.CreateDirectory(_soundsDirectory);
-        
+
         LoadDefaultSounds();
     }
 
@@ -56,9 +60,9 @@ public class SoundService
                     player.Load();
                     _players[kvp.Key] = player;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Sound file failed to load
+                    Debug.WriteLine($"[SoundService] 加载音效 {kvp.Key} 失败: {ex.Message}");
                 }
             }
         }
@@ -74,9 +78,9 @@ public class SoundService
             {
                 _players[soundName].Play();
             }
-            catch
+            catch (Exception ex)
             {
-                // Playback failed
+                Debug.WriteLine($"[SoundService] 播放 {soundName} 失败: {ex.Message}");
             }
         }
     }
@@ -91,9 +95,9 @@ public class SoundService
             {
                 _players[soundName].PlaySync();
             }
-            catch
+            catch (Exception ex)
             {
-                // Playback failed
+                Debug.WriteLine($"[SoundService] 同步播放 {soundName} 失败: {ex.Message}");
             }
         }
     }
@@ -106,9 +110,9 @@ public class SoundService
             {
                 _players[soundName].Stop();
             }
-            catch
+            catch (Exception ex)
             {
-                // Stop failed
+                Debug.WriteLine($"[SoundService] 停止 {soundName} 失败: {ex.Message}");
             }
         }
     }
@@ -121,9 +125,9 @@ public class SoundService
             {
                 player.Stop();
             }
-            catch
+            catch (Exception ex)
             {
-                // Stop failed
+                Debug.WriteLine($"[SoundService] 停止音效失败: {ex.Message}");
             }
         }
     }
@@ -156,9 +160,9 @@ public class SoundService
             {
                 player.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-                // Dispose failed
+                Debug.WriteLine($"[SoundService] Dispose 音效失败: {ex.Message}");
             }
         }
         _players.Clear();

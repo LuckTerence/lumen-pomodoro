@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
 
@@ -16,27 +18,27 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        
-        _viewModel = new MainViewModel();
+
+        var storageService = ((App)Application.Current).StorageService;
+        _viewModel = new MainViewModel(storageService);
         _trayService = new TrayService(_viewModel, _viewModel.CameraService, _viewModel.StorageService);
-        
+
         DataContext = _viewModel;
-        
+
         _trayService.AttachToWindow(this);
-        
+
         _viewModel.TrayMenuNeedsUpdate += () =>
         {
             Dispatcher.BeginInvoke(() => _trayService.UpdateMenuState());
         };
-        
+
         Loaded += MainWindow_Loaded;
         IsVisibleChanged += MainWindow_IsVisibleChanged;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        var settings = _viewModel.StorageService.LoadSettings();
-        if (settings.AnimationEnabled)
+        if (_viewModel.AppSettings.AnimationEnabled)
         {
             ApplyFadeInAnimation();
         }
@@ -47,16 +49,15 @@ public partial class MainWindow : Window
     {
         if ((bool)e.NewValue && !_isFirstLoad)
         {
-            var settings = _viewModel.StorageService.LoadSettings();
-            if (settings.AnimationEnabled)
+            if (_viewModel.AppSettings.AnimationEnabled)
             {
                 Opacity = 0;
-                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+                var fadeIn = new DoubleAnimation
                 {
                     From = 0,
                     To = 1,
                     Duration = TimeSpan.FromSeconds(0.25),
-                    EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                 };
                 BeginAnimation(OpacityProperty, fadeIn);
             }
@@ -65,11 +66,11 @@ public partial class MainWindow : Window
 
     private void ApplyFadeInAnimation()
     {
-        var border = (System.Windows.Controls.Border)FindName("MainBorder");
+        var border = (Border?)FindName("MainBorder");
         if (border == null)
         {
             Opacity = 0;
-            var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+            var fadeIn = new DoubleAnimation
             {
                 From = 0,
                 To = 1,
@@ -80,26 +81,26 @@ public partial class MainWindow : Window
         }
 
         border.Opacity = 0;
-        border.RenderTransform = new System.Windows.Media.TranslateTransform(0, 20);
+        border.RenderTransform = new TranslateTransform(0, 20);
 
-        var opacityAnim = new System.Windows.Media.Animation.DoubleAnimation
+        var opacityAnim = new DoubleAnimation
         {
             From = 0,
             To = 1,
             Duration = TimeSpan.FromSeconds(0.4),
-            EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
         };
 
-        var translateYAnim = new System.Windows.Media.Animation.DoubleAnimation
+        var translateYAnim = new DoubleAnimation
         {
             From = 20,
             To = 0,
             Duration = TimeSpan.FromSeconds(0.4),
-            EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
         };
 
         border.BeginAnimation(OpacityProperty, opacityAnim);
-        border.RenderTransform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, translateYAnim);
+        border.RenderTransform.BeginAnimation(TranslateTransform.YProperty, translateYAnim);
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -109,7 +110,7 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        var settings = _viewModel.StorageService.LoadSettings();
+        var settings = _viewModel.AppSettings;
         if (settings.TrayEnabled && settings.CloseToTray)
         {
             Hide();
@@ -170,7 +171,7 @@ public partial class MainWindow : Window
     {
         var settingsWindow = new SettingsWindow(_viewModel.StorageService, _viewModel.CameraService);
         settingsWindow.ShowDialog();
-        
+
         _viewModel.ReloadSettings();
         _viewModel.RefreshStats();
     }
@@ -179,7 +180,7 @@ public partial class MainWindow : Window
     {
         var taskWindow = new TaskManagerWindow(_viewModel.StorageService);
         taskWindow.ShowDialog();
-        
+
         _viewModel.UpdateTasks(_viewModel.StorageService.LoadTasks());
     }
 
@@ -200,7 +201,6 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        _ = _viewModel.CameraService.StopCameraAsync();
         _viewModel.Dispose();
         _trayService.Dispose();
         base.OnClosed(e);

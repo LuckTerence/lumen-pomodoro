@@ -143,13 +143,13 @@
                     <TextBlock Text="计时设置" Style="{StaticResource SectionHeader}" />
                     
                     <Label Content="专注时间（分钟）" Style="{StaticResource LabelStyle}" />
-                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding WorkMinutes}" />
-                    
+                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" />
+
                     <Label Content="短休息时间（分钟）" Style="{StaticResource LabelStyle}" />
-                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding ShortBreakMinutes}" />
-                    
+                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
+
                     <Label Content="长休息时间（分钟）" Style="{StaticResource LabelStyle}" />
-                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding LongBreakMinutes}" />
+                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
                 
                 <StackPanel Grid.Row="3">
@@ -168,7 +168,7 @@
                     </ComboBox>
                     
                     <Label Content="固定亮灯时长（秒）" Style="{StaticResource LabelStyle}" />
-                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding CameraFixedOnSeconds}" />
+                    <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" />
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                         <ToggleButton Style="{StaticResource ToggleStyle}" IsChecked="{Binding CameraFollowBreakEnabled}" />

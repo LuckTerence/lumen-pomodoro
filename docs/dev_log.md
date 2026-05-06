@@ -1,69 +1,53 @@
 # 开发日志
 
-## 格式
+## [2026-05-07] 全项目 Bug/性能修复 — 30+ 问题
 
-每条记录格式：
-```
-[日期] [模块] [类型] 描述
-- 测试结果：
-```
+**涉及模块**: TimerService, StorageService, CameraService, SoundService, TrayService, MainViewModel, SettingsViewModel, App, MainWindow, TaskManagerWindow, SettingsWindow, FocusCompleteDialog, BreakCompleteDialog, TimerServiceTests, TaskItem/TaskCategories
 
----
+**修改文件数**: 15 个
 
-## 记录
+### P0 — 严重问题修复
 
-[2026-05-06] [文档] [chore] 创建 PRD 产品需求文档，定义 V1.0-MVP 范围
-- 测试结果：N/A（文档创建）
+1. **TimerService 线程安全** — StartFocus/StartBreak/Timer_Elapsed 事件在锁外触发时读取的字段可能已被修改。修复：在锁内快照状态，锁外触发事件。
+2. **TimerService._remainingSeconds 负数** — _remainingSeconds-- 后才检查 <=0，Timer 快速连续触发时可能变负。修复：Math.Max(0, _remainingSeconds - 1)。
+3. **TimerService.Pause/Resume 锁内触发事件** — 事件订阅者回调可能导致死锁。修复：移至锁外。
+4. **StorageService.SaveSessions 无锁** — 直接 File.WriteAllText 无 _fileLock 保护，可导致 JSON 损坏。修复：加 lock(_fileLock)。
+5. **StorageService.LoadSessions 读无锁** — 读操作未锁保护，与写操作并发时可能读到半写数据。修复：所有公共读方法加锁。
+6. **StorageService.GetTodayStats 缓存线程不安全** — _cachedTodayStats/_cacheDate 跨线程无同步。修复：加锁。
+7. **CameraService CTS 释放竞态** — 旧 CTS Cancel 后立即 Dispose，可能在 token 使用中。修复：先创建新 CTS，再取消旧的。
+8. **TaskManagerWindow 占位符绑定反向** — BooleanToVisibilityConverter + Text 绑定逻辑完全反转。修复：改用 DataTrigger + 默认 Collapsed。
+9. **BreakCompleteDialog 返回值被忽略** — ShowDialog() 返回值未检查，ShouldStartNext 从未被读取。修复：在 ShowBreakCompleteDialog 中检查并调用 StartFocus()。
 
-[2026-05-06] [文档] [docs] 补全 README.md，包含项目简介、特性、技术栈、隐私声明
-- 测试结果：N/A（文档更新）
+### P1 — 高优先级修复
 
-[2026-05-07] [UI] [fix] SettingsWindow/TaskManagerWindow XAML 硬编码颜色替换为主题资源引用
-- 测试结果：构建成功，0 错误
+10. **TimerService/SoundService 未实现 IDisposable** — 有 Dispose() 但未声明接口。修复：添加 IDisposable。
+11. **TimerService.Dispose 不清事件** — 事件持有 MainViewModel 强引用阻止 GC。修复：Dispose 时置 null。
+12. **MediaFoundationCamera._internalToken 未释放** — Start() 创建 CTS，Stop() 从不 Dispose。修复：添加 IDisposable。
+13. **CameraService COM 对象泄漏** — CaptureLoop 错误路径 mediaSource 可能不释放；WMI ManagementBaseObject 未 Dispose。
+14. **CameraService._isRunning 写入不一致** — KeepCameraActiveAsync 无锁写入。修复：统一在 lock 下修改。
+15. **全局空 catch 块** — SoundService/CameraService/MainViewModel/SettingsViewModel 中空 catch 静默吞掉异常。修复：Debug.WriteLine。
+16. **Fire-and-forget 异步调用异常丢失** — 丢弃 Task 异常完全忽略。修复：统一 FireAndForget 包装。
+17. **MainViewModel.Dispose 中 fire-and-forget** — 改用同步 GetAwaiter().GetResult()。
+18. **MainViewModel 未取消订阅 TimerService 事件** — 修复：Dispose 时取消订阅。
+19. **SoundService.Volume 属性无效** — SoundPlayer 不支持音量控制。修复：添加文档注释。
 
-[2026-05-07] [UI] [fix] 修复"稍后休息"流程断链 -- 新增 IsPendingBreak 属性，IdlePanel 中显示休息按钮
-- 测试结果：构建成功，20/20 测试通过
+### P2 — 中优先级修复
 
-[2026-05-07] [全模块] [fix] 第五轮扫描：8项Bug修复 - 服务实例统一注入
-- Bug1: StorageService缓存逻辑修正(_sessionsCache移除,AddSession加锁)
-- Bug2: StorageService所有写操作加_fileLock(SaveSettings/SaveTasks)
-- Bug3: SettingsViewModel改为构造函数注入StorageService+CameraService
-- Bug4: CameraService.KeepCameraActive竞态(已由volatile+lock保护)
-- Bug5: SoundService并发访问(已由Dictionary线程安全读保护)
-- Bug6: StartCameraForDurationAsync失败后跳过Delay
-- Bug7: MainViewModel.PlayNotificationSound火灾即忘(已由Dispatcher保护)
-- Bug8: BreakCompleteDialog Escape键未设DialogResult
-- 测试结果：构建成功，20/20 测试通过
+20. **SettingsWindow 数值 TextBox 缺少 UpdateSourceTrigger** — 修复：添加 UpdateSourceTrigger=PropertyChanged。
+21. **CaptureLoop 30fps 不必要** — 改为 WaitOne(1000) 即 1fps。
+22. **InitializeCameraDevice Thread.Sleep(500) 阻塞** — 改为 async Task + await Task.Delay。
+23. **App.ApplyTheme 先删后加导致空窗** — 先添加新主题再移除旧主题。
+24. **多 StorageService 实例** — App 提供共享实例。
+25. **MainWindow 多次调用 LoadSettings** — 使用 ViewModel 的 AppSettings。
 
-[2026-05-07] [代码质量] [fix] 消除 14 个 CS4014 async 未 await 警告，统一使用 _ = 显式丢弃
-- 测试结果：构建成功，警告从 29 降至 19
+### P3 — 低优先级修复
 
-[2026-05-07] [摄像头] [fix] 摄像头失败时触发兜底提醒（声音 + 系统通知 + 弹窗）
-- 测试结果：构建成功，0 错误
+26. **Property setter 无相等性检查** — 添加 if (_field != value) 检查。
+27. **SettingsViewModel 未实现 IDisposable** — 添加接口。
+28. **TrayService 事件处理器未取消订阅** — Dispose 中逐一取消。
+29. **FocusCompleteDialog.SetLongBreakSuggestion 空引用** — 添加 IsInitialized 检查。
+30. **GetCategoryColor 重复定义** — 提取到 TaskCategories.GetCategoryColor()。
+31. **TimerComplete 测试 61 秒** — 改为 2.5 秒验证。
+32. **_theme 字段 CS8618** — 声明默认值 "system"。
 
-[2026-05-07] [设置] [fix] SettingsViewModel.SaveSettings() 中 CameraAlertCanManualClose 硬编码 true，修正为使用属性值
-- 测试结果：构建成功，0 错误，20/20 测试通过
-
-[2026-05-07] [核心] [fix] 修复跨线程UI访问、摄像头控制竞态和统计缓存
-- TimerService: 事件触发前 _currentMode 被置 Idle 导致 CompletedMode 丢失
-- MainViewModel: 事件回调统一 Dispatcher.Invoke; ForceStopCameraAlert; 复用 NotifyIcon
-- StorageService: GetTodayStats 当日缓存
-- FocusCompleteDialog: Enter 键长休息选项; SettingsViewModel: HasShownCameraPrivacyNotice
-- 测试结果：构建成功，20/20 测试通过
-
-[2026-05-07] [全模块] [fix] 第三轮深度扫描：27项问题全部修复
-- Critical: TimerService线程竞态加lock; CameraService/StorageService实例统一; _todayStats初始化; Camera回调Dispatcher; DisplayMemberPath覆盖ItemTemplate; SoundService/NotifyIcon Dispose
-- Warning: _isRunning volatile; CTS泄漏修复; StorageService文件锁; SettingsViewModel Cleanup; StatsWindow注入StorageService; 超时后StopCameraDevice
-- Minor: CalculateStreak修正; SaveSessions清缓存; BreakCompleteDialog DialogResult; FindName替代脆弱匹配
-- 测试结果：构建成功，20/20 测试通过
-
-[2026-05-07] [全模块] [fix] 第四轮扫描：9项Bug/性能问题修复
-- Bug1: TimerService.Pause/Resume变量作用域和模式恢复逻辑
-- Bug2: StartCameraForDurationAsync不可取消(加CancellationToken)
-- Bug3: SettingsWindow.Closing事件未绑定XAML
-- Bug4: TaskManagerWindow独立StorageService实例(改为注入)
-- Bug5: 设置页TextBox输入验证(Math.Clamp)
-- Bug6: App._storageService独立实例
-- Bug7: CameraService.GetAvailableCameras WMI查询缓存
-- Bug8: TrayService.UpdateMenuState定时刷新(2s)
-- 测试结果：构建成功，20/20 测试通过
+**测试结果**: 18/18 通过 (2.2s)

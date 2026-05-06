@@ -126,10 +126,18 @@
                     <Grid>
                         <TextBox x:Name="NewTaskNameTextBox" Margin="0,0,8,0" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}" />
                         <TextBlock x:Name="PlaceholderText" Text="任务名称" Margin="4,3"
-                                   Foreground="{DynamicResource TertiaryTextBrush}" IsHitTestVisible="False"
-                                   Visibility="{Binding Text, ElementName=NewTaskNameTextBox, 
-                                   Converter={StaticResource BooleanToVisibilityConverter}, 
-                                   ConverterParameter=True}" />
+                                   Foreground="{DynamicResource TertiaryTextBrush}" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=NewTaskNameTextBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Grid>
                     <ComboBox x:Name="CategoryComboBox" Margin="0,8,0,0">
                         <ComboBoxItem Content="数学" />
