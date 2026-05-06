@@ -13,6 +13,7 @@ public class StorageService
     
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
+    private List<FocusSession>? _sessionsCache;
     private readonly object _fileLock = new object();
 
     public StorageService()
@@ -142,6 +143,7 @@ public class StorageService
     private void InvalidateStatsCache()
     {
         _cachedTodayStats = null;
+        _sessionsCache = null;
     }
 
     public void SaveSessionsWithTransaction(List<FocusSession> sessions)

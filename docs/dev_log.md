@@ -38,4 +38,21 @@
 - MainViewModel: 事件回调统一 Dispatcher.Invoke; ForceStopCameraAlert; 复用 NotifyIcon
 - StorageService: GetTodayStats 当日缓存
 - FocusCompleteDialog: Enter 键长休息选项; SettingsViewModel: HasShownCameraPrivacyNotice
-- 测试结果：待验证
+- 测试结果：构建成功，20/20 测试通过
+
+[2026-05-07] [全模块] [fix] 第三轮深度扫描：27项问题全部修复
+- Critical: TimerService线程竞态加lock; CameraService/StorageService实例统一; _todayStats初始化; Camera回调Dispatcher; DisplayMemberPath覆盖ItemTemplate; SoundService/NotifyIcon Dispose
+- Warning: _isRunning volatile; CTS泄漏修复; StorageService文件锁; SettingsViewModel Cleanup; StatsWindow注入StorageService; 超时后StopCameraDevice
+- Minor: CalculateStreak修正; SaveSessions清缓存; BreakCompleteDialog DialogResult; FindName替代脆弱匹配
+- 测试结果：构建成功，20/20 测试通过
+
+[2026-05-07] [全模块] [fix] 第四轮扫描：9项Bug/性能问题修复
+- Bug1: TimerService.Pause/Resume变量作用域和模式恢复逻辑
+- Bug2: StartCameraForDurationAsync不可取消(加CancellationToken)
+- Bug3: SettingsWindow.Closing事件未绑定XAML
+- Bug4: TaskManagerWindow独立StorageService实例(改为注入)
+- Bug5: 设置页TextBox输入验证(Math.Clamp)
+- Bug6: App._storageService独立实例
+- Bug7: CameraService.GetAvailableCameras WMI查询缓存
+- Bug8: TrayService.UpdateMenuState定时刷新(2s)
+- 测试结果：构建成功，20/20 测试通过
