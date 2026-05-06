@@ -29,3 +29,6 @@
 
 [2026-05-07] [摄像头] [fix] 摄像头失败时触发兜底提醒（声音 + 系统通知 + 弹窗）
 - 测试结果：构建成功，0 错误
+
+[2026-05-07] [设置] [fix] SettingsViewModel.SaveSettings() 中 CameraAlertCanManualClose 硬编码 true，修正为使用属性值
+- 测试结果：构建成功，0 错误，20/20 测试通过

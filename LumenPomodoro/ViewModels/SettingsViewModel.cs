@@ -214,7 +214,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             CameraFixedOnSeconds = CameraFixedOnSeconds,
             CameraFollowBreakEnabled = CameraFollowBreakEnabled,
             CameraIndex = SelectedCameraIndex,
-            CameraAlertCanManualClose = true,
+            CameraAlertCanManualClose = CameraAlertCanManualClose,
             
             SoundEnabled = SoundEnabled,
             PopupEnabled = PopupEnabled,
