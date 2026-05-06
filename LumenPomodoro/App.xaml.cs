@@ -22,6 +22,8 @@ public partial class App : Application
         
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
         
+        SoundService.GenerateDefaultWavFiles();
+        
         ApplyThemeOnStartup();
     }
 

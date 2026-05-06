@@ -16,8 +16,15 @@ public partial class BreakCompleteDialog : Window
 
     private void BreakCompleteDialog_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape || e.Key == Key.Enter)
+        if (e.Key == Key.Escape)
         {
+            DialogResult = false;
+            Close();
+        }
+        else if (e.Key == Key.Enter)
+        {
+            ShouldStartNext = true;
+            DialogResult = true;
             Close();
         }
     }

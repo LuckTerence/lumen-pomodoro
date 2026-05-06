@@ -153,10 +153,10 @@ public class SettingsViewModel : INotifyPropertyChanged
         set { _animationEnabled = value; OnPropertyChanged(); }
     }
 
-    public SettingsViewModel()
+    public SettingsViewModel(StorageService storageService, CameraService cameraService)
     {
-        _storageService = new StorageService();
-        _cameraService = new CameraService();
+        _storageService = storageService;
+        _cameraService = cameraService;
         _availableCameras = new ObservableCollection<string>();
         
         LoadSettings();

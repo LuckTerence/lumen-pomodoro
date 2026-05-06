@@ -85,6 +85,8 @@ public class CameraService
     public async Task StartCameraForDurationAsync(int seconds)
     {
         await StartCameraAsync();
+        if (!_isRunning) return;
+        
         try
         {
             await Task.Delay(seconds * 1000, _cancellationTokenSource?.Token ?? CancellationToken.None);

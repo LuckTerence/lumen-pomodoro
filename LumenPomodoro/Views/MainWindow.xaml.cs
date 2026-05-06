@@ -168,7 +168,7 @@ public partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow();
+        var settingsWindow = new SettingsWindow(_viewModel.StorageService, _viewModel.CameraService);
         settingsWindow.ShowDialog();
         
         _viewModel.ReloadSettings();

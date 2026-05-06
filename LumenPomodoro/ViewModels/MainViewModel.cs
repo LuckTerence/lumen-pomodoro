@@ -119,8 +119,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _storageService = new StorageService();
         _soundService = new SoundService();
         
-        SoundService.GenerateDefaultWavFiles();
-        
         _timerService.TimerTick += TimerService_TimerTick;
         _timerService.TimerCompleted += TimerService_TimerCompleted;
         _timerService.ModeChanged += TimerService_ModeChanged;

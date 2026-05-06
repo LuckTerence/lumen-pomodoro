@@ -13,7 +13,6 @@ public class StorageService
     
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
-    private List<FocusSession>? _sessionsCache;
     private readonly object _fileLock = new object();
 
     public StorageService()
@@ -45,8 +44,11 @@ public class StorageService
 
     public void SaveSettings(Settings settings)
     {
-        var content = JsonConvert.SerializeObject(settings, Formatting.Indented);
-        File.WriteAllText(_settingsFile, content);
+        lock (_fileLock)
+        {
+            var content = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            File.WriteAllText(_settingsFile, content);
+        }
     }
 
     public List<TaskItem> LoadTasks()
@@ -68,8 +70,11 @@ public class StorageService
 
     public void SaveTasks(List<TaskItem> tasks)
     {
-        var content = JsonConvert.SerializeObject(tasks, Formatting.Indented);
-        File.WriteAllText(_tasksFile, content);
+        lock (_fileLock)
+        {
+            var content = JsonConvert.SerializeObject(tasks, Formatting.Indented);
+            File.WriteAllText(_tasksFile, content);
+        }
     }
 
     private List<TaskItem> GetDefaultTasks()
@@ -131,19 +136,18 @@ public class StorageService
 
     public void AddSession(FocusSession session)
     {
-        if (_sessionsCache == null)
+        lock (_fileLock)
         {
-            _sessionsCache = LoadSessions();
+            var sessions = LoadSessions();
+            sessions.Add(session);
+            SaveSessionsWithTransaction(sessions);
         }
-        _sessionsCache.Add(session);
-        SaveSessionsWithTransaction(_sessionsCache);
         InvalidateStatsCache();
     }
 
     private void InvalidateStatsCache()
     {
         _cachedTodayStats = null;
-        _sessionsCache = null;
     }
 
     public void SaveSessionsWithTransaction(List<FocusSession> sessions)

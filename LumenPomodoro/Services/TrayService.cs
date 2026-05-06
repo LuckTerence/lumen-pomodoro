@@ -161,7 +161,7 @@ public class TrayService
     {
         ShowMainWindow();
         
-        var settingsWindow = new Views.SettingsWindow
+        var settingsWindow = new Views.SettingsWindow(_storageService, _cameraService)
         {
             Owner = _mainWindow
         };

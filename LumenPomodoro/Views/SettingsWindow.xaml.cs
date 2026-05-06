@@ -1,4 +1,5 @@
 using System.Windows;
+using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
 
 namespace LumenPomodoro.Views;
@@ -7,10 +8,10 @@ public partial class SettingsWindow : Window
 {
     private readonly SettingsViewModel _viewModel;
 
-    public SettingsWindow()
+    public SettingsWindow(StorageService storageService, CameraService cameraService)
     {
         InitializeComponent();
-        _viewModel = new SettingsViewModel();
+        _viewModel = new SettingsViewModel(storageService, cameraService);
         DataContext = _viewModel;
     }
 
