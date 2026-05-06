@@ -32,3 +32,10 @@
 
 [2026-05-07] [设置] [fix] SettingsViewModel.SaveSettings() 中 CameraAlertCanManualClose 硬编码 true，修正为使用属性值
 - 测试结果：构建成功，0 错误，20/20 测试通过
+
+[2026-05-07] [核心] [fix] 修复跨线程UI访问、摄像头控制竞态和统计缓存
+- TimerService: 事件触发前 _currentMode 被置 Idle 导致 CompletedMode 丢失
+- MainViewModel: 事件回调统一 Dispatcher.Invoke; ForceStopCameraAlert; 复用 NotifyIcon
+- StorageService: GetTodayStats 当日缓存
+- FocusCompleteDialog: Enter 键长休息选项; SettingsViewModel: HasShownCameraPrivacyNotice
+- 测试结果：待验证
