@@ -160,7 +160,7 @@
                     </StackPanel>
                     
                     <Label Content="提醒模式" Style="{StaticResource LabelStyle}" />
-                    <ComboBox Style="{StaticResource ComboBoxStyle}" SelectedItem="{Binding CameraAlertMode}">
+                    <ComboBox Style="{StaticResource ComboBoxStyle}" SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
                         <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" />
                         <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" />
                         <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" />
@@ -172,6 +172,11 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                         <ToggleButton Style="{StaticResource ToggleStyle}" IsChecked="{Binding CameraFollowBreakEnabled}" />
                         <Label Content="休息期间亮灯" Style="{StaticResource LabelStyle}" Margin="8,8,0,4" />
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <ToggleButton Style="{StaticResource ToggleStyle}" IsChecked="{Binding CameraAlertCanManualClose}" />
+                        <Label Content="提醒中允许手动关闭" Style="{StaticResource LabelStyle}" Margin="8,8,0,4" />
                     </StackPanel>
                     
                     <Label Content="摄像头选择" Style="{StaticResource LabelStyle}" />
@@ -227,10 +232,10 @@
                     <TextBlock Text="外观" Style="{StaticResource SectionHeader}" />
                     
                     <Label Content="主题" Style="{StaticResource LabelStyle}" />
-                    <ComboBox Style="{StaticResource ComboBoxStyle}" SelectedItem="{Binding Theme}">
-                        <ComboBoxItem Content="跟随系统" />
-                        <ComboBoxItem Content="浅色" />
-                        <ComboBoxItem Content="深色" />
+                    <ComboBox Style="{StaticResource ComboBoxStyle}" SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
+                        <ComboBoxItem Content="跟随系统" Tag="system" />
+                        <ComboBoxItem Content="浅色" Tag="light" />
+                        <ComboBoxItem Content="深色" Tag="dark" />
                     </ComboBox>
                     
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">

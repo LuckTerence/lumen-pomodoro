@@ -24,6 +24,7 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isFocusCompleted;
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
+    private bool _shouldSuggestLongBreak;
     
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -93,6 +94,12 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isPendingBreak = value; OnPropertyChanged(); }
     }
 
+    public bool ShouldSuggestLongBreak
+    {
+        get => _shouldSuggestLongBreak;
+        set { _shouldSuggestLongBreak = value; OnPropertyChanged(); }
+    }
+
     public Settings AppSettings { get; private set; }
     
     private FocusSession? _currentSession;
@@ -160,9 +167,19 @@ public class MainViewModel : INotifyPropertyChanged
             }
             
             IsFocusCompleted = true;
+            ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
+                                     TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
             StartCameraAlert();
             PlayNotificationSound();
-            ShowFocusCompleteDialog();
+            if (AppSettings.PopupEnabled)
+            {
+                ShowFocusCompleteDialog();
+            }
+            else
+            {
+                IsPendingBreak = true;
+                CurrentStatus = TimerMode.Idle;
+            }
             ShowSystemNotification("专注完成！", "该休息了！");
         }
         else if (e.CompletedMode == TimerMode.Break)
@@ -170,7 +187,10 @@ public class MainViewModel : INotifyPropertyChanged
             IsBreakCompleted = true;
             StopCameraAlert();
             PlayNotificationSound();
-            ShowBreakCompleteDialog();
+            if (AppSettings.PopupEnabled)
+            {
+                ShowBreakCompleteDialog();
+            }
             ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
         }
     }
@@ -191,13 +211,25 @@ public class MainViewModel : INotifyPropertyChanged
         CameraStatus = error;
         IsCameraAlertActive = false;
 
-        // 兜底提醒：摄像头不可用时，确保其他提醒方式仍然触发
         PlayNotificationSound();
         ShowSystemNotification("摄像头提醒失败", error);
 
         if (AppSettings.PopupEnabled)
         {
-            MessageBox.Show(error, "摄像头错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            var result = MessageBox.Show(
+                $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
+                "摄像头错误",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            
+            if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
+                }
+                catch { }
+            }
         }
     }
 
@@ -246,6 +278,11 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void StartBreak(bool isLongBreak = false)
     {
+        if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && IsCameraAlertActive)
+        {
+            StopCameraAlert();
+        }
+
         int breakMinutes = isLongBreak ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
         _timerService.StartBreak(breakMinutes);
         
@@ -258,7 +295,6 @@ public class MainViewModel : INotifyPropertyChanged
         IsBreakCompleted = false;
         IsPendingBreak = false;
 
-        // Session already recorded in TimerCompleted handler before this method is called
         _currentSession = null;
     }
 
@@ -286,6 +322,30 @@ public class MainViewModel : INotifyPropertyChanged
     private void StartCameraAlert()
     {
         if (!AppSettings.CameraAlertEnabled) return;
+
+        if (!AppSettings.HasShownCameraPrivacyNotice)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var result = MessageBox.Show(
+                    "本软件仅在番茄钟结束或休息阶段根据你的设置调用摄像头，用于触发摄像头指示灯提醒。\n\n软件不会拍照、录像、保存或上传摄像头画面。\n\n是否同意启用摄像头提醒？",
+                    "摄像头隐私声明",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (result == MessageBoxResult.No)
+                {
+                    AppSettings.CameraAlertEnabled = false;
+                    _storageService.SaveSettings(AppSettings);
+                    return;
+                }
+
+                AppSettings.HasShownCameraPrivacyNotice = true;
+                _storageService.SaveSettings(AppSettings);
+            });
+
+            if (!AppSettings.CameraAlertEnabled) return;
+        }
         
         try
         {
@@ -309,6 +369,11 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void StopCameraAlert()
     {
+        if (!AppSettings.CameraAlertCanManualClose)
+        {
+            MessageBox.Show("当前设置不允许手动关闭摄像头提醒，请在设置中开启。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
         _ = _cameraService.StopCameraAsync();
         IsCameraAlertActive = false;
     }
@@ -350,15 +415,17 @@ public class MainViewModel : INotifyPropertyChanged
             var dialog = new Views.FocusCompleteDialog
             {
                 Owner = Application.Current.MainWindow,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                SuggestCount = TodayStats.CompletedPomodoros
             };
+            dialog.SetLongBreakSuggestion(ShouldSuggestLongBreak);
             var result = dialog.ShowDialog();
             
             if (result == true)
             {
                 if (dialog.ShouldStartBreak)
                 {
-                    StartBreak(isLongBreak: false);
+                    StartBreak(isLongBreak: dialog.ShouldStartLongBreak);
                 }
             }
             else
@@ -398,12 +465,23 @@ public class MainViewModel : INotifyPropertyChanged
     public void UpdateSettings(Settings settings)
     {
         AppSettings = settings;
-        _storageService.SaveSettings(settings);
         
         if (CurrentStatus == TimerMode.Idle)
         {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
+    }
+
+    public void ReloadSettings()
+    {
+        AppSettings = _storageService.LoadSettings();
+        
+        if (CurrentStatus == TimerMode.Idle)
+        {
+            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        }
+        
+        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback);
     }
 
     public void UpdateTasks(List<TaskItem> tasks)

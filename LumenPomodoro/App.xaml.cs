@@ -3,6 +3,7 @@ using System.Data;
 using System.Windows;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
+using Microsoft.Win32;
 
 namespace LumenPomodoro;
 
@@ -13,7 +14,51 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        
+        SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+        
         ApplyThemeOnStartup();
+    }
+
+    private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        try
+        {
+            MessageBox.Show($"发生未预期的错误：{e.Exception.Message}\n\n软件将继续运行，但部分功能可能受影响。",
+                "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        catch { }
+        
+        e.Handled = true;
+    }
+
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            try
+            {
+                MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch { }
+        }
+    }
+
+    private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+    {
+        if (e.Mode == PowerModes.Resume)
+        {
+            Current.Dispatcher.BeginInvoke(() =>
+            {
+                if (Current.MainWindow is Views.MainWindow mainWindow)
+                {
+                    mainWindow.RefreshTimerOnWake();
+                }
+            });
+        }
     }
 
     private void ApplyThemeOnStartup()
@@ -70,5 +115,10 @@ public partial class App : Application
             return false;
         }
     }
-}
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+        base.OnExit(e);
+    }
+}

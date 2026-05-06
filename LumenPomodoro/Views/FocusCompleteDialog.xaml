@@ -3,17 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="专注完成"
         Width="400"
-        Height="280"
+        Height="320"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize"
         Topmost="True"
         WindowStartupLocation="CenterOwner">
-    <Border Background="White"
-            BorderBrush="#E5E7EB"
-            BorderThickness="1"
-            CornerRadius="12">
+    <Border Background="{DynamicResource GlassBackgroundBrush}"
+            CornerRadius="16">
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.15" Color="#000000" />
         </Border.Effect>
@@ -21,55 +19,73 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Icon -->
-            <Ellipse Grid.Row="0" Width="64" Height="64" Fill="#10B981" HorizontalAlignment="Center" Margin="0,0,0,16" />
+            <Ellipse Grid.Row="0" Width="64" Height="64" Fill="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" Margin="0,0,0,16" />
             <Path Grid.Row="0" Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="White" 
                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,16"
                   Width="32" Height="32" Stretch="Uniform" />
 
-            <!-- Title -->
             <TextBlock Grid.Row="1"
                        Text="专注完成！"
                        FontSize="22"
                        FontWeight="Bold"
-                       Foreground="#1F2937"
+                       Foreground="{DynamicResource PrimaryTextBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,8" />
 
-            <!-- Message -->
-            <TextBlock Grid.Row="2"
+            <TextBlock x:Name="SuggestionText" Grid.Row="2"
+                       FontSize="13"
+                       Foreground="{DynamicResource WarningBrush}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Visibility="Collapsed"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Grid.Row="3"
                        Text="您已完成本轮专注，现在该休息一下了。建议起身活动、喝水或做些简单的伸展运动。"
                        FontSize="14"
-                       Foreground="#6B7280"
+                       Foreground="{DynamicResource SecondaryTextBrush}"
                        TextWrapping="Wrap"
                        TextAlignment="Center"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Margin="0,0,0,16" />
 
-            <!-- Buttons -->
-            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                <Button Content="开始休息"
-                        Width="120"
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                <Button Content="开始短休息"
+                        Width="110"
                         Height="40"
-                        Background="#10B981"
+                        Background="{DynamicResource SuccessBrush}"
                         Foreground="White"
-                        FontSize="14"
+                        FontSize="13"
                         FontWeight="SemiBold"
                         BorderThickness="0"
                         Cursor="Hand"
                         Click="StartBreak_Click"
-                        Margin="0,0,12,0" />
-                <Button Content="稍后休息"
-                        Width="120"
+                        Margin="0,0,8,0" />
+                <Button x:Name="LongBreakButton" Content="长休息"
+                        Width="90"
                         Height="40"
-                        Background="#F3F4F6"
-                        Foreground="#374151"
-                        FontSize="14"
+                        Background="{DynamicResource PrimaryBrush}"
+                        Foreground="White"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="StartLongBreak_Click"
+                        Visibility="Collapsed"
+                        Margin="0,0,8,0" />
+                <Button Content="稍后休息"
+                        Width="100"
+                        Height="40"
+                        Background="{DynamicResource ControlBackgroundBrush}"
+                        Foreground="{DynamicResource PrimaryTextBrush}"
+                        FontSize="13"
                         FontWeight="SemiBold"
                         BorderThickness="0"
                         Cursor="Hand"

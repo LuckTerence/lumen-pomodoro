@@ -13,6 +13,7 @@ public class Settings
     public bool CameraFollowBreakEnabled { get; set; } = true;
     public int CameraIndex { get; set; } = 0;
     public bool CameraAlertCanManualClose { get; set; } = true;
+    public bool HasShownCameraPrivacyNotice { get; set; } = false;
     
     public bool SoundEnabled { get; set; } = true;
     public bool PopupEnabled { get; set; } = true;

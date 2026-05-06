@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
 
@@ -11,6 +12,8 @@ public partial class MainWindow : Window
     private readonly TrayService _trayService;
     private readonly CameraService _cameraService;
     private readonly StorageService _storageService;
+
+    private bool _isFirstLoad = true;
 
     public MainWindow()
     {
@@ -27,6 +30,7 @@ public partial class MainWindow : Window
         
         Loaded += MainWindow_Loaded;
         StateChanged += MainWindow_StateChanged;
+        IsVisibleChanged += MainWindow_IsVisibleChanged;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -35,6 +39,27 @@ public partial class MainWindow : Window
         if (settings.AnimationEnabled)
         {
             ApplyFadeInAnimation();
+        }
+        _isFirstLoad = false;
+    }
+
+    private void MainWindow_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if ((bool)e.NewValue && !_isFirstLoad)
+        {
+            var settings = _storageService.LoadSettings();
+            if (settings.AnimationEnabled)
+            {
+                Opacity = 0;
+                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    From = 0,
+                    To = 1,
+                    Duration = TimeSpan.FromSeconds(0.25),
+                    EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+                };
+                BeginAnimation(OpacityProperty, fadeIn);
+            }
         }
     }
 
@@ -52,14 +77,54 @@ public partial class MainWindow : Window
 
     private void ApplyFadeInAnimation()
     {
-        Opacity = 0;
-        var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+        var border = (System.Windows.Controls.Border)FindVisualChild<System.Windows.Controls.Border>(this, b => b.Style?.ToString().Contains("GlassPanel") == true);
+        if (border == null)
+        {
+            Opacity = 0;
+            var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromSeconds(0.3)
+            };
+            BeginAnimation(OpacityProperty, fadeIn);
+            return;
+        }
+
+        border.Opacity = 0;
+        border.RenderTransform = new System.Windows.Media.TranslateTransform(0, 20);
+
+        var opacityAnim = new System.Windows.Media.Animation.DoubleAnimation
         {
             From = 0,
             To = 1,
-            Duration = TimeSpan.FromSeconds(0.3)
+            Duration = TimeSpan.FromSeconds(0.4),
+            EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
         };
-        BeginAnimation(OpacityProperty, fadeIn);
+
+        var translateYAnim = new System.Windows.Media.Animation.DoubleAnimation
+        {
+            From = 20,
+            To = 0,
+            Duration = TimeSpan.FromSeconds(0.4),
+            EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+        };
+
+        border.BeginAnimation(OpacityProperty, opacityAnim);
+        border.RenderTransform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, translateYAnim);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent, Func<T, bool> condition) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild && condition(typedChild))
+                return typedChild;
+            var result = FindVisualChild(child, condition);
+            if (result != null) return result;
+        }
+        return null;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -131,6 +196,7 @@ public partial class MainWindow : Window
         var settingsWindow = new SettingsWindow();
         settingsWindow.ShowDialog();
         
+        _viewModel.ReloadSettings();
         _viewModel.RefreshStats();
     }
 
@@ -140,6 +206,21 @@ public partial class MainWindow : Window
         taskWindow.ShowDialog();
         
         _viewModel.UpdateTasks(_storageService.LoadTasks());
+    }
+
+    private void StatsPanel_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var statsWindow = new StatsWindow
+        {
+            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        statsWindow.ShowDialog();
+    }
+
+    public void RefreshTimerOnWake()
+    {
+        _viewModel.RefreshStats();
     }
 
     protected override void OnClosed(EventArgs e)

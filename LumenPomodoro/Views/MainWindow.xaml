@@ -16,7 +16,14 @@
     <Window.Resources>
         <converters:StatusConverter x:Key="StatusConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
-        
+
+        <Storyboard x:Key="FadeInUpStoryboard">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
+            <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
+        </Storyboard>
+
+        <QuadraticEase x:Key="QuadraticEase" EasingMode="EaseOut" />
+
         <Style x:Key="GlassPanel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
             <Setter Property="CornerRadius" Value="24" />
@@ -88,7 +95,10 @@
     </Window.Resources>
     
     <Grid>
-        <Border Style="{StaticResource GlassPanel}">
+        <Border Style="{StaticResource GlassPanel}" RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <TranslateTransform Y="0" />
+            </Border.RenderTransform>
             <Grid Margin="24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -254,11 +264,11 @@
                 
                 <Grid Grid.Row="6" Margin="0,24,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
                             <TextBlock Text="{Binding TodayStats.CompletedPomodoros}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" />
                             <TextBlock Text="今日完成" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="16,0,0,0" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
                             <TextBlock Text="{Binding TodayStats.TotalFocusMinutes}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" />
                             <TextBlock Text="专注时长(分)" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
                         </StackPanel>

@@ -17,6 +17,8 @@ public class CameraService
     private Action<string>? _errorCallback;
     private MediaFoundationCamera? _cameraDevice;
     private readonly object _lockObject = new object();
+    private DateTime? _startTime;
+    private const int MaxRunMinutes = 30;
 
     public bool IsRunning => _isRunning;
 
@@ -32,6 +34,7 @@ public class CameraService
         if (_isRunning) return;
         
         _isRunning = true;
+        _startTime = DateTime.Now;
         _cancellationTokenSource = new CancellationTokenSource();
         
         try
@@ -126,6 +129,12 @@ public class CameraService
         while (!token.IsCancellationRequested)
         {
             Thread.Sleep(100);
+            
+            if (_startTime.HasValue && (DateTime.Now - _startTime.Value).TotalMinutes >= MaxRunMinutes)
+            {
+                _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
+                break;
+            }
             
             if (_cameraDevice != null && !_cameraDevice.IsRunning)
             {

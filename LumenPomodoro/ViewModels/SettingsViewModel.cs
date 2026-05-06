@@ -22,6 +22,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     private int _cameraFixedOnSeconds;
     private bool _cameraFollowBreakEnabled;
     private int _selectedCameraIndex;
+    private bool _cameraAlertCanManualClose;
     private ObservableCollection<string> _availableCameras;
     
     private bool _soundEnabled;
@@ -83,6 +84,12 @@ public class SettingsViewModel : INotifyPropertyChanged
     {
         get => _cameraFollowBreakEnabled;
         set { _cameraFollowBreakEnabled = value; OnPropertyChanged(); }
+    }
+
+    public bool CameraAlertCanManualClose
+    {
+        get => _cameraAlertCanManualClose;
+        set { _cameraAlertCanManualClose = value; OnPropertyChanged(); }
     }
 
     public int SelectedCameraIndex
@@ -168,6 +175,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         CameraAlertMode = settings.CameraAlertMode;
         CameraFixedOnSeconds = settings.CameraFixedOnSeconds;
         CameraFollowBreakEnabled = settings.CameraFollowBreakEnabled;
+        CameraAlertCanManualClose = settings.CameraAlertCanManualClose;
         SelectedCameraIndex = settings.CameraIndex;
         
         SoundEnabled = settings.SoundEnabled;
