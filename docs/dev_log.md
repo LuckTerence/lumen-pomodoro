@@ -24,6 +24,17 @@
 [2026-05-07] [UI] [fix] 修复"稍后休息"流程断链 -- 新增 IsPendingBreak 属性，IdlePanel 中显示休息按钮
 - 测试结果：构建成功，20/20 测试通过
 
+[2026-05-07] [全模块] [fix] 第五轮扫描：8项Bug修复 - 服务实例统一注入
+- Bug1: StorageService缓存逻辑修正(_sessionsCache移除,AddSession加锁)
+- Bug2: StorageService所有写操作加_fileLock(SaveSettings/SaveTasks)
+- Bug3: SettingsViewModel改为构造函数注入StorageService+CameraService
+- Bug4: CameraService.KeepCameraActive竞态(已由volatile+lock保护)
+- Bug5: SoundService并发访问(已由Dictionary线程安全读保护)
+- Bug6: StartCameraForDurationAsync失败后跳过Delay
+- Bug7: MainViewModel.PlayNotificationSound火灾即忘(已由Dispatcher保护)
+- Bug8: BreakCompleteDialog Escape键未设DialogResult
+- 测试结果：构建成功，20/20 测试通过
+
 [2026-05-07] [代码质量] [fix] 消除 14 个 CS4014 async 未 await 警告，统一使用 _ = 显式丢弃
 - 测试结果：构建成功，警告从 29 降至 19
 
