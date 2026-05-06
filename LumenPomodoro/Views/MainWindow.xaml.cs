@@ -10,8 +10,6 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly TrayService _trayService;
-    private readonly CameraService _cameraService;
-    private readonly StorageService _storageService;
 
     private bool _isFirstLoad = true;
 
@@ -19,17 +17,14 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         
-        _cameraService = new CameraService();
-        _storageService = new StorageService();
         _viewModel = new MainViewModel();
-        _trayService = new TrayService(_viewModel, _cameraService, _storageService);
+        _trayService = new TrayService(_viewModel, _viewModel.CameraService, _viewModel.StorageService);
         
         DataContext = _viewModel;
         
         _trayService.AttachToWindow(this);
         
         Loaded += MainWindow_Loaded;
-        StateChanged += MainWindow_StateChanged;
         IsVisibleChanged += MainWindow_IsVisibleChanged;
     }
 
@@ -65,14 +60,6 @@ public partial class MainWindow : Window
 
     private void MainWindow_StateChanged(object sender, EventArgs e)
     {
-        if (WindowState == WindowState.Minimized)
-        {
-            var settings = _storageService.LoadSettings();
-            if (settings.TrayEnabled && settings.CloseToTray)
-            {
-                Hide();
-            }
-        }
     }
 
     private void ApplyFadeInAnimation()

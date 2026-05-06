@@ -102,6 +102,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     public Settings AppSettings { get; private set; }
     
+    public CameraService CameraService => _cameraService;
+    public StorageService StorageService => _storageService;
+    
     private FocusSession? _currentSession;
 
     public MainViewModel()
@@ -144,60 +147,68 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void TimerService_TimerTick(object? sender, TimerTickEventArgs e)
     {
-        RemainingTime = FormatTime(e.RemainingSeconds);
-        
-        if (e.TotalSeconds > 0)
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            Progress = (int)((double)e.RemainingSeconds / e.TotalSeconds * 100);
-        }
+            RemainingTime = FormatTime(e.RemainingSeconds);
+            
+            if (e.TotalSeconds > 0)
+            {
+                Progress = (int)((double)e.RemainingSeconds / e.TotalSeconds * 100);
+            }
+        });
     }
 
     private void TimerService_TimerCompleted(object? sender, TimerCompletedEventArgs e)
     {
-        if (e.CompletedMode == TimerMode.Focus)
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            // Record session immediately when focus completes
-            if (_currentSession != null && !_currentSession.Completed)
+            if (e.CompletedMode == TimerMode.Focus)
             {
-                _currentSession.EndTime = DateTime.Now;
-                _currentSession.Completed = true;
-                _storageService.AddSession(_currentSession);
-                TodayStats = _storageService.GetTodayStats();
-                _currentSession = null; // Clear after recording
+                if (_currentSession != null && !_currentSession.Completed)
+                {
+                    _currentSession.EndTime = DateTime.Now;
+                    _currentSession.Completed = true;
+                    _storageService.AddSession(_currentSession);
+                    TodayStats = _storageService.GetTodayStats();
+                    _currentSession = null;
+                }
+                
+                IsFocusCompleted = true;
+                ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
+                                         TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
+                StartCameraAlert();
+                PlayNotificationSound();
+                if (AppSettings.PopupEnabled)
+                {
+                    ShowFocusCompleteDialog();
+                }
+                else
+                {
+                    IsPendingBreak = true;
+                    CurrentStatus = TimerMode.Idle;
+                }
+                ShowSystemNotification("专注完成！", "该休息了！");
             }
-            
-            IsFocusCompleted = true;
-            ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
-                                     TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
-            StartCameraAlert();
-            PlayNotificationSound();
-            if (AppSettings.PopupEnabled)
+            else if (e.CompletedMode == TimerMode.Break)
             {
-                ShowFocusCompleteDialog();
+                IsBreakCompleted = true;
+                ForceStopCameraAlert();
+                PlayNotificationSound();
+                if (AppSettings.PopupEnabled)
+                {
+                    ShowBreakCompleteDialog();
+                }
+                ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
             }
-            else
-            {
-                IsPendingBreak = true;
-                CurrentStatus = TimerMode.Idle;
-            }
-            ShowSystemNotification("专注完成！", "该休息了！");
-        }
-        else if (e.CompletedMode == TimerMode.Break)
-        {
-            IsBreakCompleted = true;
-            StopCameraAlert();
-            PlayNotificationSound();
-            if (AppSettings.PopupEnabled)
-            {
-                ShowBreakCompleteDialog();
-            }
-            ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
-        }
+        });
     }
 
     private void TimerService_ModeChanged(object? sender, TimerModeChangedEventArgs e)
     {
-        CurrentStatus = e.NewMode;
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            CurrentStatus = e.NewMode;
+        });
     }
 
     private void CameraStatusCallback(string status)
@@ -267,7 +278,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void ResetFocus()
     {
-        StopCameraAlert();
+        ForceStopCameraAlert();
         _timerService.Reset();
         IsFocusCompleted = false;
         IsBreakCompleted = false;
@@ -280,7 +291,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && IsCameraAlertActive)
         {
-            StopCameraAlert();
+            ForceStopCameraAlert();
         }
 
         int breakMinutes = isLongBreak ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
@@ -300,7 +311,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void EndBreak()
     {
-        StopCameraAlert();
+        ForceStopCameraAlert();
         _timerService.Reset();
         IsBreakCompleted = true;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
@@ -309,8 +320,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void SkipBreak()
     {
-        // If user skips break, session is already recorded
-        StopCameraAlert();
+        ForceStopCameraAlert();
         _timerService.Reset();
         IsBreakCompleted = false;
         IsFocusCompleted = false;
@@ -374,6 +384,11 @@ public class MainViewModel : INotifyPropertyChanged
             MessageBox.Show("当前设置不允许手动关闭摄像头提醒，请在设置中开启。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+        ForceStopCameraAlert();
+    }
+
+    private void ForceStopCameraAlert()
+    {
         _ = _cameraService.StopCameraAsync();
         IsCameraAlertActive = false;
     }
@@ -389,65 +404,63 @@ public class MainViewModel : INotifyPropertyChanged
         catch { }
     }
 
+    private System.Windows.Forms.NotifyIcon? _notifyIcon;
+
     private void ShowSystemNotification(string title, string message)
     {
         if (!AppSettings.SystemNotificationEnabled) return;
         
         try
         {
-            var notification = new System.Windows.Forms.NotifyIcon
+            if (_notifyIcon == null)
             {
-                Visible = true,
-                Icon = System.Drawing.SystemIcons.Information,
-                BalloonTipTitle = title,
-                BalloonTipText = message
-            };
-            notification.ShowBalloonTip(3000);
-            notification.Dispose();
+                _notifyIcon = new System.Windows.Forms.NotifyIcon
+                {
+                    Visible = true,
+                    Icon = System.Drawing.SystemIcons.Information
+                };
+            }
+            _notifyIcon.BalloonTipTitle = title;
+            _notifyIcon.BalloonTipText = message;
+            _notifyIcon.ShowBalloonTip(3000);
         }
         catch { }
     }
 
     private void ShowFocusCompleteDialog()
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        var dialog = new Views.FocusCompleteDialog
         {
-            var dialog = new Views.FocusCompleteDialog
+            Owner = Application.Current.MainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            SuggestCount = TodayStats.CompletedPomodoros
+        };
+        dialog.SetLongBreakSuggestion(ShouldSuggestLongBreak);
+        var result = dialog.ShowDialog();
+        
+        if (result == true)
+        {
+            if (dialog.ShouldStartBreak)
             {
-                Owner = Application.Current.MainWindow,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                SuggestCount = TodayStats.CompletedPomodoros
-            };
-            dialog.SetLongBreakSuggestion(ShouldSuggestLongBreak);
-            var result = dialog.ShowDialog();
-            
-            if (result == true)
-            {
-                if (dialog.ShouldStartBreak)
-                {
-                    StartBreak(isLongBreak: dialog.ShouldStartLongBreak);
-                }
+                StartBreak(isLongBreak: dialog.ShouldStartLongBreak);
             }
-            else
-            {
-                IsFocusCompleted = false;
-                IsPendingBreak = true;
-                CurrentStatus = TimerMode.Idle;
-            }
-        });
+        }
+        else
+        {
+            IsFocusCompleted = false;
+            IsPendingBreak = true;
+            CurrentStatus = TimerMode.Idle;
+        }
     }
 
     private void ShowBreakCompleteDialog()
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        var dialog = new Views.BreakCompleteDialog
         {
-            var dialog = new Views.BreakCompleteDialog
-            {
-                Owner = Application.Current.MainWindow,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog();
-        });
+            Owner = Application.Current.MainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        dialog.ShowDialog();
     }
 
     private string FormatTime(int seconds)

@@ -41,6 +41,7 @@ public partial class FocusCompleteDialog : Window
         else if (e.Key == Key.Enter)
         {
             ShouldStartBreak = true;
+            ShouldStartLongBreak = LongBreakButton.Visibility == Visibility.Visible;
             DialogResult = true;
             Close();
         }

@@ -23,6 +23,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     private bool _cameraFollowBreakEnabled;
     private int _selectedCameraIndex;
     private bool _cameraAlertCanManualClose;
+    private bool _hasShownCameraPrivacyNotice;
     private ObservableCollection<string> _availableCameras;
     
     private bool _soundEnabled;
@@ -176,6 +177,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         CameraFixedOnSeconds = settings.CameraFixedOnSeconds;
         CameraFollowBreakEnabled = settings.CameraFollowBreakEnabled;
         CameraAlertCanManualClose = settings.CameraAlertCanManualClose;
+        _hasShownCameraPrivacyNotice = settings.HasShownCameraPrivacyNotice;
         SelectedCameraIndex = settings.CameraIndex;
         
         SoundEnabled = settings.SoundEnabled;
@@ -215,6 +217,7 @@ public class SettingsViewModel : INotifyPropertyChanged
             CameraFollowBreakEnabled = CameraFollowBreakEnabled,
             CameraIndex = SelectedCameraIndex,
             CameraAlertCanManualClose = CameraAlertCanManualClose,
+            HasShownCameraPrivacyNotice = _hasShownCameraPrivacyNotice,
             
             SoundEnabled = SoundEnabled,
             PopupEnabled = PopupEnabled,

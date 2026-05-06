@@ -10,6 +10,10 @@ public class StorageService
     private readonly string _settingsFile;
     private readonly string _tasksFile;
     private readonly string _sessionsFile;
+    
+    private DailyStats? _cachedTodayStats;
+    private DateTime _cacheDate;
+    private List<FocusSession>? _sessionsCache;
 
     public StorageService()
     {
@@ -128,6 +132,13 @@ public class StorageService
         var sessions = LoadSessions();
         sessions.Add(session);
         SaveSessionsWithTransaction(sessions);
+        InvalidateStatsCache();
+    }
+
+    private void InvalidateStatsCache()
+    {
+        _cachedTodayStats = null;
+        _sessionsCache = null;
     }
 
     public void SaveSessionsWithTransaction(List<FocusSession> sessions)
@@ -172,6 +183,11 @@ public class StorageService
 
     public DailyStats GetTodayStats()
     {
+        if (_cachedTodayStats != null && _cacheDate == DateTime.Today)
+        {
+            return _cachedTodayStats;
+        }
+
         var sessions = LoadSessions();
         var today = DateTime.Today;
         var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
@@ -190,6 +206,9 @@ public class StorageService
         }
 
         stats.CurrentStreak = CalculateStreak(sessions);
+        
+        _cachedTodayStats = stats;
+        _cacheDate = DateTime.Today;
         
         return stats;
     }

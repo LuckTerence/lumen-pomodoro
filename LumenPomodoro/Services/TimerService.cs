@@ -101,7 +101,7 @@ public class TimerService
         if (_isPaused) return;
         
         _remainingSeconds--;
-        
+
         TimerTick?.Invoke(this, new TimerTickEventArgs(_remainingSeconds, _totalSeconds, _currentMode));
         
         if (_remainingSeconds <= 0)
@@ -109,10 +109,11 @@ public class TimerService
             _timer.Stop();
             _isRunning = false;
             
-            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(_currentMode));
-            
+            var completedMode = _currentMode;
             _currentMode = TimerMode.Idle;
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(_currentMode, TimerMode.Idle));
+            
+            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }
     }
 
