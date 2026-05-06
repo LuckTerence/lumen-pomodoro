@@ -42,25 +42,25 @@ public class SettingsViewModel : INotifyPropertyChanged
     public int WorkMinutes
     {
         get => _workMinutes;
-        set { _workMinutes = value; OnPropertyChanged(); }
+        set { _workMinutes = Math.Clamp(value, 1, 120); OnPropertyChanged(); }
     }
 
     public int ShortBreakMinutes
     {
         get => _shortBreakMinutes;
-        set { _shortBreakMinutes = value; OnPropertyChanged(); }
+        set { _shortBreakMinutes = Math.Clamp(value, 1, 60); OnPropertyChanged(); }
     }
 
     public int LongBreakMinutes
     {
         get => _longBreakMinutes;
-        set { _longBreakMinutes = value; OnPropertyChanged(); }
+        set { _longBreakMinutes = Math.Clamp(value, 1, 60); OnPropertyChanged(); }
     }
 
     public int LongBreakInterval
     {
         get => _longBreakInterval;
-        set { _longBreakInterval = value; OnPropertyChanged(); }
+        set { _longBreakInterval = Math.Clamp(value, 2, 10); OnPropertyChanged(); }
     }
 
     public bool CameraAlertEnabled
@@ -78,7 +78,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     public int CameraFixedOnSeconds
     {
         get => _cameraFixedOnSeconds;
-        set { _cameraFixedOnSeconds = value; OnPropertyChanged(); }
+        set { _cameraFixedOnSeconds = Math.Clamp(value, 1, 300); OnPropertyChanged(); }
     }
 
     public bool CameraFollowBreakEnabled
@@ -255,6 +255,14 @@ public class SettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             MessageBox.Show($"摄像头测试失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    public void Cleanup()
+    {
+        if (_cameraService.IsRunning)
+        {
+            _ = _cameraService.StopCameraAsync();
         }
     }
 

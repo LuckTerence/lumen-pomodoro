@@ -6,20 +6,20 @@ using LumenPomodoro.Services;
 
 namespace LumenPomodoro.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public class MainViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly TimerService _timerService;
     private readonly CameraService _cameraService;
     private readonly StorageService _storageService;
     private readonly SoundService _soundService;
     
-    private TimerMode _currentStatus;
-    private string _remainingTime;
-    private int _progress;
+    private TimerMode _currentStatus = TimerMode.Idle;
+    private string _remainingTime = "25:00";
+    private int _progress = 100;
     private TaskItem? _selectedTask;
-    private List<TaskItem> _tasks;
-    private DailyStats _todayStats;
-    private string _cameraStatus;
+    private List<TaskItem> _tasks = new();
+    private DailyStats _todayStats = new();
+    private string _cameraStatus = string.Empty;
     private bool _isCameraAlertActive;
     private bool _isFocusCompleted;
     private bool _isBreakCompleted;
@@ -106,6 +106,11 @@ public class MainViewModel : INotifyPropertyChanged
     public StorageService StorageService => _storageService;
     
     private FocusSession? _currentSession;
+    private System.Windows.Forms.NotifyIcon? _notifyIcon;
+    private bool _disposed;
+    private System.Timers.Timer? _trayUpdateTimer;
+    
+    public event Action? TrayMenuNeedsUpdate;
 
     public MainViewModel()
     {
@@ -122,15 +127,15 @@ public class MainViewModel : INotifyPropertyChanged
         
         _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback);
         
+        _trayUpdateTimer = new System.Timers.Timer(2000);
+        _trayUpdateTimer.Elapsed += (s, e) => TrayMenuNeedsUpdate?.Invoke();
+        _trayUpdateTimer.Start();
+        
         LoadData();
         
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         CurrentStatus = TimerMode.Idle;
         Progress = 100;
-        CameraStatus = string.Empty;
-        IsCameraAlertActive = false;
-        IsFocusCompleted = false;
-        IsBreakCompleted = false;
     }
 
     private void LoadData()
@@ -147,7 +152,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void TimerService_TimerTick(object? sender, TimerTickEventArgs e)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
             RemainingTime = FormatTime(e.RemainingSeconds);
             
@@ -160,7 +165,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void TimerService_TimerCompleted(object? sender, TimerCompletedEventArgs e)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
             if (e.CompletedMode == TimerMode.Focus)
             {
@@ -177,7 +182,7 @@ public class MainViewModel : INotifyPropertyChanged
                 ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
                                          TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
                 StartCameraAlert();
-                PlayNotificationSound();
+                PlayNotificationSound("FocusComplete");
                 if (AppSettings.PopupEnabled)
                 {
                     ShowFocusCompleteDialog();
@@ -193,7 +198,7 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 IsBreakCompleted = true;
                 ForceStopCameraAlert();
-                PlayNotificationSound();
+                PlayNotificationSound("BreakComplete");
                 if (AppSettings.PopupEnabled)
                 {
                     ShowBreakCompleteDialog();
@@ -205,7 +210,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void TimerService_ModeChanged(object? sender, TimerModeChangedEventArgs e)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
             CurrentStatus = e.NewMode;
         });
@@ -213,35 +218,41 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void CameraStatusCallback(string status)
     {
-        CameraStatus = status;
-        IsCameraAlertActive = _cameraService.IsRunning;
+        Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            CameraStatus = status;
+            IsCameraAlertActive = _cameraService.IsRunning;
+        });
     }
 
     private void CameraErrorCallback(string error)
     {
-        CameraStatus = error;
-        IsCameraAlertActive = false;
-
-        PlayNotificationSound();
-        ShowSystemNotification("摄像头提醒失败", error);
-
-        if (AppSettings.PopupEnabled)
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var result = MessageBox.Show(
-                $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
-                "摄像头错误",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            
-            if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
+            CameraStatus = error;
+            IsCameraAlertActive = false;
+
+            PlayNotificationSound("FocusComplete");
+            ShowSystemNotification("摄像头提醒失败", error);
+
+            if (AppSettings.PopupEnabled)
             {
-                try
+                MessageBox.Show(
+                    $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
+                    "摄像头错误",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                
+                if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
                 {
-                    System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
+                    try
+                    {
+                        System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
+                    }
+                    catch { }
                 }
-                catch { }
             }
-        }
+        });
     }
 
     public void StartFocus()
@@ -335,26 +346,21 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (!AppSettings.HasShownCameraPrivacyNotice)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            var result = MessageBox.Show(
+                "本软件仅在番茄钟结束或休息阶段根据你的设置调用摄像头，用于触发摄像头指示灯提醒。\n\n软件不会拍照、录像、保存或上传摄像头画面。\n\n是否同意启用摄像头提醒？",
+                "摄像头隐私声明",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Information);
+
+            if (result == MessageBoxResult.No)
             {
-                var result = MessageBox.Show(
-                    "本软件仅在番茄钟结束或休息阶段根据你的设置调用摄像头，用于触发摄像头指示灯提醒。\n\n软件不会拍照、录像、保存或上传摄像头画面。\n\n是否同意启用摄像头提醒？",
-                    "摄像头隐私声明",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
-
-                if (result == MessageBoxResult.No)
-                {
-                    AppSettings.CameraAlertEnabled = false;
-                    _storageService.SaveSettings(AppSettings);
-                    return;
-                }
-
-                AppSettings.HasShownCameraPrivacyNotice = true;
+                AppSettings.CameraAlertEnabled = false;
                 _storageService.SaveSettings(AppSettings);
-            });
+                return;
+            }
 
-            if (!AppSettings.CameraAlertEnabled) return;
+            AppSettings.HasShownCameraPrivacyNotice = true;
+            _storageService.SaveSettings(AppSettings);
         }
         
         try
@@ -393,18 +399,19 @@ public class MainViewModel : INotifyPropertyChanged
         IsCameraAlertActive = false;
     }
 
-    private void PlayNotificationSound()
+    private void PlayNotificationSound(string soundName)
     {
         if (!AppSettings.SoundEnabled) return;
         
-        try
+        Task.Run(() =>
         {
-            _soundService.PlaySound("FocusComplete");
-        }
-        catch { }
+            try
+            {
+                _soundService.PlaySound(soundName);
+            }
+            catch { }
+        });
     }
-
-    private System.Windows.Forms.NotifyIcon? _notifyIcon;
 
     private void ShowSystemNotification(string title, string message)
     {
@@ -506,6 +513,19 @@ public class MainViewModel : INotifyPropertyChanged
         {
             SelectedTask = Tasks.First();
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        
+        _trayUpdateTimer?.Stop();
+        _trayUpdateTimer?.Dispose();
+        _timerService.Dispose();
+        _soundService.Dispose();
+        _notifyIcon?.Dispose();
+        _ = _cameraService.StopCameraAsync();
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -5,9 +5,11 @@ namespace LumenPomodoro.Services;
 public class TimerService
 {
     private readonly System.Timers.Timer _timer;
+    private readonly object _lock = new object();
     private int _remainingSeconds;
     private int _totalSeconds;
     private TimerMode _currentMode;
+    private TimerMode _modeBeforePause;
     private bool _isPaused;
     private bool _isRunning;
     
@@ -25,17 +27,22 @@ public class TimerService
     {
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += Timer_Elapsed;
+        _timer.AutoReset = true;
         _currentMode = TimerMode.Idle;
     }
 
     public void StartFocus(int minutes)
     {
-        _totalSeconds = minutes * 60;
-        _remainingSeconds = _totalSeconds;
-        _currentMode = TimerMode.Focus;
-        _isRunning = true;
-        _isPaused = false;
-        _timer.Start();
+        lock (_lock)
+        {
+            if (_isRunning) return;
+            _totalSeconds = minutes * 60;
+            _remainingSeconds = _totalSeconds;
+            _currentMode = TimerMode.Focus;
+            _isRunning = true;
+            _isPaused = false;
+            _timer.Start();
+        }
         
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, _currentMode));
         TimerTick?.Invoke(this, new TimerTickEventArgs(_remainingSeconds, _totalSeconds, _currentMode));
@@ -43,12 +50,16 @@ public class TimerService
 
     public void StartBreak(int minutes)
     {
-        _totalSeconds = minutes * 60;
-        _remainingSeconds = _totalSeconds;
-        _currentMode = TimerMode.Break;
-        _isRunning = true;
-        _isPaused = false;
-        _timer.Start();
+        lock (_lock)
+        {
+            if (_isRunning) return;
+            _totalSeconds = minutes * 60;
+            _remainingSeconds = _totalSeconds;
+            _currentMode = TimerMode.Break;
+            _isRunning = true;
+            _isPaused = false;
+            _timer.Start();
+        }
         
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, _currentMode));
         TimerTick?.Invoke(this, new TimerTickEventArgs(_remainingSeconds, _totalSeconds, _currentMode));
@@ -56,62 +67,93 @@ public class TimerService
 
     public void Pause()
     {
-        if (_isRunning && !_isPaused)
+        lock (_lock)
         {
-            _isPaused = true;
-            _timer.Stop();
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(_currentMode, TimerMode.Paused));
+            if (_isRunning && !_isPaused)
+            {
+                _isPaused = true;
+                TimerMode oldMode = _currentMode;
+                _modeBeforePause = _currentMode;
+                _currentMode = TimerMode.Paused;
+                _timer.Stop();
+                ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Paused));
+            }
         }
     }
 
     public void Resume()
     {
-        if (_isRunning && _isPaused)
+        lock (_lock)
         {
-            _isPaused = false;
-            _timer.Start();
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Paused, _currentMode));
+            if (_isRunning && _isPaused)
+            {
+                _isPaused = false;
+                TimerMode restoredMode = _modeBeforePause;
+                _currentMode = restoredMode;
+                _timer.Start();
+                ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Paused, restoredMode));
+            }
         }
     }
 
     public void Reset()
     {
-        _timer.Stop();
-        _isRunning = false;
-        _isPaused = false;
-        _remainingSeconds = 0;
-        _totalSeconds = 0;
+        TimerMode oldMode;
+        lock (_lock)
+        {
+            _timer.Stop();
+            _isRunning = false;
+            _isPaused = false;
+            _remainingSeconds = 0;
+            _totalSeconds = 0;
+            oldMode = _currentMode;
+            _currentMode = TimerMode.Idle;
+        }
         
-        var oldMode = _currentMode;
-        _currentMode = TimerMode.Idle;
-        
-        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, _currentMode));
-        TimerTick?.Invoke(this, new TimerTickEventArgs(0, 0, _currentMode));
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
+        TimerTick?.Invoke(this, new TimerTickEventArgs(0, 0, TimerMode.Idle));
     }
 
     public void Stop()
     {
-        _timer.Stop();
-        _isRunning = false;
-        _isPaused = false;
+        lock (_lock)
+        {
+            _timer.Stop();
+            _isRunning = false;
+            _isPaused = false;
+        }
     }
 
     private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        if (_isPaused) return;
+        bool shouldComplete = false;
+        TimerMode completedMode = TimerMode.Idle;
+        int remaining, total;
+        TimerMode mode;
         
-        _remainingSeconds--;
-
-        TimerTick?.Invoke(this, new TimerTickEventArgs(_remainingSeconds, _totalSeconds, _currentMode));
-        
-        if (_remainingSeconds <= 0)
+        lock (_lock)
         {
-            _timer.Stop();
-            _isRunning = false;
+            if (_isPaused) return;
             
-            var completedMode = _currentMode;
-            _currentMode = TimerMode.Idle;
+            _remainingSeconds--;
+            remaining = _remainingSeconds;
+            total = _totalSeconds;
+            mode = _currentMode;
             
+            if (_remainingSeconds <= 0)
+            {
+                _timer.Stop();
+                _isRunning = false;
+                completedMode = _currentMode;
+                _currentMode = TimerMode.Idle;
+                shouldComplete = true;
+            }
+        }
+
+        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
+        
+        if (shouldComplete)
+        {
             TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }

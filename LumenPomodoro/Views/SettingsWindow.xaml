@@ -9,7 +9,8 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Closing="Window_Closing">
     
     <Window.Resources>
         <Style x:Key="GlassPanel" TargetType="Border">

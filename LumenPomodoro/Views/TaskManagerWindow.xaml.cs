@@ -8,12 +8,12 @@ namespace LumenPomodoro.Views;
 public partial class TaskManagerWindow : Window
 {
     private readonly StorageService _storageService;
-    private List<TaskItem> _tasks;
+    private List<TaskItem> _tasks = new();
 
-    public TaskManagerWindow()
+    public TaskManagerWindow(StorageService storageService)
     {
         InitializeComponent();
-        _storageService = new StorageService();
+        _storageService = storageService;
         LoadTasks();
     }
 

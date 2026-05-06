@@ -5,6 +5,8 @@ namespace LumenPomodoro.Views;
 
 public partial class BreakCompleteDialog : Window
 {
+    public bool ShouldStartNext { get; private set; } = false;
+
     public BreakCompleteDialog()
     {
         InitializeComponent();
@@ -22,6 +24,7 @@ public partial class BreakCompleteDialog : Window
 
     private void StartNext_Click(object sender, RoutedEventArgs e)
     {
+        ShouldStartNext = true;
         DialogResult = true;
         Close();
     }

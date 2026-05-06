@@ -161,8 +161,15 @@ public class TrayService
     {
         ShowMainWindow();
         
-        var settingsWindow = new Views.SettingsWindow();
+        var settingsWindow = new Views.SettingsWindow
+        {
+            Owner = _mainWindow
+        };
         settingsWindow.ShowDialog();
+        
+        _mainViewModel.ReloadSettings();
+        _mainViewModel.RefreshStats();
+        UpdateMenuState();
     }
 
     private void ExitItem_Click(object? sender, RoutedEventArgs e)

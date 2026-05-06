@@ -24,13 +24,18 @@ public partial class MainWindow : Window
         
         _trayService.AttachToWindow(this);
         
+        _viewModel.TrayMenuNeedsUpdate += () =>
+        {
+            Dispatcher.BeginInvoke(() => _trayService.UpdateMenuState());
+        };
+        
         Loaded += MainWindow_Loaded;
         IsVisibleChanged += MainWindow_IsVisibleChanged;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        var settings = _storageService.LoadSettings();
+        var settings = _viewModel.StorageService.LoadSettings();
         if (settings.AnimationEnabled)
         {
             ApplyFadeInAnimation();
@@ -42,7 +47,7 @@ public partial class MainWindow : Window
     {
         if ((bool)e.NewValue && !_isFirstLoad)
         {
-            var settings = _storageService.LoadSettings();
+            var settings = _viewModel.StorageService.LoadSettings();
             if (settings.AnimationEnabled)
             {
                 Opacity = 0;
@@ -58,13 +63,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void MainWindow_StateChanged(object sender, EventArgs e)
-    {
-    }
-
     private void ApplyFadeInAnimation()
     {
-        var border = (System.Windows.Controls.Border)FindVisualChild<System.Windows.Controls.Border>(this, b => b.Style?.ToString().Contains("GlassPanel") == true);
+        var border = (System.Windows.Controls.Border)FindName("MainBorder");
         if (border == null)
         {
             Opacity = 0;
@@ -101,19 +102,6 @@ public partial class MainWindow : Window
         border.RenderTransform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, translateYAnim);
     }
 
-    private static T? FindVisualChild<T>(DependencyObject parent, Func<T, bool> condition) where T : DependencyObject
-    {
-        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
-        {
-            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
-            if (child is T typedChild && condition(typedChild))
-                return typedChild;
-            var result = FindVisualChild(child, condition);
-            if (result != null) return result;
-        }
-        return null;
-    }
-
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
@@ -121,7 +109,7 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        var settings = _storageService.LoadSettings();
+        var settings = _viewModel.StorageService.LoadSettings();
         if (settings.TrayEnabled && settings.CloseToTray)
         {
             Hide();
@@ -189,15 +177,15 @@ public partial class MainWindow : Window
 
     private void ManageTasksButton_Click(object sender, RoutedEventArgs e)
     {
-        var taskWindow = new TaskManagerWindow();
+        var taskWindow = new TaskManagerWindow(_viewModel.StorageService);
         taskWindow.ShowDialog();
         
-        _viewModel.UpdateTasks(_storageService.LoadTasks());
+        _viewModel.UpdateTasks(_viewModel.StorageService.LoadTasks());
     }
 
     private void StatsPanel_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        var statsWindow = new StatsWindow
+        var statsWindow = new StatsWindow(_viewModel.StorageService)
         {
             Owner = this,
             WindowStartupLocation = WindowStartupLocation.CenterOwner
@@ -212,7 +200,8 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        _ = _cameraService.StopCameraAsync();
+        _ = _viewModel.CameraService.StopCameraAsync();
+        _viewModel.Dispose();
         _trayService.Dispose();
         base.OnClosed(e);
     }

@@ -9,11 +9,13 @@ namespace LumenPomodoro;
 
 public partial class App : Application
 {
-    private readonly StorageService _storageService = new StorageService();
+    private StorageService? _storageService;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        
+        _storageService = new StorageService();
         
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;

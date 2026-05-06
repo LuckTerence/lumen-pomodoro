@@ -29,4 +29,9 @@ public partial class SettingsWindow : Window
     {
         _viewModel.TestCameraAlert();
     }
+
+    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        _viewModel.Cleanup();
+    }
 }

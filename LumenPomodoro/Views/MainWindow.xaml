@@ -14,6 +14,7 @@
         ShowInTaskbar="True">
     
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:StatusConverter x:Key="StatusConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
 
@@ -95,7 +96,7 @@
     </Window.Resources>
     
     <Grid>
-        <Border Style="{StaticResource GlassPanel}" RenderTransformOrigin="0.5,0.5">
+        <Border x:Name="MainBorder" Style="{StaticResource GlassPanel}" RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
                 <TranslateTransform Y="0" />
             </Border.RenderTransform>
@@ -122,8 +123,7 @@
                 <StackPanel Grid.Row="1" Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Center">
                     <ComboBox x:Name="TaskComboBox" Style="{StaticResource TaskComboBox}" Width="200"
                               ItemsSource="{Binding Tasks}"
-                              SelectedItem="{Binding SelectedTask}"
-                              DisplayMemberPath="Name">
+                              SelectedItem="{Binding SelectedTask}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

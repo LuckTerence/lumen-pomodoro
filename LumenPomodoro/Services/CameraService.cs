@@ -9,7 +9,7 @@ namespace LumenPomodoro.Services;
 
 public class CameraService
 {
-    private bool _isRunning = false;
+    private volatile bool _isRunning = false;
     private Task? _cameraTask;
     private CancellationTokenSource? _cancellationTokenSource;
     private int _cameraIndex = 0;
@@ -19,6 +19,8 @@ public class CameraService
     private readonly object _lockObject = new object();
     private DateTime? _startTime;
     private const int MaxRunMinutes = 30;
+    private List<string>? _cachedCameraNames;
+    private int _cachedCameraCount = -1;
 
     public bool IsRunning => _isRunning;
 
@@ -35,7 +37,11 @@ public class CameraService
         
         _isRunning = true;
         _startTime = DateTime.Now;
+        
+        var oldCts = _cancellationTokenSource;
         _cancellationTokenSource = new CancellationTokenSource();
+        oldCts?.Cancel();
+        oldCts?.Dispose();
         
         try
         {
@@ -45,7 +51,7 @@ public class CameraService
             
             _statusCallback?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
             
-            _cameraTask = Task.Run(() => KeepCameraActive(_cancellationTokenSource.Token));
+            _cameraTask = KeepCameraActiveAsync(_cancellationTokenSource.Token);
         }
         catch (Exception ex)
         {
@@ -79,7 +85,13 @@ public class CameraService
     public async Task StartCameraForDurationAsync(int seconds)
     {
         await StartCameraAsync();
-        await Task.Delay(seconds * 1000);
+        try
+        {
+            await Task.Delay(seconds * 1000, _cancellationTokenSource?.Token ?? CancellationToken.None);
+        }
+        catch (OperationCanceledException)
+        {
+        }
         await StopCameraAsync();
     }
 
@@ -124,20 +136,23 @@ public class CameraService
         }
     }
 
-    private void KeepCameraActive(CancellationToken token)
+    private async Task KeepCameraActiveAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
-            Thread.Sleep(100);
-            
+            await Task.Delay(100, token);
+
             if (_startTime.HasValue && (DateTime.Now - _startTime.Value).TotalMinutes >= MaxRunMinutes)
             {
+                StopCameraDevice();
+                _isRunning = false;
                 _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
                 break;
             }
             
             if (_cameraDevice != null && !_cameraDevice.IsRunning)
             {
+                _isRunning = false;
                 _errorCallback?.Invoke("摄像头意外断开");
                 break;
             }
@@ -146,26 +161,36 @@ public class CameraService
 
     public List<string> GetAvailableCameras()
     {
+        if (_cachedCameraNames != null) return _cachedCameraNames;
+        
         try
         {
             var devices = GetAvailableCameraDevices();
-            return devices.Select(d => d.Name).ToList();
+            _cachedCameraNames = devices.Select(d => d.Name).ToList();
+            _cachedCameraCount = _cachedCameraNames.Count;
+            return _cachedCameraNames;
         }
         catch
         {
-            return new List<string> { "默认摄像头" };
+            _cachedCameraNames = new List<string> { "默认摄像头" };
+            _cachedCameraCount = 1;
+            return _cachedCameraNames;
         }
     }
 
     public int GetCameraCount()
     {
+        if (_cachedCameraCount >= 0) return _cachedCameraCount;
+        
         try
         {
-            return GetAvailableCameraDevices().Count;
+            _cachedCameraCount = GetAvailableCameraDevices().Count;
+            return _cachedCameraCount;
         }
         catch
         {
-            return 1;
+            _cachedCameraCount = 1;
+            return _cachedCameraCount;
         }
     }
 
@@ -213,7 +238,7 @@ public class CameraService
 internal class MediaFoundationCamera
 {
     private readonly string _symbolicLink;
-    private bool _isRunning;
+    private volatile bool _isRunning;
     private Thread? _captureThread;
     private CancellationTokenSource? _internalToken;
 

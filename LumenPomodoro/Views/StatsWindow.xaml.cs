@@ -10,10 +10,10 @@ public partial class StatsWindow : Window
 {
     private readonly StorageService _storageService;
 
-    public StatsWindow()
+    public StatsWindow(StorageService storageService)
     {
         InitializeComponent();
-        _storageService = new StorageService();
+        _storageService = storageService;
         LoadStats();
     }
 

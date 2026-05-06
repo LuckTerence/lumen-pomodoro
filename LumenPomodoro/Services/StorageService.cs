@@ -13,7 +13,7 @@ public class StorageService
     
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
-    private List<FocusSession>? _sessionsCache;
+    private readonly object _fileLock = new object();
 
     public StorageService()
     {
@@ -125,20 +125,23 @@ public class StorageService
     {
         var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
         File.WriteAllText(_sessionsFile, content);
+        InvalidateStatsCache();
     }
 
     public void AddSession(FocusSession session)
     {
-        var sessions = LoadSessions();
-        sessions.Add(session);
-        SaveSessionsWithTransaction(sessions);
+        if (_sessionsCache == null)
+        {
+            _sessionsCache = LoadSessions();
+        }
+        _sessionsCache.Add(session);
+        SaveSessionsWithTransaction(_sessionsCache);
         InvalidateStatsCache();
     }
 
     private void InvalidateStatsCache()
     {
         _cachedTodayStats = null;
-        _sessionsCache = null;
     }
 
     public void SaveSessionsWithTransaction(List<FocusSession> sessions)
@@ -216,43 +219,29 @@ public class StorageService
     private int CalculateStreak(List<FocusSession> sessions)
     {
         var completedSessions = sessions.Where(s => s.Completed && s.EndTime.HasValue)
-                                       .OrderByDescending(s => s.EndTime.Value)
+                                       .Select(s => s.EndTime!.Value.Date)
+                                       .Distinct()
+                                       .OrderByDescending(d => d)
                                        .ToList();
         
         if (completedSessions.Count == 0) return 0;
         
-        int streak = 0;
-        DateTime? lastDate = null;
-        
-        foreach (var session in completedSessions)
+        var startDate = completedSessions[0];
+        if (startDate != DateTime.Today && startDate != DateTime.Today.AddDays(-1))
         {
-            if (!session.EndTime.HasValue) continue;
-            
-            var sessionDate = session.EndTime.Value.Date;
-            
-            if (lastDate == null)
+            return 0;
+        }
+        
+        int streak = 1;
+        for (int i = 1; i < completedSessions.Count; i++)
+        {
+            if (completedSessions[i] == completedSessions[i - 1].AddDays(-1))
             {
-                if (sessionDate == DateTime.Today)
-                {
-                    streak++;
-                    lastDate = sessionDate;
-                }
-                else
-                {
-                    break;
-                }
+                streak++;
             }
             else
             {
-                if (sessionDate == lastDate.Value.AddDays(-1))
-                {
-                    streak++;
-                    lastDate = sessionDate;
-                }
-                else if (sessionDate != lastDate.Value)
-                {
-                    break;
-                }
+                break;
             }
         }
         
