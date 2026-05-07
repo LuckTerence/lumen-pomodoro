@@ -17,15 +17,17 @@
 
     <Grid Margin="32,0">
         <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,48"
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24"
                     Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
             <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
                 <Ellipse.Fill>
@@ -39,10 +41,10 @@
             </TextBlock>
         </StackPanel>
 
-        <TextBlock Grid.Row="1" x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
+        <TextBlock Grid.Row="2" x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
                    Style="{StaticResource TimerText}" Margin="0,0,0,24" />
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
                     Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="{DynamicResource AccentFillColorDefaultBrush}" Margin="0,0,8,0" />
             <TextBlock Text="摄像头提醒中" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
@@ -51,10 +53,10 @@
             </ui:Button>
         </StackPanel>
 
-        <ProgressBar Grid.Row="3" Value="{Binding Progress}" Minimum="0" Maximum="100"
-                     Style="{StaticResource SlimProgressBar}" Margin="48,0,48,48" />
+        <ProgressBar Grid.Row="4" Value="{Binding Progress}" Minimum="0" Maximum="100"
+                     Style="{StaticResource SlimProgressBar}" Margin="48,0,48,32" />
 
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="5">
             <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -125,7 +127,7 @@
             </StackPanel>
         </Grid>
 
-        <TextBlock Grid.Row="5" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+        <TextBlock Grid.Row="6" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                    HorizontalAlignment="Center" Margin="0,16,0,0" Cursor="Hand" MouseDown="StatsSummary_MouseDown">
             <Run Text="今日 " />
             <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
