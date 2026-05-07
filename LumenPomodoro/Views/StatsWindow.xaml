@@ -49,7 +49,7 @@
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                     <Button Style="{StaticResource SecondaryButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
-                        <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{DynamicResource PrimaryTextBrush}" StrokeThickness="1.5" Width="10" Height="10" />
                     </Button>
                 </StackPanel>
 
