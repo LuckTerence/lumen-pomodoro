@@ -25,8 +25,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isFocusCompleted;
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
-    private bool _shouldSuggestLongBreak;
-    private bool _isSettingsVisible;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -96,21 +94,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         set { if (_isPendingBreak != value) { _isPendingBreak = value; OnPropertyChanged(); } }
     }
 
-    public bool ShouldSuggestLongBreak
-    {
-        get => _shouldSuggestLongBreak;
-        set { if (_shouldSuggestLongBreak != value) { _shouldSuggestLongBreak = value; OnPropertyChanged(); } }
-    }
-
-    public bool IsSettingsVisible
-    {
-        get => _isSettingsVisible;
-        set { if (_isSettingsVisible != value) { _isSettingsVisible = value; OnPropertyChanged(); } }
-    }
-
     public Settings AppSettings { get; private set; } = new();
-
-    public SettingsViewModel? SettingsVM { get; private set; }
 
     public CameraService CameraService => _cameraService;
     public StorageService StorageService => _storageService;
@@ -193,10 +177,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 IsPendingBreak = true;
                 StartCameraAlert();
                 PlayNotificationSound("FocusComplete");
-                if (AppSettings.PopupEnabled)
-                {
-                    ShowFocusCompleteDialog();
-                }
                 ShowSystemNotification("专注完成！", "该休息了！");
             }
             else if (e.CompletedMode == TimerMode.Break)
@@ -204,10 +184,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 IsBreakCompleted = true;
                 ForceStopCameraAlert();
                 PlayNotificationSound("BreakComplete");
-                if (AppSettings.PopupEnabled)
-                {
-                    ShowBreakCompleteDialog();
-                }
                 ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
             }
         });
@@ -458,50 +434,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private void ShowFocusCompleteDialog()
-    {
-        ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
-                                 TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
-
-        var dialog = new Views.FocusCompleteDialog
-        {
-            Owner = Application.Current.MainWindow,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            SuggestCount = TodayStats.CompletedPomodoros
-        };
-        dialog.SetLongBreakSuggestion(ShouldSuggestLongBreak);
-        var result = dialog.ShowDialog();
-
-        if (result == true)
-        {
-            if (dialog.ShouldStartBreak)
-            {
-                StartBreak(isLongBreak: dialog.ShouldStartLongBreak);
-            }
-        }
-        else
-        {
-            IsFocusCompleted = false;
-            IsPendingBreak = true;
-            CurrentStatus = TimerMode.Idle;
-        }
-    }
-
-    private void ShowBreakCompleteDialog()
-    {
-        var dialog = new Views.BreakCompleteDialog
-        {
-            Owner = Application.Current.MainWindow,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner
-        };
-        var result = dialog.ShowDialog();
-
-        if (result == true && dialog.ShouldStartNext)
-        {
-            StartFocus();
-        }
-    }
-
     private string FormatTime(int seconds)
     {
         int mins = seconds / 60;
@@ -555,49 +487,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback);
     }
 
-    public void ToggleSettings()
-    {
-        if (!IsSettingsVisible)
-        {
-            SettingsVM = new SettingsViewModel(_storageService, _cameraService);
-            IsSettingsVisible = true;
-            OnPropertyChanged(nameof(SettingsVM));
-        }
-        else
-        {
-            CloseSettings(discard: true);
-        }
-    }
-
-    public void SaveAndCloseSettings()
-    {
-        if (SettingsVM != null)
-        {
-            SettingsVM.SaveSettings();
-            SettingsVM.Cleanup();
-            SettingsVM = null;
-        }
-        IsSettingsVisible = false;
-        ReloadSettings();
-        RefreshStats();
-        OnPropertyChanged(nameof(SettingsVM));
-    }
-
-    public void CloseSettings(bool discard)
-    {
-        if (SettingsVM != null)
-        {
-            SettingsVM.Cleanup();
-            SettingsVM = null;
-        }
-        IsSettingsVisible = false;
-        if (!discard)
-        {
-            ReloadSettings();
-        }
-        OnPropertyChanged(nameof(SettingsVM));
-    }
-
     public void UpdateTasks(List<TaskItem> tasks)
     {
         Tasks = tasks;
@@ -624,8 +513,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-
-        SettingsVM?.Cleanup();
 
         _trayUpdateTimer?.Stop();
         _trayUpdateTimer?.Dispose();

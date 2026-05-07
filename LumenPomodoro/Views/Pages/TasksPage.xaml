@@ -1,0 +1,78 @@
+<Page x:Class="LumenPomodoro.Views.Pages.TasksPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="任务管理" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Tasks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:CardControl Margin="0,0,0,8" Padding="12">
+                            <ui:CardControl.Content>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Ellipse Grid.Column="0" Width="10" Height="10" Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <Ellipse.Fill>
+                                            <SolidColorBrush Color="{Binding Color}" />
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        <TextBlock Text="{Binding Category}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:Button Appearance="Secondary" Click="EditTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4">
+                                            编辑
+                                        </ui:Button>
+                                        <ui:Button Appearance="Danger" Click="DeleteTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4" Margin="4,0,0,0">
+                                            删除
+                                        </ui:Button>
+                                    </StackPanel>
+                                </Grid>
+                            </ui:CardControl.Content>
+                        </ui:CardControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Margin="0,16,0,0">
+            <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称" Margin="0,0,0,8" />
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="CategoryComboBox" MinWidth="120" Margin="0,0,8,0"
+                          SelectedIndex="0">
+                    <ComboBoxItem Content="数学" />
+                    <ComboBoxItem Content="英语" />
+                    <ComboBoxItem Content="政治" />
+                    <ComboBoxItem Content="专业课" />
+                    <ComboBoxItem Content="其他" />
+                </ComboBox>
+                <ui:Button Appearance="Primary" Click="AddTask_Click">添加</ui:Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>

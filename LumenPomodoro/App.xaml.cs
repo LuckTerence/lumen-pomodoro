@@ -1,11 +1,9 @@
-using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using Microsoft.Win32;
+using Wpf.Ui.Appearance;
 
 namespace LumenPomodoro;
 
@@ -97,41 +95,19 @@ public partial class App : Application
 
     public void ApplyTheme(string theme)
     {
-        var resources = Resources.MergedDictionaries;
-
-        var themeDictionaries = resources
-            .Where(r => r.Source?.ToString().Contains("Themes/") == true)
-            .ToList();
-
-        var newTheme = theme.ToLower() switch
+        switch (theme.ToLower())
         {
-            "dark" => new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) },
-            "light" => new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) },
-            _ => IsSystemDarkMode()
-                ? new ResourceDictionary { Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative) }
-                : new ResourceDictionary { Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative) }
-        };
-
-        // 先添加新主题，再移除旧主题，避免 DynamicResource 查找空窗
-        resources.Add(newTheme);
-        foreach (var dict in themeDictionaries)
-        {
-            resources.Remove(dict);
-        }
-    }
-
-    private bool IsSystemDarkMode()
-    {
-        try
-        {
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            var value = key?.GetValue("AppsUseLightTheme");
-            return value != null && (int)value == 0;
-        }
-        catch
-        {
-            return false;
+            case "dark":
+                ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+                break;
+            case "light":
+                ApplicationThemeManager.Apply(ApplicationTheme.Light);
+                break;
+            default:
+                var systemTheme = ApplicationThemeManager.GetSystemTheme();
+                ApplicationThemeManager.Apply(
+                    systemTheme == SystemTheme.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
+                break;
         }
     }
 

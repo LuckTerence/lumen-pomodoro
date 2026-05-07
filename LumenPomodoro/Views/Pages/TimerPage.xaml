@@ -1,0 +1,137 @@
+<Page x:Class="LumenPomodoro.Views.Pages.TimerPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:converters="clr-namespace:LumenPomodoro.Converters"
+      xmlns:models="clr-namespace:LumenPomodoro.Models">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Margin="32,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,48"
+                    Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
+            <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                <Ellipse.Fill>
+                    <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#6B7280}" />
+                </Ellipse.Fill>
+            </Ellipse>
+            <TextBlock FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Cursor="Hand"
+                       MouseDown="TaskName_MouseDown">
+                <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
+                <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            </TextBlock>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
+                   Style="{StaticResource TimerText}" Margin="0,0,0,24" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
+                    Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="{DynamicResource AccentFillColorDefaultBrush}" Margin="0,0,8,0" />
+            <TextBlock Text="摄像头提醒中" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            <ui:Button Appearance="Secondary" Click="StopCameraButton_Click" FontSize="12" Padding="6,2" Margin="4,0,0,0">
+                关闭
+            </ui:Button>
+        </StackPanel>
+
+        <ProgressBar Grid.Row="3" Value="{Binding Progress}" Minimum="0" Maximum="100"
+                     Style="{StaticResource SlimProgressBar}" Margin="48,0,48,48" />
+
+        <Grid Grid.Row="4">
+            <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFocusCompleted}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <ui:Button Appearance="Secondary" Click="AdjustTimeDown_Click" FontSize="16" Padding="8,2">-</ui:Button>
+                    <TextBlock Text="{Binding AppSettings.WorkMinutes}" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               VerticalAlignment="Center" Margin="6,0" />
+                    <TextBlock Text="分钟" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                    <ui:Button Appearance="Secondary" Click="AdjustTimeUp_Click" FontSize="16" Padding="8,2">+</ui:Button>
+                </StackPanel>
+                <ui:Button Appearance="Primary" Click="StartFocusButton_Click" FontSize="17" Padding="22,11">
+                    开始专注
+                </ui:Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
+                            Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:Button Appearance="Primary" Click="StartShortBreakButton_Click">短休息</ui:Button>
+                    <ui:Button Appearance="Secondary" Click="StartLongBreakButton_Click" Margin="8,0,0,0">长休息</ui:Button>
+                    <ui:Button Appearance="Secondary" Click="SkipBreakButton_Click">跳过</ui:Button>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel x:Name="FocusPanel"
+                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
+                        Orientation="Horizontal" HorizontalAlignment="Center">
+                <ui:Button Appearance="Secondary" Click="PauseButton_Click">暂停</ui:Button>
+                <ui:Button Appearance="Secondary" Click="ResetButton_Click" Margin="8,0,0,0">重置</ui:Button>
+            </StackPanel>
+
+            <StackPanel x:Name="PausedPanel"
+                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
+                        Orientation="Horizontal" HorizontalAlignment="Center">
+                <ui:Button Appearance="Primary" Click="ResumeButton_Click">继续</ui:Button>
+                <ui:Button Appearance="Secondary" Click="ResetButton_Click" Margin="8,0,0,0">重置</ui:Button>
+            </StackPanel>
+
+            <StackPanel x:Name="BreakPanel"
+                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
+                        Orientation="Horizontal" HorizontalAlignment="Center">
+                <ui:Button Appearance="Primary" Click="EndBreakButton_Click">结束休息</ui:Button>
+            </StackPanel>
+
+            <StackPanel x:Name="CompletedPanel" Orientation="Horizontal" HorizontalAlignment="Center">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsFocusCompleted}" Value="True" />
+                                    <Condition Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <ui:Button Appearance="Primary" Click="StartShortBreakButton_Click">短休息</ui:Button>
+                <ui:Button Appearance="Secondary" Click="StartLongBreakButton_Click" Margin="8,0,0,0">长休息</ui:Button>
+                <ui:Button Appearance="Secondary" Click="SkipBreakButton_Click">跳过</ui:Button>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="5" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                   HorizontalAlignment="Center" Margin="0,16,0,0" Cursor="Hand" MouseDown="StatsSummary_MouseDown">
+            <Run Text="今日 " />
+            <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+            <Run Text=" · 专注 " />
+            <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+            <Run Text="分" />
+        </TextBlock>
+    </Grid>
+</Page>

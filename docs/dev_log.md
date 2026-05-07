@@ -1,5 +1,25 @@
 # 开发日志
 
+## [2026-05-08] WPF-UI FluentWindow + NavigationView 架构迁移
+
+**涉及模块**: MainWindow, App, TimerPage, TasksPage, StatsPage, SettingsPage, MainViewModel, TasksViewModel, StatsViewModel, SettingsViewModel, CustomStyles, DESIGN.md, TrayService
+
+### 改动摘要
+
+1. **引入 WPF-UI 4.3.0 库** — 实现 Mica/Acrylic 玻璃效果，替代手写半透明背景。
+2. **FluentWindow + NavigationView 底部 Tab Bar** — 替代多窗口架构，单一窗口内导航切换。
+3. **4 个 Page 替代 5 个独立窗口** — TimerPage/TasksPage/StatsPage/SettingsPage 替代原 MainWindow/TaskManagerWindow/StatsWindow/SettingsWindow/FocusCompleteDialog。
+4. **专注完成/休息完成改为内联状态过渡** — 不再弹窗，在 TimerPage 内直接过渡。
+5. **WPF-UI Fluent 控件替代手写 ControlTemplate** — 消除约 500 行重复 XAML。
+6. **CustomStyles.xaml 统一管理业务特定样式** — 集中维护非 Fluent 标准的业务样式。
+7. **重写 DESIGN.md** — 改为桌面番茄钟专属设计语言。
+8. **新增 TasksViewModel 和 StatsViewModel** — 职责拆分，MainViewModel 不再承载任务和统计逻辑。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+
 ## [2026-05-08] 全项目 Bug 扫描修复 — 14 项
 
 **涉及模块**: SettingsViewModel, MainViewModel, MainWindow, CameraService, StorageService, TaskManagerWindow, StorageServiceTests

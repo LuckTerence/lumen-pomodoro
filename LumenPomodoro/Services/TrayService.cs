@@ -161,16 +161,8 @@ public class TrayService
     private void SettingsItem_Click(object? sender, RoutedEventArgs e)
     {
         ShowMainWindow();
-
-        var settingsWindow = new Views.SettingsWindow(_storageService, _cameraService)
-        {
-            Owner = _mainWindow
-        };
-        settingsWindow.ShowDialog();
-
-        _mainViewModel.ReloadSettings();
-        _mainViewModel.RefreshStats();
-        UpdateMenuState();
+        if (_mainWindow is Views.MainWindow mw)
+            mw.NavigateToPage(typeof(Views.Pages.SettingsPage));
     }
 
     private void ExitItem_Click(object? sender, RoutedEventArgs e)
