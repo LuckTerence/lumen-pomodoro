@@ -1,5 +1,22 @@
 # 开发日志
 
+## [2026-05-07] 根目录启动入口
+
+**涉及模块**: Start-LumenPomodoro.cmd, README
+
+### 改动摘要
+
+1. 新增根目录 `Start-LumenPomodoro.cmd`，双击即可启动 Release 版本应用。
+2. 启动入口会优先使用已有 `LumenPomodoro.exe`，缺少构建产物时自动执行 Release 构建。
+3. README 增加快速启动说明，避免用户进入深层 `bin/Release` 目录手动打开。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+- 根目录执行 `Start-LumenPomodoro.cmd`：已有 Release 产物时可启动应用进程并显示窗口。
+- 临时移走 `LumenPomodoro.exe` 后再次执行 `Start-LumenPomodoro.cmd`：脚本可自动 Release 构建并启动应用窗口。
+
 ## [2026-05-07] 按 Apple DESIGN.md 重构界面语言
 
 **涉及模块**: DESIGN.md, LightTheme, DarkTheme, MainWindow, SettingsWindow

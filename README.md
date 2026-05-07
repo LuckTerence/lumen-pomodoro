@@ -28,9 +28,14 @@ lumen-pomodoro/
 │   └── dev_log.md      # 开发日志
 ├── LumenPomodoro/       # WPF 应用源码
 ├── LumenPomodoro.Tests/ # xUnit 测试
+├── Start-LumenPomodoro.cmd # 根目录启动入口
 ├── LICENSE
 └── README.md
 ```
+
+## 快速启动
+
+在项目根目录双击 `Start-LumenPomodoro.cmd` 即可启动应用。首次运行如果还没有 Release 构建产物，脚本会自动构建后再打开。
 
 ## 开发进度
 
