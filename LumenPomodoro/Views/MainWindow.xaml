@@ -401,7 +401,7 @@
                                 <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                             </Button>
                             <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
-                                <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                             </Button>
                         </StackPanel>
                     </Grid>
