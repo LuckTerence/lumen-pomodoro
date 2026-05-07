@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL -o Inter-Light.ttf \"https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Light.ttf\")",
+      "Bash(curl -sL -o Inter-Regular.ttf \"https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.ttf\")",
+      "Bash(curl -sL -o Inter-SemiBold.ttf \"https://github.com/rsms/inter/raw/master/docs/font-files/Inter-SemiBold.ttf\")",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
