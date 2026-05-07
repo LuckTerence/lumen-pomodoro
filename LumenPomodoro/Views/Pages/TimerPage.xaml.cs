@@ -14,9 +14,13 @@ public partial class TimerPage : Page
     private Storyboard? _breathingStoryboard;
     private Storyboard? _cameraBreathingStoryboard;
     private Storyboard? _pausedPulseStoryboard;
+    private Storyboard? _completionStoryboard;
 
     public event Action? RequestTasksPage;
     public event Action? RequestStatsPage;
+
+    public static readonly RoutedCommand ToggleCommand = new();
+    public static readonly RoutedCommand ResetCommand = new();
 
     public TimerPage(MainViewModel viewModel)
     {
@@ -24,6 +28,31 @@ public partial class TimerPage : Page
         _viewModel = viewModel;
         DataContext = _viewModel;
         _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+        CommandBindings.Add(new CommandBinding(ToggleCommand, Toggle_Executed));
+        CommandBindings.Add(new CommandBinding(ResetCommand, Reset_Executed));
+    }
+
+    private void Toggle_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        switch (_viewModel.CurrentStatus)
+        {
+            case TimerMode.Idle:
+                _viewModel.StartFocus();
+                break;
+            case TimerMode.Focus:
+            case TimerMode.Break:
+                _viewModel.PauseFocus();
+                break;
+            case TimerMode.Paused:
+                _viewModel.ResumeFocus();
+                break;
+        }
+    }
+
+    private void Reset_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        _viewModel.ResetFocus();
     }
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -34,9 +63,15 @@ public partial class TimerPage : Page
                 Dispatcher.BeginInvoke(() =>
                 {
                     if (_viewModel.IsFocusCompleted)
+                    {
+                        PlayCompletionAnimation();
                         StartBreathingAnimation();
+                    }
                     else
+                    {
+                        StopCompletionAnimation();
                         StopBreathingAnimation();
+                    }
                 });
                 break;
             case nameof(MainViewModel.IsCameraAlertActive):
@@ -51,6 +86,7 @@ public partial class TimerPage : Page
             case nameof(MainViewModel.CurrentStatus):
                 Dispatcher.BeginInvoke(() =>
                 {
+                    FadeInActivePanel();
                     if (_viewModel.CurrentStatus == TimerMode.Paused)
                         StartPausedPulseAnimation();
                     else
@@ -58,6 +94,39 @@ public partial class TimerPage : Page
                 });
                 break;
         }
+    }
+
+    private void PlayCompletionAnimation()
+    {
+        if (!_viewModel.AppSettings.AnimationEnabled) return;
+
+        StopCompletionAnimation();
+
+        var scaleAnim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(400) };
+        scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0)));
+        scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.15, KeyTime.FromPercent(0.4))
+            { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } });
+        scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0))
+            { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } });
+
+        Storyboard.SetTarget(scaleAnim, TimerTextBlock);
+        Storyboard.SetTargetProperty(scaleAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
+
+        var scaleYAnim = scaleAnim.Clone();
+        Storyboard.SetTarget(scaleYAnim, TimerTextBlock);
+        Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
+
+        _completionStoryboard = new Storyboard();
+        _completionStoryboard.Children.Add(scaleAnim);
+        _completionStoryboard.Children.Add(scaleYAnim);
+        _completionStoryboard.Begin();
+    }
+
+    private void StopCompletionAnimation()
+    {
+        if (_completionStoryboard == null) return;
+        _completionStoryboard.Stop();
+        _completionStoryboard = null;
     }
 
     private void StartBreathingAnimation()
@@ -158,6 +227,23 @@ public partial class TimerPage : Page
         if (_pausedPulseStoryboard == null) return;
         _pausedPulseStoryboard.Stop();
         _pausedPulseStoryboard = null;
+    }
+
+    private void FadeInActivePanel()
+    {
+        var panels = new[] { IdlePanel, FocusPanel, PausedPanel, BreakPanel, CompletedPanel };
+        foreach (var panel in panels)
+        {
+            if (panel.Visibility == Visibility.Visible)
+            {
+                var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+                panel.BeginAnimation(UIElement.OpacityProperty, anim);
+            }
+            else
+            {
+                panel.Opacity = 0;
+            }
+        }
     }
 
     private void TaskName_MouseDown(object sender, MouseButtonEventArgs e)

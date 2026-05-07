@@ -20,7 +20,18 @@
 
         <TextBlock Grid.Row="0" Text="任务管理" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      x:Name="TasksScrollViewer">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Tasks.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
             <ItemsControl ItemsSource="{Binding Tasks}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -59,6 +70,25 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Tasks.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="36"
+                       HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,8" />
+            <TextBlock Text="还没有任务" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="在下方添加你的第一个任务" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0" />
+        </StackPanel>
 
         <StackPanel Grid.Row="2" Margin="0,16,0,0">
             <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称" Margin="0,0,0,8" />

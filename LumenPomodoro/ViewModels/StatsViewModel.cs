@@ -11,6 +11,7 @@ public class TaskStatItem
     public string TaskName { get; set; } = string.Empty;
     public string Color { get; set; } = "#6B7280";
     public int Count { get; set; }
+    public double BarRatio { get; set; }
 }
 
 public class StatsViewModel : INotifyPropertyChanged
@@ -56,6 +57,9 @@ public class StatsViewModel : INotifyPropertyChanged
         var tasks = _storageService.LoadTasks();
         var taskColorMap = tasks.ToDictionary(t => t.Name, t => t.Color);
 
+        var maxCount = stats.TaskStats.Values.DefaultIfEmpty(0).Max();
+        if (maxCount == 0) maxCount = 1;
+
         var items = new ObservableCollection<TaskStatItem>();
         foreach (var kv in stats.TaskStats.OrderByDescending(s => s.Value))
         {
@@ -63,7 +67,8 @@ public class StatsViewModel : INotifyPropertyChanged
             {
                 TaskName = kv.Key,
                 Color = taskColorMap.GetValueOrDefault(kv.Key, "#6B7280"),
-                Count = kv.Value
+                Count = kv.Value,
+                BarRatio = (double)kv.Value / maxCount
             });
         }
 

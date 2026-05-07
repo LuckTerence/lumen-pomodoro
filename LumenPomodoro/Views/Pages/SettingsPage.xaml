@@ -16,123 +16,153 @@
         <StackPanel Margin="24">
             <TextBlock Text="设置" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
 
-            <TextBlock Text="计时" Style="{StaticResource SectionTitle}" />
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="专注时间（分钟）" Style="{StaticResource SettingLabel}" />
-                <ui:TextBox Grid.Column="1" Text="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
-            </Grid>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="短休息（分钟）" Style="{StaticResource SettingLabel}" />
-                <ui:TextBox Grid.Column="1" Text="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
-            </Grid>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="长休息（分钟）" Style="{StaticResource SettingLabel}" />
-                <ui:TextBox Grid.Column="1" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
-            </Grid>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="长休息间隔（次）" Style="{StaticResource SettingLabel}" />
-                <ui:TextBox Grid.Column="1" Text="{Binding LongBreakInterval, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
-            </Grid>
+            <ui:CardControl Margin="0,0,0,12" Padding="16">
+                <ui:CardControl.Content>
+                    <StackPanel>
+                        <TextBlock Text="计时" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="专注时间（分钟）" Style="{StaticResource SettingLabel}" />
+                            <ui:TextBox Grid.Column="1" Text="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
+                        </Grid>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="短休息（分钟）" Style="{StaticResource SettingLabel}" />
+                            <ui:TextBox Grid.Column="1" Text="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
+                        </Grid>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="长休息（分钟）" Style="{StaticResource SettingLabel}" />
+                            <ui:TextBox Grid.Column="1" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="长休息间隔（次）" Style="{StaticResource SettingLabel}" />
+                            <ui:TextBox Grid.Column="1" Text="{Binding LongBreakInterval, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardControl.Content>
+            </ui:CardControl>
 
-            <TextBlock Text="摄像头" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="启用摄像头提醒" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="提醒模式" Style="{StaticResource SettingLabel}" />
-                <ComboBox Grid.Column="1" MinWidth="100"
-                          SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
-                    <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" />
-                    <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" />
-                    <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" />
-                </ComboBox>
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="固定亮灯时长（秒）" Style="{StaticResource SettingLabel}" />
-                <ui:TextBox Grid.Column="1" Text="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="休息期间亮灯" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraFollowBreakEnabled}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="允许手动关闭" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertCanManualClose}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="摄像头选择" Style="{StaticResource SettingLabel}" />
-                <ComboBox Grid.Column="1" MinWidth="120"
-                          ItemsSource="{Binding AvailableCameras}"
-                          SelectedIndex="{Binding SelectedCameraIndex}" />
-            </Grid>
-            <ui:Button Appearance="Secondary" Click="TestCamera_Click" FontSize="12" Padding="10,6" HorizontalAlignment="Left">
-                测试摄像头
-            </ui:Button>
+            <ui:CardControl Margin="0,0,0,12" Padding="16">
+                <ui:CardControl.Content>
+                    <StackPanel>
+                        <TextBlock Text="摄像头" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="启用摄像头提醒" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="提醒模式" Style="{StaticResource SettingLabel}" />
+                            <ComboBox Grid.Column="1" MinWidth="100"
+                                      SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" />
+                                <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" />
+                                <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="固定亮灯时长（秒）" Style="{StaticResource SettingLabel}" />
+                            <ui:TextBox Grid.Column="1" Text="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="休息期间亮灯" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraFollowBreakEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="允许手动关闭" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertCanManualClose}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="摄像头选择" Style="{StaticResource SettingLabel}" />
+                            <ComboBox Grid.Column="1" MinWidth="120"
+                                      ItemsSource="{Binding AvailableCameras}"
+                                      SelectedIndex="{Binding SelectedCameraIndex}" />
+                        </Grid>
+                        <ui:Button Appearance="Secondary" Click="TestCamera_Click" FontSize="12" Padding="10,6" HorizontalAlignment="Left">
+                            测试摄像头
+                        </ui:Button>
+                    </StackPanel>
+                </ui:CardControl.Content>
+            </ui:CardControl>
 
-            <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="声音提醒" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SoundEnabled}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="弹窗提醒" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PopupEnabled}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="系统通知" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SystemNotificationEnabled}" />
-            </Grid>
+            <ui:CardControl Margin="0,0,0,12" Padding="16">
+                <ui:CardControl.Content>
+                    <StackPanel>
+                        <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="声音提醒" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SoundEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="弹窗提醒" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PopupEnabled}" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="系统通知" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SystemNotificationEnabled}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardControl.Content>
+            </ui:CardControl>
 
-            <TextBlock Text="外观" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="主题" Style="{StaticResource SettingLabel}" />
-                <ComboBox Grid.Column="1" MinWidth="100"
-                          SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
-                    <ComboBoxItem Content="跟随系统" Tag="system" />
-                    <ComboBoxItem Content="浅色" Tag="light" />
-                    <ComboBoxItem Content="深色" Tag="dark" />
-                </ComboBox>
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="动画效果" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AnimationEnabled}" />
-            </Grid>
+            <ui:CardControl Margin="0,0,0,12" Padding="16">
+                <ui:CardControl.Content>
+                    <StackPanel>
+                        <TextBlock Text="外观" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="主题" Style="{StaticResource SettingLabel}" />
+                            <ComboBox Grid.Column="1" MinWidth="100"
+                                      SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="跟随系统" Tag="system" />
+                                <ComboBoxItem Content="浅色" Tag="light" />
+                                <ComboBoxItem Content="深色" Tag="dark" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="动画效果" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AnimationEnabled}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardControl.Content>
+            </ui:CardControl>
 
-            <TextBlock Text="系统" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="托盘运行" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding TrayEnabled}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="关闭时最小化到托盘" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CloseToTray}" />
-            </Grid>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="开机自启" Style="{StaticResource SettingLabel}" />
-                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoStartEnabled}" />
-            </Grid>
+            <ui:CardControl Margin="0,0,0,12" Padding="16">
+                <ui:CardControl.Content>
+                    <StackPanel>
+                        <TextBlock Text="系统" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="托盘运行" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding TrayEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="关闭时最小化到托盘" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CloseToTray}" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="开机自启" Style="{StaticResource SettingLabel}" />
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoStartEnabled}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardControl.Content>
+            </ui:CardControl>
 
             <ui:Button Appearance="Primary" Click="Save_Click" FontSize="14" Padding="22,10"
-                       HorizontalAlignment="Right" Margin="0,24,0,0">
+                       HorizontalAlignment="Right" Margin="0,12,0,0">
                 保存
             </ui:Button>
         </StackPanel>
