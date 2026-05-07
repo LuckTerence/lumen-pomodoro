@@ -1,5 +1,7 @@
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
@@ -13,14 +15,14 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        base.OnStartup(e);
-
         StorageService = new StorageService();
 
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+
+        base.OnStartup(e);
 
         SoundService.GenerateDefaultWavFiles();
 
@@ -29,6 +31,8 @@ public partial class App : Application
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
+        LogException(e.Exception);
+
         try
         {
             MessageBox.Show($"发生未预期的错误：{e.Exception.Message}\n\n软件将继续运行，但部分功能可能受影响。",
@@ -43,11 +47,31 @@ public partial class App : Application
     {
         if (e.ExceptionObject is Exception ex)
         {
+            LogException(ex);
+
             try
             {
                 MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch { }
+        }
+    }
+
+    private static void LogException(Exception ex)
+    {
+        try
+        {
+            var logDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "LumenPomodoro");
+            Directory.CreateDirectory(logDirectory);
+
+            var logPath = Path.Combine(logDirectory, "error.log");
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]\n{ex}\n\n");
+            Debug.WriteLine(ex);
+        }
+        catch
+        {
         }
     }
 

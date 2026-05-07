@@ -18,12 +18,12 @@
         <converters:StatusConverter x:Key="StatusConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
 
+        <QuadraticEase x:Key="QuadraticEase" EasingMode="EaseOut" />
+
         <Storyboard x:Key="FadeInUpStoryboard">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
             <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
         </Storyboard>
-
-        <QuadraticEase x:Key="QuadraticEase" EasingMode="EaseOut" />
 
         <Style x:Key="GlassPanel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
@@ -184,7 +184,7 @@
                                     <BeginStoryboard>
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                                                             From="1" To="0.3" Duration="0.8s" 
+                                                             From="1" To="0.3" Duration="0:0:0.8"
                                                              AutoReverse="True" RepeatBehavior="Forever" />
                                         </Storyboard>
                                     </BeginStoryboard>

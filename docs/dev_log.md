@@ -1,5 +1,22 @@
 # 开发日志
 
+## [2026-05-07] 启动失败修复
+
+**涉及模块**: App, MainWindow
+
+### 改动摘要
+
+1. 修复 `App.OnStartup` 初始化顺序，确保 `StorageService` 在 `StartupUri` 创建主窗口前可用。
+2. 修复 `MainWindow.xaml` 中非法动画时间 `0.8s`，改为 WPF 支持的 `0:0:0.8`。
+3. 调整 `QuadraticEase` 资源声明顺序，避免 `StaticResource` 前向引用风险。
+4. 为全局异常处理增加 `%AppData%\LumenPomodoro\error.log` 记录，后续启动异常可直接定位完整堆栈。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+- Release 启动验证：主窗口句柄存在，窗口标题为 `Lumen Pomodoro`。
+
 ## [2026-05-07] 上线前复扫修复
 
 **涉及模块**: SettingsWindow, MainViewModel, StorageService, StorageServiceTests, README
