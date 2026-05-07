@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:LumenPomodoro.Models"
         mc:Ignorable="d"
-        Title="设置" Height="600" Width="500"
+        Title="设置" Height="720" Width="560"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -15,12 +15,7 @@
     <Window.Resources>
         <Style x:Key="GlassPanel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="20" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="20" Color="{DynamicResource PrimaryTextColor}" Opacity="0.15" />
-                </Setter.Value>
-            </Setter>
+            <Setter Property="CornerRadius" Value="26" />
         </Style>
 
         <Style x:Key="SectionHeader" TargetType="TextBlock">
@@ -31,7 +26,7 @@
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="Margin" Value="0,8,0,4" />
         </Style>
@@ -39,13 +34,13 @@
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="16" Padding="{TemplateBinding Padding}">
                             <ScrollViewer x:Name="PART_ContentHost" />
                         </Border>
                     </ControlTemplate>
@@ -56,7 +51,7 @@
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -80,7 +75,7 @@
                                           ClickMode="Press">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="12,8" TextElement.Foreground="{DynamicResource PrimaryTextBrush}">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="16" Padding="12,8" TextElement.Foreground="{DynamicResource PrimaryTextBrush}">
                                             <Grid>
                                                 <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                                   ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
@@ -94,7 +89,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
                             <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="{DynamicResource ControlBackgroundBrush}" CornerRadius="8" Padding="4" MinWidth="{TemplateBinding ActualWidth}">
+                                <Border Background="{DynamicResource ControlBackgroundBrush}" CornerRadius="16" Padding="4" MinWidth="{TemplateBinding ActualWidth}">
                                     <ScrollViewer MaxHeight="220">
                                         <ItemsPresenter />
                                     </ScrollViewer>
@@ -120,7 +115,7 @@
                                 <VisualStateGroup Name="CheckStates">
                                     <VisualState Name="Checked">
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="#3B82F6" />
+                                            <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="#0066CC" />
                                             <ThicknessAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="Margin" To="26,2,2,2" Duration="0:0:0.12" />
                                         </Storyboard>
                                     </VisualState>
@@ -141,15 +136,15 @@
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="Padding" Value="22,11" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="999" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -173,9 +168,9 @@
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="15,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -251,7 +246,7 @@
                 
                 <Grid Grid.Row="0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Border Width="32" Height="32" CornerRadius="10" Background="{DynamicResource ControlBackgroundBrush}">
+                        <Border Width="32" Height="32" CornerRadius="16" Background="{DynamicResource ControlBackgroundBrush}">
                             <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15"
                                        Foreground="{DynamicResource PrimaryBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />

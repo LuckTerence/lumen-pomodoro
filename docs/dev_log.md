@@ -1,5 +1,23 @@
 # 开发日志
 
+## [2026-05-07] 按 Apple DESIGN.md 重构界面语言
+
+**涉及模块**: DESIGN.md, LightTheme, DarkTheme, MainWindow, SettingsWindow
+
+### 改动摘要
+
+1. 引入根目录 `DESIGN.md` 作为界面设计规范来源。
+2. 主题色切换为 Apple 风格单一 Action Blue，并同步近黑、羊皮纸、Pearl、Hairline 等表面色。
+3. 主窗口与设置页主按钮改为胶囊按钮，次级按钮改为紧凑 utility 样式。
+4. 去除控件阴影和进度条装饰渐变，保留更克制的 Apple 式界面层级。
+5. 放大主窗口与设置页尺寸、增加留白，降低控件密度。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+- Release 启动验证：主窗口正常显示，未写入启动错误日志。
+
 ## [2026-05-07] 图标化按钮与品牌栏收口
 
 **涉及模块**: MainWindow, SettingsWindow

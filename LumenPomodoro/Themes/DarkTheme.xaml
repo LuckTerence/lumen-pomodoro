@@ -2,26 +2,26 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
     <!-- Dark Theme Colors -->
-    <Color x:Key="PrimaryColor">#60A5FA</Color>
-    <Color x:Key="PrimaryHoverColor">#3B82F6</Color>
-    <Color x:Key="SuccessColor">#34D399</Color>
-    <Color x:Key="WarningColor">#FBBF24</Color>
-    <Color x:Key="ErrorColor">#F87171</Color>
+    <Color x:Key="PrimaryColor">#2997FF</Color>
+    <Color x:Key="PrimaryHoverColor">#40A6FF</Color>
+    <Color x:Key="SuccessColor">#30D158</Color>
+    <Color x:Key="WarningColor">#FFD60A</Color>
+    <Color x:Key="ErrorColor">#FF453A</Color>
     
     <!-- Background Colors -->
     <Color x:Key="WindowBackgroundColor">#00000000</Color>
-    <Color x:Key="GlassBackgroundColor">#1F2937</Color>
-    <Color x:Key="CardBackgroundColor">#111827</Color>
-    <Color x:Key="ControlBackgroundColor">#374151</Color>
+    <Color x:Key="GlassBackgroundColor">#1C1C1E</Color>
+    <Color x:Key="CardBackgroundColor">#2C2C2E</Color>
+    <Color x:Key="ControlBackgroundColor">#3A3A3C</Color>
     
     <!-- Text Colors -->
-    <Color x:Key="PrimaryTextColor">#F9FAFB</Color>
-    <Color x:Key="SecondaryTextColor">#D1D5DB</Color>
-    <Color x:Key="TertiaryTextColor">#9CA3AF</Color>
+    <Color x:Key="PrimaryTextColor">#F5F5F7</Color>
+    <Color x:Key="SecondaryTextColor">#D1D1D6</Color>
+    <Color x:Key="TertiaryTextColor">#8E8E93</Color>
     
     <!-- Border Colors -->
-    <Color x:Key="BorderColor">#374151</Color>
-    <Color x:Key="BorderHoverColor">#4B5563</Color>
+    <Color x:Key="BorderColor">#48484A</Color>
+    <Color x:Key="BorderHoverColor">#636366</Color>
     
     <!-- Brush Resources -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
