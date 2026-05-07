@@ -236,8 +236,8 @@ public class StorageServiceTests : IDisposable
         Assert.True(settings.SoundEnabled);
         Assert.True(settings.PopupEnabled);
         Assert.True(settings.SystemNotificationEnabled);
-        Assert.True(settings.TrayEnabled);
-        Assert.True(settings.CloseToTray);
+        Assert.False(settings.TrayEnabled);
+        Assert.False(settings.CloseToTray);
         Assert.False(settings.AutoStartEnabled);
         Assert.Equal("system", settings.Theme);
         Assert.True(settings.AnimationEnabled);

@@ -202,13 +202,13 @@ public partial class MainWindow : Window
         {
             TimerView.Visibility = Visibility.Collapsed;
             SettingsView.Visibility = Visibility.Visible;
-            Height = 720;
+            Height = 680;
         }
         else
         {
             SettingsView.Visibility = Visibility.Collapsed;
             TimerView.Visibility = Visibility.Visible;
-            Height = 600;
+            Height = 520;
         }
     }
 
@@ -217,7 +217,7 @@ public partial class MainWindow : Window
         _viewModel.SaveAndCloseSettings();
         SettingsView.Visibility = Visibility.Collapsed;
         TimerView.Visibility = Visibility.Visible;
-        Height = 600;
+        Height = 520;
     }
 
     private void CancelSettings_Click(object sender, RoutedEventArgs e)
@@ -225,7 +225,7 @@ public partial class MainWindow : Window
         _viewModel.CloseSettings(discard: true);
         SettingsView.Visibility = Visibility.Collapsed;
         TimerView.Visibility = Visibility.Visible;
-        Height = 600;
+        Height = 520;
     }
 
     private void ManageTasksButton_Click(object sender, RoutedEventArgs e)

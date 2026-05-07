@@ -212,3 +212,25 @@
 ### 验证结果
 
 - `dotnet build`：通过，0 warning / 0 error。
+
+## [2026-05-07] 极简 Apple 风格 MainWindow 完全重构
+
+**涉及模块**: MainWindow, MainWindow.xaml.cs, StorageServiceTests
+
+**修改文件数**: 3 个
+
+### 改动摘要
+
+1. **Hero 时间显示** — 剩余时间从 76px 提升到 80px InterLight，成为视觉核心。品牌栏（Lumen 图标+文字）完全移除。
+2. **极简布局** — 窗口从 460x600 缩减至 420x520。布局改为三行：窗口控制（右上角）→ 主内容区（垂直居中）→ 极简页脚。
+3. **每状态精简按钮** — Idle: 开始专注 (Primary); Focus: 暂停+重置; Paused: 继续+重置; Break: 结束休息。次级操作（长休息/跳过）改为 TextLink 纯文字按钮。
+4. **极简页脚** — 一行文字 `今日 3 · 专注 75分` + 齿轮设置按钮，取代原来的双数字统计卡+设置按钮。
+5. **任务选择器条件显示** — 仅 Idle 状态可见，专注/休息时自动隐藏。
+6. **窗口控制重做** — 最小化/关闭按钮从 CircleButton 改为 Path 几何图形绘制的极简图标，无背景。
+7. **新增 TextLinkButton 样式** — 无边框无背景纯文字按钮，hover 时轻微底色。
+8. **修复预存测试** — `Settings_Model_ShouldHaveDefaultValues` 中 `TrayEnabled`/`CloseToTray` 断言从 True 改为 False，匹配实际默认值。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
