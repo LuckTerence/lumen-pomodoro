@@ -77,7 +77,7 @@ public partial class MainWindow : Window
     {
         while (source != null)
         {
-            if (source is ButtonBase || source is TextBox || source is ComboBox || source is ProgressBar)
+            if (source is ButtonBase || source is TextBox || source is ComboBox || source is ProgressBar || source is ToggleButton)
             {
                 return true;
             }
@@ -193,11 +193,36 @@ public partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow(_viewModel.StorageService, _viewModel.CameraService);
-        settingsWindow.ShowDialog();
+        _viewModel.ToggleSettings();
 
-        _viewModel.ReloadSettings();
-        _viewModel.RefreshStats();
+        if (_viewModel.IsSettingsVisible)
+        {
+            TimerView.Visibility = Visibility.Collapsed;
+            SettingsView.Visibility = Visibility.Visible;
+            Height = 720;
+        }
+        else
+        {
+            SettingsView.Visibility = Visibility.Collapsed;
+            TimerView.Visibility = Visibility.Visible;
+            Height = 600;
+        }
+    }
+
+    private void SaveSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SaveAndCloseSettings();
+        SettingsView.Visibility = Visibility.Collapsed;
+        TimerView.Visibility = Visibility.Visible;
+        Height = 600;
+    }
+
+    private void CancelSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.CloseSettings(discard: true);
+        SettingsView.Visibility = Visibility.Collapsed;
+        TimerView.Visibility = Visibility.Visible;
+        Height = 600;
     }
 
     private void ManageTasksButton_Click(object sender, RoutedEventArgs e)

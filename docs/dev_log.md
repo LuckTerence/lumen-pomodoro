@@ -176,3 +176,22 @@
 
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
+
+## [2026-05-07] 设置内联化 + UI 视觉优化
+
+**涉及模块**: MainViewModel, MainWindow, MainWindow.xaml.cs
+
+**修改文件数**: 3 个
+
+### 改动摘要
+
+1. **设置内联** — 点击齿轮按钮不再弹出 SettingsWindow，而是在 MainWindow 内切换 TimerView / SettingsView。窗口高度从 600 动态扩展到 720 以容纳设置内容。
+2. **MainViewModel 新增** — `IsSettingsVisible` (INPC), `SettingsVM` (SettingsViewModel 实例), `ToggleSettings()`, `SaveAndCloseSettings()`, `CloseSettings(bool discard)`。SettingsVM 在展开时创建、关闭时 Dispose，与 MainViewModel 通过 StorageService 解耦。
+3. **精简设置项** — 内联面板展示：计时(3项)、提醒(3项)、外观(2项)、系统(3项)。摄像头高级选项暂不在内联面板中暴露。
+4. **UI 元素统一** — Timer 区的暂停/重置/跳过等次级按钮统一使用 SmallSecondaryButton 样式（14px, pill, 16x8 padding），而非全尺寸 SecondaryButton。ManageTasksButton 改用 CircleButton 样式。
+5. **设置面板样式** — 新增 SettingsSectionTitle、SettingsLabel、SettingsToggle、SettingsInput、SettingsCombo、SmallSecondaryButton 共 6 个样式资源。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。

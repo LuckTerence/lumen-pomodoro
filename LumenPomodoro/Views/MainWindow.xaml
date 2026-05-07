@@ -15,15 +15,11 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <converters:StatusConverter x:Key="StatusConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
 
         <QuadraticEase x:Key="QuadraticEase" EasingMode="EaseOut" />
-
-        <Storyboard x:Key="FadeInUpStoryboard">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
-            <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.4" EasingFunction="{StaticResource QuadraticEase}" />
-        </Storyboard>
 
         <!-- DESIGN.md rounded.lg = 18 -->
         <Style x:Key="GlassPanel" TargetType="Border">
@@ -134,7 +130,7 @@
             </Setter>
         </Style>
 
-        <!-- DESIGN.md button-icon-circular: 44x44, translucent chip bg, full radius -->
+        <!-- DESIGN.md button-icon-circular: 44x44, full radius -->
         <Style x:Key="CircleButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
@@ -213,7 +209,6 @@
                                           ClickMode="Press">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <!-- DESIGN.md rounded.lg = 18 -->
                                         <Border Background="{TemplateBinding Background}" CornerRadius="18" Padding="12,8" TextElement.Foreground="{DynamicResource PrimaryTextBrush}">
                                             <Grid>
                                                 <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
@@ -239,6 +234,128 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Settings inline styles -->
+        <Style x:Key="SettingsSectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <Style x:Key="SettingsLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+
+        <Style x:Key="SettingsToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{DynamicResource BorderBrush}" CornerRadius="12">
+                            <Ellipse x:Name="Thumb" Fill="White" Width="20" Height="20" Margin="2"
+                                     HorizontalAlignment="Left" />
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CheckStates">
+                                    <VisualState Name="Checked">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="{DynamicResource PrimaryColor}" />
+                                            <ThicknessAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="Margin" To="22,2,2,2" Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Unchecked">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="White" />
+                                            <ThicknessAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="Margin" To="2,2,2,2" Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SettingsInput" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="70" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="9999" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SettingsCombo" TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style x:Key="SmallSecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="9999" Padding="{TemplateBinding Padding}"
+                                BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.95" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.95" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid MouseLeftButtonDown="Window_MouseLeftButtonDown">
@@ -246,229 +363,389 @@
             <Border.RenderTransform>
                 <TranslateTransform Y="0" />
             </Border.RenderTransform>
-            <Grid Margin="24">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" VerticalAlignment="Top">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Border Width="32" Height="32" CornerRadius="16" Background="{DynamicResource ControlBackgroundBrush}">
-                            <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets" FontSize="15"
-                                       Foreground="{DynamicResource PrimaryBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Text="Lumen" FontSize="15" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   VerticalAlignment="Center" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                        <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="MinimizeButton_Click">
-                            <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                        </Button>
-                        <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
-                            <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                        </Button>
-                    </StackPanel>
-                </Grid>
+            <!-- Use a Style with DataTriggers on the inner Grid to swap content -->
+            <Grid x:Name="ContentRoot" Margin="24">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </Style>
+                </Grid.Style>
 
-                <!-- spacing.xl = 32 -->
-                <StackPanel Grid.Row="1" Margin="0,32,0,0" Orientation="Horizontal" HorizontalAlignment="Center">
-                    <ComboBox x:Name="TaskComboBox" Style="{StaticResource TaskComboBox}" Width="260"
-                              ItemsSource="{Binding Tasks}"
-                              SelectedItem="{Binding SelectedTask}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Rectangle Width="8" Height="8" Fill="{Binding Color}" RadiusX="4" RadiusY="4" Margin="0,0,8,0" />
-                                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource PrimaryTextBrush}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button x:Name="ManageTasksButton" Style="{StaticResource SecondaryButton}" Width="32" Height="32" Margin="8,0,0,0" Padding="8" Click="ManageTasksButton_Click">
-                        <TextBlock Text="&#xE179;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                    </Button>
-                </StackPanel>
-
-                <Grid Grid.Row="2" Margin="0,48,0,0">
+                <!-- ===== TIMER VIEW ===== -->
+                <Grid x:Name="TimerView">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
-                               FontSize="17" Foreground="{DynamicResource SecondaryTextBrush}" TextAlignment="Center" Margin="0,0,0,12" />
+                    <!-- Brand bar -->
+                    <Grid Grid.Row="0" VerticalAlignment="Top">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Border Width="32" Height="32" CornerRadius="16" Background="{DynamicResource ControlBackgroundBrush}">
+                                <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Lumen" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="MinimizeButton_Click">
+                                <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            </Button>
+                            <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
+                                <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
 
-                    <TextBlock Grid.Row="1" Text="{Binding RemainingTime}"
-                               FontSize="76" FontWeight="Light" Foreground="{DynamicResource PrimaryTextBrush}"
-                               TextAlignment="Center" FontFamily="{DynamicResource InterLight}" />
-                </Grid>
-
-                <!-- spacing.md = 17 -->
-                <Grid Grid.Row="3" Margin="0,17,0,0">
-                    <Border  ClipToBounds="True">
-                        <ProgressBar x:Name="ProgressBar"
-                                     Value="{Binding Progress}"
-                                     Minimum="0"
-                                     Maximum="100"
-                                     Height="6"
-                                     Background="{DynamicResource BorderBrush}"
-                                     BorderThickness="0">
-                        <ProgressBar.Foreground>
-                            <SolidColorBrush Color="{DynamicResource PrimaryColor}" />
-                        </ProgressBar.Foreground>
-                        </ProgressBar>
-                    </Border>
-                </Grid>
-
-                <Grid Grid.Row="4" Margin="0,24,0,0">
-                    <StackPanel x:Name="CameraStatusPanel" Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0">
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             From="1" To="0.3" Duration="0:0:0.8"
-                                                             AutoReverse="True" RepeatBehavior="Forever" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <TextBlock Text="{Binding CameraStatus}" FontSize="12" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,8,0" />
-                        <Button x:Name="StopCameraButton" Style="{StaticResource SecondaryButton}"
-                                Padding="8,4" FontSize="12" Click="StopCameraButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,6,0" />
-                                <TextBlock Text="关闭提醒" />
-                            </StackPanel>
+                    <!-- Task selector -->
+                    <StackPanel Grid.Row="1" Margin="0,32,0,0" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <ComboBox x:Name="TaskComboBox" Style="{StaticResource TaskComboBox}" Width="260"
+                                  ItemsSource="{Binding Tasks}"
+                                  SelectedItem="{Binding SelectedTask}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Rectangle Width="8" Height="8" Fill="{Binding Color}" RadiusX="4" RadiusY="4" Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button x:Name="ManageTasksButton" Style="{StaticResource CircleButton}" Width="32" Height="32" Margin="8,0,0,0" Padding="0" Click="ManageTasksButton_Click">
+                            <TextBlock Text="&#xE179;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                         </Button>
                     </StackPanel>
-                </Grid>
 
-                <!-- spacing.xl = 32 -->
-                <Grid Grid.Row="5" Margin="0,32,0,0">
-                    <StackPanel x:Name="IdlePanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}"
-                                Orientation="Vertical" HorizontalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
+                    <!-- Timer display -->
+                    <Grid Grid.Row="2" Margin="0,48,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
+                                   FontSize="17" Foreground="{DynamicResource SecondaryTextBrush}" TextAlignment="Center" Margin="0,0,0,12" />
+                        <TextBlock Grid.Row="1" Text="{Binding RemainingTime}"
+                                   FontSize="76" FontWeight="Light" Foreground="{DynamicResource PrimaryTextBrush}"
+                                   TextAlignment="Center" FontFamily="{DynamicResource InterLight}" />
+                    </Grid>
+
+                    <!-- Progress bar -->
+                    <Grid Grid.Row="3" Margin="0,17,0,0">
+                        <Border ClipToBounds="True">
+                            <ProgressBar x:Name="ProgressBar" Value="{Binding Progress}" Minimum="0" Maximum="100"
+                                         Height="6" Background="{DynamicResource BorderBrush}" BorderThickness="0">
+                                <ProgressBar.Foreground>
+                                    <SolidColorBrush Color="{DynamicResource PrimaryColor}" />
+                                </ProgressBar.Foreground>
+                            </ProgressBar>
+                        </Border>
+                    </Grid>
+
+                    <!-- Camera status -->
+                    <Grid Grid.Row="4" Margin="0,24,0,0">
+                        <StackPanel x:Name="CameraStatusPanel" Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0">
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.3" Duration="0:0:0.8" AutoReverse="True" RepeatBehavior="Forever" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                            <TextBlock Text="{Binding CameraStatus}" FontSize="12" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,8,0" />
+                            <Button Style="{StaticResource SmallSecondaryButton}" Padding="8,4" FontSize="12" Click="StopCameraButton_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
-                                    <TextBlock Text="开始专注" />
+                                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,6,0" />
+                                    <TextBlock Text="关闭提醒" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"
-                                    Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Button x:Name="PendingShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
+                    </Grid>
+
+                    <!-- Action buttons -->
+                    <Grid Grid.Row="5" Margin="0,32,0,0">
+                        <StackPanel x:Name="IdlePanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}"
+                                    Orientation="Vertical" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                        <TextBlock Text="开始专注" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                        Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Button x:Name="PendingShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                        <TextBlock Text="短休息" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="PendingLongBreakButton" Style="{StaticResource SmallSecondaryButton}" Click="StartLongBreakButton_Click" Margin="8,0,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="长休息" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="PendingSkipBreakButton" Style="{StaticResource SmallSecondaryButton}" Click="SkipBreakButton_Click" Margin="8,0,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="跳过" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel x:Name="FocusPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
+                                    Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="PauseButton" Style="{StaticResource SmallSecondaryButton}" Click="PauseButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE769;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="暂停" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="ResetButton" Style="{StaticResource SmallSecondaryButton}" Click="ResetButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="重置" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <StackPanel x:Name="PausedPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
+                                    Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="ResumeButton" Style="{StaticResource PrimaryButton}" Click="ResumeButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                    <TextBlock Text="继续" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="ResetButton2" Style="{StaticResource SmallSecondaryButton}" Click="ResetButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                    <TextBlock Text="重置" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <StackPanel x:Name="CompletedPanel" Visibility="{Binding IsFocusCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="StartShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
                                     <TextBlock Text="短休息" />
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="PendingLongBreakButton" Style="{StaticResource SecondaryButton}" Click="StartLongBreakButton_Click" Margin="8,0,0,0">
+                            <Button x:Name="StartLongBreakButton" Style="{StaticResource SmallSecondaryButton}" Click="StartLongBreakButton_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
                                     <TextBlock Text="长休息" />
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="PendingSkipBreakButton" Style="{StaticResource SecondaryButton}" Click="SkipBreakButton_Click" Margin="8,0,0,0">
+                            <Button x:Name="SkipBreakButton" Style="{StaticResource SmallSecondaryButton}" Click="SkipBreakButton_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
                                     <TextBlock Text="跳过" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                    </StackPanel>
 
-                    <StackPanel x:Name="FocusPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
-                                Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="PauseButton" Style="{StaticResource SecondaryButton}" Click="PauseButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE769;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="暂停" />
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="ResetButton" Style="{StaticResource SecondaryButton}" Click="ResetButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="重置" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                        <StackPanel x:Name="BreakPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
+                                    Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="EndBreakButton" Style="{StaticResource PrimaryButton}" Click="EndBreakButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                    <TextBlock Text="结束休息" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
 
-                    <StackPanel x:Name="PausedPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
-                                Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="ResumeButton" Style="{StaticResource PrimaryButton}" Click="ResumeButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
-                                <TextBlock Text="继续" />
+                    <!-- Stats bar -->
+                    <Grid Grid.Row="6" Margin="0,32,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
+                                <TextBlock Text="{Binding TodayStats.CompletedPomodoros}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="今日完成" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
                             </StackPanel>
-                        </Button>
-                        <Button x:Name="ResetButton2" Style="{StaticResource SecondaryButton}" Click="ResetButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="重置" />
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="16,0,0,0" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
+                                <TextBlock Text="{Binding TodayStats.TotalFocusMinutes}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" />
+                                <TextBlock Text="专注时长(分)" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
                             </StackPanel>
-                        </Button>
-                    </StackPanel>
-
-                    <StackPanel x:Name="CompletedPanel" Visibility="{Binding IsFocusCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="StartShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
-                                <TextBlock Text="短休息" />
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="StartLongBreakButton" Style="{StaticResource SecondaryButton}" Click="StartLongBreakButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="长休息" />
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="SkipBreakButton" Style="{StaticResource SecondaryButton}" Click="SkipBreakButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
-                                <TextBlock Text="跳过" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-
-                    <StackPanel x:Name="BreakPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
-                                Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="EndBreakButton" Style="{StaticResource PrimaryButton}" Click="EndBreakButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
-                                <TextBlock Text="结束休息" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                            <Button x:Name="SettingsButton" Style="{StaticResource CircleButton}" Width="40" Height="40" Click="SettingsButton_Click">
+                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
 
-                <!-- spacing.xl = 32 -->
-                <Grid Grid.Row="6" Margin="0,32,0,0">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
-                            <!-- DESIGN.md body-strong = 17/600, display stats numbers at SemiBold (600) -->
-                            <TextBlock Text="{Binding TodayStats.CompletedPomodoros}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
-                            <TextBlock Text="今日完成" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
+                <!-- ===== SETTINGS VIEW ===== -->
+                <Grid x:Name="SettingsView" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Settings header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="SettingsButton_Click">
+                                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            </Button>
+                            <TextBlock Text="设置" FontSize="21" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="16,0,0,0" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
-                            <TextBlock Text="{Binding TodayStats.TotalFocusMinutes}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" />
-                            <TextBlock Text="专注时长(分)" FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}" />
+                    </Grid>
+
+                    <!-- Settings content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel DataContext="{Binding SettingsVM}">
+                            <!-- Timer settings -->
+                            <TextBlock Text="计时" Style="{StaticResource SettingsSectionTitle}" />
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="专注时间（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="短休息（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="长休息（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <!-- Alert settings -->
+                            <TextBlock Text="提醒" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="声音提醒" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding SoundEnabled}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="弹窗提醒" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding PopupEnabled}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="系统通知" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding SystemNotificationEnabled}" />
+                            </Grid>
+
+                            <!-- Appearance settings -->
+                            <TextBlock Text="外观" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="主题" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Style="{StaticResource SettingsCombo}" MinWidth="100"
+                                          SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
+                                    <ComboBoxItem Content="跟随系统" Tag="system" />
+                                    <ComboBoxItem Content="浅色" Tag="light" />
+                                    <ComboBoxItem Content="深色" Tag="dark" />
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="动画效果" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AnimationEnabled}" />
+                            </Grid>
+
+                            <!-- System settings -->
+                            <TextBlock Text="系统" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="托盘运行" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding TrayEnabled}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="关闭时最小化到托盘" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding CloseToTray}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="开机自启" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AutoStartEnabled}" />
+                            </Grid>
                         </StackPanel>
-                        <Button x:Name="SettingsButton" Style="{StaticResource CircleButton}" Width="40" Height="40" Click="SettingsButton_Click">
-                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="18" />
+                    </ScrollViewer>
+
+                    <!-- Save / Cancel -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Style="{StaticResource SmallSecondaryButton}" Click="CancelSettings_Click" Margin="0,0,12,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="取消" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PrimaryButton}" FontSize="14" Padding="22,10" Click="SaveSettings_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" />
+                                <TextBlock Text="保存" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </Grid>

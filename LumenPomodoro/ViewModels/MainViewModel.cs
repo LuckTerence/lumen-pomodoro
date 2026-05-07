@@ -26,6 +26,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
     private bool _shouldSuggestLongBreak;
+    private bool _isSettingsVisible;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -101,7 +102,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         set { if (_shouldSuggestLongBreak != value) { _shouldSuggestLongBreak = value; OnPropertyChanged(); } }
     }
 
+    public bool IsSettingsVisible
+    {
+        get => _isSettingsVisible;
+        set { if (_isSettingsVisible != value) { _isSettingsVisible = value; OnPropertyChanged(); } }
+    }
+
     public Settings AppSettings { get; private set; } = new();
+
+    public SettingsViewModel? SettingsVM { get; private set; }
 
     public CameraService CameraService => _cameraService;
     public StorageService StorageService => _storageService;
@@ -519,6 +528,49 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback);
     }
 
+    public void ToggleSettings()
+    {
+        if (!IsSettingsVisible)
+        {
+            SettingsVM = new SettingsViewModel(_storageService, _cameraService);
+            IsSettingsVisible = true;
+            OnPropertyChanged(nameof(SettingsVM));
+        }
+        else
+        {
+            CloseSettings(discard: true);
+        }
+    }
+
+    public void SaveAndCloseSettings()
+    {
+        if (SettingsVM != null)
+        {
+            SettingsVM.SaveSettings();
+            SettingsVM.Cleanup();
+            SettingsVM = null;
+        }
+        IsSettingsVisible = false;
+        ReloadSettings();
+        RefreshStats();
+        OnPropertyChanged(nameof(SettingsVM));
+    }
+
+    public void CloseSettings(bool discard)
+    {
+        if (SettingsVM != null)
+        {
+            SettingsVM.Cleanup();
+            SettingsVM = null;
+        }
+        IsSettingsVisible = false;
+        if (!discard)
+        {
+            ReloadSettings();
+        }
+        OnPropertyChanged(nameof(SettingsVM));
+    }
+
     public void UpdateTasks(List<TaskItem> tasks)
     {
         Tasks = tasks;
@@ -546,6 +598,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+
+        SettingsVM?.Cleanup();
 
         _trayUpdateTimer?.Stop();
         _trayUpdateTimer?.Dispose();
