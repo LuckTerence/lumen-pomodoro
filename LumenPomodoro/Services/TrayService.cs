@@ -31,7 +31,8 @@ public class TrayService
         _notifyIcon = new TaskbarIcon
         {
             ToolTipText = "Lumen Pomodoro",
-            Visibility = Visibility.Visible
+            Visibility = Visibility.Visible,
+            IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/LOGO.png"))
         };
 
         CreateMenu();
@@ -167,7 +168,14 @@ public class TrayService
 
     private void ExitItem_Click(object? sender, RoutedEventArgs e)
     {
-        FireAndForget(_cameraService.StopCameraAsync(), "退出时停止摄像头");
+        try
+        {
+            _cameraService.StopCameraAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[TrayService] 退出时停止摄像头异常: {ex.Message}");
+        }
         _notifyIcon.Dispose();
         Application.Current.Shutdown();
     }

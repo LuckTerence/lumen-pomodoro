@@ -497,6 +497,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public void ReloadTasks()
+    {
+        Tasks = _storageService.LoadTasks();
+
+        if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
+        {
+            SelectedTask = Tasks.Any() ? Tasks.First() : null;
+        }
+    }
+
     private static async void FireAndForget(Task task, string operationName)
     {
         try

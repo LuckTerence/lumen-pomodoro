@@ -78,12 +78,6 @@
                 <ui:Button Appearance="Primary" Click="StartFocusButton_Click" FontSize="17" Padding="22,11">
                     开始专注
                 </ui:Button>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
-                            Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ui:Button Appearance="Primary" Click="StartShortBreakButton_Click">短休息</ui:Button>
-                    <ui:Button Appearance="Secondary" Click="StartLongBreakButton_Click" Margin="8,0,0,0">长休息</ui:Button>
-                    <ui:Button Appearance="Secondary" Click="SkipBreakButton_Click">跳过</ui:Button>
-                </StackPanel>
             </StackPanel>
 
             <StackPanel x:Name="FocusPanel"

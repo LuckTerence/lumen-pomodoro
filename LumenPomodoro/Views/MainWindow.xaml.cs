@@ -74,16 +74,18 @@ public partial class MainWindow : FluentWindow
     {
         _viewModel.Dispose();
         _trayService?.Dispose();
+        _pageProvider.Dispose();
         base.OnClosed(e);
     }
 
-    private sealed class PageProvider : INavigationViewPageProvider
+    private sealed class PageProvider : INavigationViewPageProvider, IDisposable
     {
         private readonly MainViewModel _viewModel;
         private TimerPage? _timerPage;
         private TasksPage? _tasksPage;
         private StatsPage? _statsPage;
         private SettingsPage? _settingsPage;
+        private SettingsViewModel? _settingsViewModel;
 
         public PageProvider(MainViewModel viewModel)
         {
@@ -95,9 +97,23 @@ public partial class MainWindow : FluentWindow
             if (pageType == typeof(TimerPage))
                 return _timerPage ??= CreateTimerPage();
             if (pageType == typeof(TasksPage))
-                return _tasksPage ??= new TasksPage(new TasksViewModel(_viewModel.StorageService));
+            {
+                if (_tasksPage != null)
+                {
+                    _tasksPage.Refresh();
+                    return _tasksPage;
+                }
+                return _tasksPage = CreateTasksPage();
+            }
             if (pageType == typeof(StatsPage))
-                return _statsPage ??= new StatsPage(new StatsViewModel(_viewModel.StorageService));
+            {
+                if (_statsPage != null)
+                {
+                    _statsPage.Refresh();
+                    return _statsPage;
+                }
+                return _statsPage = CreateStatsPage();
+            }
             if (pageType == typeof(SettingsPage))
                 return _settingsPage ??= CreateSettingsPage();
             return null;
@@ -112,16 +128,33 @@ public partial class MainWindow : FluentWindow
             return page;
         }
 
+        private TasksPage CreateTasksPage()
+        {
+            var tasksVM = new TasksViewModel(_viewModel.StorageService);
+            tasksVM.TasksChanged += () => _viewModel.ReloadTasks();
+            return new TasksPage(tasksVM);
+        }
+
+        private StatsPage CreateStatsPage()
+        {
+            return new StatsPage(new StatsViewModel(_viewModel.StorageService));
+        }
+
         private SettingsPage CreateSettingsPage()
         {
-            var settingsVM = new SettingsViewModel(_viewModel.StorageService, _viewModel.CameraService);
-            var page = new SettingsPage(settingsVM);
+            _settingsViewModel = new SettingsViewModel(_viewModel.StorageService, _viewModel.CameraService);
+            var page = new SettingsPage(_settingsViewModel);
             page.SettingsSaved += () =>
             {
                 _viewModel.ReloadSettings();
                 _viewModel.RefreshStats();
             };
             return page;
+        }
+
+        public void Dispose()
+        {
+            _settingsViewModel?.Dispose();
         }
     }
 }

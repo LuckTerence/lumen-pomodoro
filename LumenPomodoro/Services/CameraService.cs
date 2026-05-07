@@ -11,6 +11,7 @@ namespace LumenPomodoro.Services;
 public class CameraService
 {
     private volatile bool _isRunning = false;
+    private volatile bool _isInitializing = false;
     private Task? _cameraTask;
     private CancellationTokenSource? _cancellationTokenSource;
     private int _cameraIndex = 0;
@@ -34,7 +35,11 @@ public class CameraService
 
     public async Task StartCameraAsync()
     {
-        if (_isRunning) return;
+        lock (_lockObject)
+        {
+            if (_isRunning || _isInitializing) return;
+            _isInitializing = true;
+        }
 
         _startTime = DateTime.Now;
 
@@ -69,6 +74,10 @@ public class CameraService
                 _isRunning = false;
             }
             _errorCallback?.Invoke($"摄像头打开失败: {ex.Message}");
+        }
+        finally
+        {
+            _isInitializing = false;
         }
     }
 
@@ -136,6 +145,10 @@ public class CameraService
         {
             _isRunning = false;
         }
+
+        _cancellationTokenSource?.Dispose();
+        _cancellationTokenSource = null;
+
         _statusCallback?.Invoke("摄像头已关闭");
     }
 

@@ -64,13 +64,7 @@
             <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称" Margin="0,0,0,8" />
             <StackPanel Orientation="Horizontal">
                 <ComboBox x:Name="CategoryComboBox" MinWidth="120" Margin="0,0,8,0"
-                          SelectedIndex="0">
-                    <ComboBoxItem Content="数学" />
-                    <ComboBoxItem Content="英语" />
-                    <ComboBoxItem Content="政治" />
-                    <ComboBoxItem Content="专业课" />
-                    <ComboBoxItem Content="其他" />
-                </ComboBox>
+                          ItemsSource="{Binding Categories}" SelectedIndex="0" />
                 <ui:Button Appearance="Primary" Click="AddTask_Click">添加</ui:Button>
             </StackPanel>
         </StackPanel>

@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Resource Include="Fonts\*.ttf" />
+    <Resource Include="LOGO.png" />
   </ItemGroup>
 
 </Project>

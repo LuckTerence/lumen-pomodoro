@@ -23,9 +23,9 @@ public partial class TasksPage : Page
     private void AddTask_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.NewTaskName = NewTaskNameBox.Text;
-        if (CategoryComboBox.SelectedItem is ComboBoxItem item)
+        if (CategoryComboBox.SelectedItem is string category)
         {
-            _viewModel.SelectedCategory = item.Content?.ToString() ?? "其他";
+            _viewModel.SelectedCategory = category;
         }
         _viewModel.AddTask();
         NewTaskNameBox.Text = string.Empty;

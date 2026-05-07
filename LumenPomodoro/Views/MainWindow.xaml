@@ -9,7 +9,8 @@
         Title="Lumen Pomodoro" Width="520" Height="640" MinHeight="520"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        ExtendsContentIntoTitleBar="True">
+        ExtendsContentIntoTitleBar="True"
+        Icon="pack://application:,,,/LOGO.png">
 
     <ui:FluentWindow.Resources>
         <ResourceDictionary>
@@ -28,11 +29,12 @@
         <ui:TitleBar x:Name="AppTitleBar"
                      Title="Lumen Pomodoro"
                      Grid.Row="0"
-                     ShowMaximize="False" />
+                     ShowMaximize="False"
+                     Icon="pack://application:,,,/LOGO.png" />
 
         <ui:NavigationView x:Name="NavView" Grid.Row="1" PaneDisplayMode="Bottom">
             <ui:NavigationView.TitleBar>
-                <ui:TitleBar Title="Lumen Pomodoro" ShowMaximize="False" />
+                <ui:TitleBar Title="Lumen Pomodoro" ShowMaximize="False" Icon="pack://application:,,,/LOGO.png" />
             </ui:NavigationView.TitleBar>
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
