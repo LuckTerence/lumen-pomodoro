@@ -83,7 +83,7 @@ public partial class App : Application
             {
                 if (Current.MainWindow is Views.MainWindow mainWindow)
                 {
-                    mainWindow.RefreshTimerOnWake();
+                    mainWindow.HandleWake();
                 }
             });
         }

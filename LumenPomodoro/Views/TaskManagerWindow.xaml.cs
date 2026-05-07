@@ -131,7 +131,7 @@ public partial class TaskManagerWindow : Window
             Padding = new Thickness(12, 8, 12, 8),
             BorderThickness = new Thickness(0)
         };
-        textBox.SelectAll();
+        textBox.Loaded += (s, args) => textBox.SelectAll();
         panel.Children.Add(textBox);
 
         var btnPanel = new System.Windows.Controls.StackPanel

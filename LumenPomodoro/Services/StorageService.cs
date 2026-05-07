@@ -58,12 +58,16 @@ public class StorageService
             try
             {
                 var content = File.ReadAllText(_tasksFile);
-                return JsonConvert.DeserializeObject<List<TaskItem>>(content) ?? GetDefaultTasks();
+                var tasks = JsonConvert.DeserializeObject<List<TaskItem>>(content);
+                if (tasks != null && tasks.Count > 0) return tasks;
             }
             catch
             {
-                return GetDefaultTasks();
             }
+
+            var defaults = GetDefaultTasks();
+            SaveTasks(defaults);
+            return defaults;
         }
     }
 
@@ -144,7 +148,7 @@ public class StorageService
         _cachedTodayStats = null;
     }
 
-    public void SaveSessionsWithTransaction(List<FocusSession> sessions)
+    private void SaveSessionsWithTransaction(List<FocusSession> sessions)
     {
         var backupFile = _sessionsFile + ".bak";
 
@@ -191,39 +195,31 @@ public class StorageService
             {
                 return _cachedTodayStats;
             }
-        }
 
-        List<FocusSession> sessions;
-        lock (_fileLock)
-        {
-            sessions = LoadSessionsCore();
-        }
+            var sessions = LoadSessionsCore();
+            var today = DateTime.Today;
+            var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
 
-        var today = DateTime.Today;
-        var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
+            var stats = new DailyStats();
+            stats.CompletedPomodoros = todaySessions.Count;
+            stats.TotalFocusMinutes = todaySessions.Sum(s => s.FocusMinutes);
 
-        var stats = new DailyStats();
-        stats.CompletedPomodoros = todaySessions.Count;
-        stats.TotalFocusMinutes = todaySessions.Sum(s => s.FocusMinutes);
-
-        foreach (var session in todaySessions)
-        {
-            if (!stats.TaskStats.ContainsKey(session.TaskName))
+            foreach (var session in todaySessions)
             {
-                stats.TaskStats[session.TaskName] = 0;
+                if (!stats.TaskStats.ContainsKey(session.TaskName))
+                {
+                    stats.TaskStats[session.TaskName] = 0;
+                }
+                stats.TaskStats[session.TaskName]++;
             }
-            stats.TaskStats[session.TaskName]++;
-        }
 
-        stats.CurrentStreak = CalculateStreak(sessions);
+            stats.CurrentStreak = CalculateStreak(sessions);
 
-        lock (_fileLock)
-        {
             _cachedTodayStats = stats;
             _cacheDate = DateTime.Today;
-        }
 
-        return stats;
+            return stats;
+        }
     }
 
     private int CalculateStreak(List<FocusSession> sessions)

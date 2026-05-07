@@ -116,11 +116,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public StorageService StorageService => _storageService;
 
     private FocusSession? _currentSession;
-    private System.Windows.Forms.NotifyIcon? _notifyIcon;
     private bool _disposed;
     private System.Timers.Timer? _trayUpdateTimer;
 
     public event Action? TrayMenuNeedsUpdate;
+    public event Action<string, string>? NotificationRequested;
 
     public MainViewModel(StorageService storageService)
     {
@@ -190,18 +190,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 }
 
                 IsFocusCompleted = true;
-                ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
-                                         TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
+                IsPendingBreak = true;
                 StartCameraAlert();
                 PlayNotificationSound("FocusComplete");
                 if (AppSettings.PopupEnabled)
                 {
                     ShowFocusCompleteDialog();
-                }
-                else
-                {
-                    IsPendingBreak = true;
-                    CurrentStatus = TimerMode.Idle;
                 }
                 ShowSystemNotification("专注完成！", "该休息了！");
             }
@@ -245,6 +239,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
             PlayNotificationSound("FocusComplete");
             ShowSystemNotification("摄像头提醒失败", error);
+
+            if (error.Contains("保护释放"))
+            {
+                IsFocusCompleted = true;
+            }
 
             if (AppSettings.PopupEnabled)
             {
@@ -412,7 +411,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void ForceStopCameraAlert()
     {
         FireAndForget(_cameraService.StopCameraAsync(), "停止摄像头");
-        IsCameraAlertActive = false;
     }
 
     private void PlayNotificationSound(string soundName)
@@ -436,19 +434,23 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (!AppSettings.SystemNotificationEnabled) return;
 
+        if (NotificationRequested != null)
+        {
+            NotificationRequested.Invoke(title, message);
+            return;
+        }
+
         try
         {
-            if (_notifyIcon == null)
+            var notifyIcon = new System.Windows.Forms.NotifyIcon
             {
-                _notifyIcon = new System.Windows.Forms.NotifyIcon
-                {
-                    Visible = true,
-                    Icon = System.Drawing.SystemIcons.Information
-                };
-            }
-            _notifyIcon.BalloonTipTitle = title;
-            _notifyIcon.BalloonTipText = message;
-            _notifyIcon.ShowBalloonTip(3000);
+                Visible = true,
+                Icon = System.Drawing.SystemIcons.Information,
+                BalloonTipTitle = title,
+                BalloonTipText = message
+            };
+            notifyIcon.ShowBalloonTip(3000);
+            notifyIcon.Dispose();
         }
         catch (Exception ex)
         {
@@ -458,6 +460,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void ShowFocusCompleteDialog()
     {
+        ShouldSuggestLongBreak = TodayStats.CompletedPomodoros > 0 &&
+                                 TodayStats.CompletedPomodoros % AppSettings.LongBreakInterval == 0;
+
         var dialog = new Views.FocusCompleteDialog
         {
             Owner = Application.Current.MainWindow,
@@ -507,6 +512,25 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void RefreshStats()
     {
         TodayStats = _storageService.GetTodayStats();
+    }
+
+    public void RefreshTimerOnWake()
+    {
+        _timerService.CorrectAfterWake();
+        RefreshStats();
+    }
+
+    public void AdjustWorkMinutes(int delta)
+    {
+        var newVal = Math.Clamp(AppSettings.WorkMinutes + delta, 1, 120);
+        if (newVal == AppSettings.WorkMinutes) return;
+        AppSettings.WorkMinutes = newVal;
+        _storageService.SaveSettings(AppSettings);
+
+        if (CurrentStatus == TimerMode.Idle)
+        {
+            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        }
     }
 
     public void UpdateSettings(Settings settings)
@@ -577,11 +601,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void UpdateTasks(List<TaskItem> tasks)
     {
         Tasks = tasks;
-        _storageService.SaveTasks(tasks);
 
-        if (SelectedTask == null && Tasks.Any())
+        if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
         {
-            SelectedTask = Tasks.First();
+            SelectedTask = Tasks.Any() ? Tasks.First() : null;
         }
     }
 
@@ -612,7 +635,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _timerService.ModeChanged -= TimerService_ModeChanged;
         _timerService.Dispose();
         _soundService.Dispose();
-        _notifyIcon?.Dispose();
 
         // 同步停止摄像头（不再 fire-and-forget）
         try

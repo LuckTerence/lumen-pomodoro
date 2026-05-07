@@ -13,6 +13,7 @@ public class TimerService : IDisposable
     private TimerMode _modeBeforePause;
     private bool _isPaused;
     private bool _isRunning;
+    private DateTime _lastTickTime;
 
     public event EventHandler<TimerTickEventArgs>? TimerTick;
     public event EventHandler<TimerCompletedEventArgs>? TimerCompleted;
@@ -30,6 +31,7 @@ public class TimerService : IDisposable
         _timer.Elapsed += Timer_Elapsed;
         _timer.AutoReset = true;
         _currentMode = TimerMode.Idle;
+        _lastTickTime = DateTime.Now;
     }
 
     public void StartFocus(int minutes)
@@ -43,6 +45,7 @@ public class TimerService : IDisposable
             _currentMode = TimerMode.Focus;
             _isRunning = true;
             _isPaused = false;
+            _lastTickTime = DateTime.Now;
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -63,6 +66,7 @@ public class TimerService : IDisposable
             _currentMode = TimerMode.Break;
             _isRunning = true;
             _isPaused = false;
+            _lastTickTime = DateTime.Now;
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -106,6 +110,7 @@ public class TimerService : IDisposable
                 _isPaused = false;
                 restoredMode = _modeBeforePause;
                 _currentMode = restoredMode;
+                _lastTickTime = DateTime.Now;
                 _timer.Start();
                 shouldInvoke = true;
             }
@@ -145,6 +150,45 @@ public class TimerService : IDisposable
         }
     }
 
+    public void CorrectAfterWake()
+    {
+        int remaining, total;
+        TimerMode mode;
+        bool shouldComplete = false;
+        TimerMode completedMode = TimerMode.Idle;
+
+        lock (_lock)
+        {
+            if (!_isRunning || _isPaused) return;
+
+            var elapsed = (DateTime.Now - _lastTickTime).TotalSeconds;
+            if (elapsed < 2) return;
+
+            _remainingSeconds = Math.Max(0, _remainingSeconds - (int)elapsed);
+            _lastTickTime = DateTime.Now;
+            remaining = _remainingSeconds;
+            total = _totalSeconds;
+            mode = _currentMode;
+
+            if (_remainingSeconds <= 0)
+            {
+                _timer.Stop();
+                _isRunning = false;
+                completedMode = _currentMode;
+                _currentMode = TimerMode.Idle;
+                shouldComplete = true;
+            }
+        }
+
+        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
+
+        if (shouldComplete)
+        {
+            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
+        }
+    }
+
     private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         bool shouldComplete = false;
@@ -157,6 +201,7 @@ public class TimerService : IDisposable
             if (_isPaused) return;
 
             _remainingSeconds = Math.Max(0, _remainingSeconds - 1);
+            _lastTickTime = DateTime.Now;
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;

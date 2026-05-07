@@ -269,31 +269,61 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Task name (Idle only, minimal) -->
-                        <TextBlock Grid.Row="0" x:Name="TaskNameDisplay"
-                                   HorizontalAlignment="Center" Margin="0,0,0,48"
-                                   FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"
-                                   Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Cursor" Value="Hand" />
-                                    <EventSetter Event="MouseDown" Handler="ManageTasksButton_Click" />
-                                </Style>
-                            </TextBlock.Style>
-                            <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
-                            <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource TertiaryTextBrush}" />
-                        </TextBlock>
+                        <!-- Task name (Idle only, minimal) + color dot -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,48"
+                                    Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
+                            <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource TertiaryTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedTask.Color, FallbackValue='#6B7280'}" Value="#6B7280">
+                                                <Setter Property="Fill" Value="{DynamicResource TertiaryTextBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                                <Ellipse.Fill>
+                                    <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#6B7280}" />
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <TextBlock FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <EventSetter Event="MouseDown" Handler="ManageTasksButton_Click" />
+                                    </Style>
+                                </TextBlock.Style>
+                                <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
+                                <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource TertiaryTextBrush}" />
+                            </TextBlock>
+                        </StackPanel>
 
-                        <!-- HERO: 96px time -->
-                        <TextBlock Grid.Row="1" Text="{Binding RemainingTime}"
+                        <!-- HERO: 96px time + breathing on focus complete / paused pulse -->
+                        <TextBlock Grid.Row="1" x:Name="TimerText" Text="{Binding RemainingTime}"
                                    FontSize="96" FontWeight="Light" Foreground="{DynamicResource PrimaryTextBrush}"
                                    HorizontalAlignment="Center" FontFamily="{DynamicResource InterLight}"
-                                   LineHeight="1" Margin="0,0,0,24" />
+                                   LineHeight="1" Margin="0,0,0,24" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+
+                        <!-- Camera alert indicator (breathing dot) -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
+                                    Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="{DynamicResource PrimaryBrush}" Margin="0,0,8,0" />
+                            <TextBlock Text="摄像头提醒中" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" />
+                            <Button Style="{StaticResource TextLinkButton}" Click="StopCameraButton_Click" FontSize="12" Padding="6,2" Margin="4,0,0,0">
+                                关闭
+                            </Button>
+                        </StackPanel>
 
                         <!-- Progress: 2px, almost invisible -->
-                        <Border Grid.Row="2" Margin="48,0,48,48" ClipToBounds="True">
+                        <Border Grid.Row="3" Margin="48,0,48,48" ClipToBounds="True">
                             <ProgressBar x:Name="ProgressBar" Value="{Binding Progress}" Minimum="0" Maximum="100"
                                          Height="2" Background="{DynamicResource BorderBrush}" BorderThickness="0">
                                 <ProgressBar.Foreground>
@@ -303,11 +333,27 @@
                         </Border>
 
                         <!-- ===== ACTION BUTTONS ===== -->
-                        <Grid Grid.Row="3">
-                            <!-- Idle: 开始专注 -->
+                        <Grid Grid.Row="4">
+                            <!-- Idle: 开始专注 + quick adjust -->
                             <StackPanel x:Name="IdlePanel"
-                                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}"
                                         Orientation="Vertical" HorizontalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFocusCompleted}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                                    <Button Style="{StaticResource TextLinkButton}" Click="AdjustTimeDown_Click" FontSize="16" Padding="8,2">−</Button>
+                                    <TextBlock Text="{Binding AppSettings.WorkMinutes}" FontSize="13" Foreground="{DynamicResource TertiaryTextBrush}"
+                                               VerticalAlignment="Center" Margin="6,0" />
+                                    <TextBlock Text="分钟" FontSize="13" Foreground="{DynamicResource TertiaryTextBrush}" VerticalAlignment="Center" />
+                                    <Button Style="{StaticResource TextLinkButton}" Click="AdjustTimeUp_Click" FontSize="16" Padding="8,2">+</Button>
+                                </StackPanel>
                                 <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
                                     开始专注
                                 </Button>
@@ -360,8 +406,21 @@
 
                             <!-- Focus completed -->
                             <StackPanel x:Name="CompletedPanel"
-                                        Visibility="{Binding IsFocusCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"
                                         Orientation="Horizontal" HorizontalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsFocusCompleted}" Value="True" />
+                                                    <Condition Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <Button x:Name="StartShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
                                     短休息
                                 </Button>

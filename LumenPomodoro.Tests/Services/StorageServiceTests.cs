@@ -120,19 +120,16 @@ public class StorageServiceTests : IDisposable
     }
 
     [Fact]
-    public void SaveSessionsWithTransaction_ShouldCreateBackup()
+    public void AddSession_ShouldPersistWithTransactionBackup()
     {
-        // Arrange
-        var sessions = new List<FocusSession>
+        var session = new FocusSession
         {
-            new FocusSession { Id = "1", TaskId = "t1", TaskName = "Task 1", StartTime = DateTime.Now, Completed = true, FocusMinutes = 25 }
+            Id = "1", TaskId = "t1", TaskName = "Task 1", StartTime = DateTime.Now, Completed = true, FocusMinutes = 25
         };
 
-        // Act
-        _storageService.SaveSessionsWithTransaction(sessions);
+        _storageService.AddSession(session);
         var loadedSessions = _storageService.LoadSessions();
 
-        // Assert
         Assert.NotEmpty(loadedSessions);
         Assert.Contains(loadedSessions, s => s.Id == "1");
     }

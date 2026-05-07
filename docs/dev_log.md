@@ -177,6 +177,36 @@
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
 
+## [2026-05-08] P1 动效补齐 + P2 健壮性与体验打磨
+
+**涉及模块**: MainWindow, MainWindow.xaml.cs, TimerService, MainViewModel, StorageService, StatsWindow, App
+
+**修改文件数**: 7 个
+
+### 改动摘要
+
+**P1 动效：**
+1. **专注完成呼吸动画** — TimerText Opacity 3s 呼吸循环（1.0→0.5→1.0），由 `IsFocusCompleted` 触发。
+2. **摄像头提醒中呼吸动画** — CameraAlertDot Opacity 2s 呼吸循环（1.0→0.3→1.0），由 `IsCameraAlertActive` 触发。
+3. **暂停状态动效** — TimerText ScaleTransform 4s 微缩放（1.0→0.97→1.0），由 `CurrentStatus==Paused` 触发。
+4. **启动淡入+上浮** — 已有 `MainWindow_IsVisibleChanged` 中的 Opacity/TranslateTransform 动画。
+5. **休息切换平滑过渡** — 已有状态切换时的 Opacity 动画。
+6. **托盘恢复淡入** — 同上 `IsVisibleChanged` 逻辑。
+
+**P2 健壮性：**
+7. **睡眠恢复时间修正** — TimerService 新增 `_lastTickTime` 字段和 `CorrectAfterWake()` 方法，唤醒后按实际流逝时间修正倒计时；App.xaml.cs 通过 `SystemEvents.PowerModeChanged` 监听唤醒事件，调用 `MainWindow.HandleWake()`。
+8. **摄像头自动释放后 UI 提示** — `CameraErrorCallback` 中检测"保护释放"关键词，设置 `IsFocusCompleted = true` 使主界面显示完成状态。
+
+**P3 体验优化：**
+9. **任务颜色标签 UI 展示** — 主界面任务名前增加颜色圆点（Ellipse）；统计页面每个任务卡片增加颜色圆点（`GetTaskColor` 方法）。
+10. **首次启动预置默认考研分类任务** — `StorageService.LoadTasks()` 在文件不存在或为空时调用 `GetDefaultTasks()` 并立即 `SaveTasks()` 写入文件。
+11. **主界面快速调整专注时长** — Idle 状态下"开始专注"按钮上方增加 −/+ 调整控件，每次 ±5 分钟，范围 1-120。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+
 ## [2026-05-07] P0 功能闭环
 
 **涉及模块**: SettingsViewModel, MainWindow, MainWindow.xaml.cs

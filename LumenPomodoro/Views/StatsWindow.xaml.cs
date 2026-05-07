@@ -55,22 +55,40 @@ public partial class StatsWindow : Window
             var panel = new StackPanel();
 
             var header = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
+
+            var leftPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+            var taskColor = GetTaskColor(kvp.Key);
+            var dot = new Ellipse
+            {
+                Width = 8,
+                Height = 8,
+                Fill = new SolidColorBrush(taskColor),
+                Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            leftPanel.Children.Add(dot);
+
             var nameText = new TextBlock
             {
                 Text = kvp.Key,
                 FontSize = 14,
-                Foreground = (Brush)FindResource("PrimaryTextBrush")
+                Foreground = (Brush)FindResource("PrimaryTextBrush"),
+                VerticalAlignment = VerticalAlignment.Center
             };
+            leftPanel.Children.Add(nameText);
+
             var countText = new TextBlock
             {
                 Text = $"{kvp.Value} 个番茄钟",
                 FontSize = 14,
                 Foreground = (Brush)FindResource("SecondaryTextBrush"),
-                HorizontalAlignment = HorizontalAlignment.Right
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
             };
             DockPanel.SetDock(countText, Dock.Right);
             header.Children.Add(countText);
-            header.Children.Add(nameText);
+            header.Children.Add(leftPanel);
             panel.Children.Add(header);
 
             var barGrid = new Grid
@@ -111,5 +129,18 @@ public partial class StatsWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private static Color GetTaskColor(string taskName)
+    {
+        foreach (var cat in Models.TaskCategories.DefaultTasks)
+        {
+            if (cat.Value.Contains(taskName))
+            {
+                var hex = Models.TaskCategories.GetCategoryColor(cat.Key);
+                return (Color)ColorConverter.ConvertFromString(hex);
+            }
+        }
+        return (Color)ColorConverter.ConvertFromString(Models.TaskCategories.GetCategoryColor("其他"));
     }
 }

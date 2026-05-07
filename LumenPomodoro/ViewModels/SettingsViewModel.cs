@@ -139,13 +139,13 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     public bool AutoStartEnabled
     {
         get => _autoStartEnabled;
-        set { if (_autoStartEnabled != value) { _autoStartEnabled = value; OnPropertyChanged(); UpdateAutoStart(); } }
+        set { if (_autoStartEnabled != value) { _autoStartEnabled = value; OnPropertyChanged(); } }
     }
 
     public string Theme
     {
         get => _theme;
-        set { if (_theme != value) { _theme = value; OnPropertyChanged(); ApplyTheme(value); } }
+        set { if (_theme != value) { _theme = value; OnPropertyChanged(); } }
     }
 
     public bool AnimationEnabled
@@ -233,6 +233,9 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         };
 
         _storageService.SaveSettings(settings);
+
+        UpdateAutoStart();
+        ApplyTheme(Theme);
 
         if (!CameraAlertEnabled && !SoundEnabled && !PopupEnabled && !SystemNotificationEnabled)
         {

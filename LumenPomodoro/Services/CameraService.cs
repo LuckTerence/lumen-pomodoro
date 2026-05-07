@@ -36,14 +36,16 @@ public class CameraService
     {
         if (_isRunning) return;
 
-        _isRunning = true;
         _startTime = DateTime.Now;
 
-        // 先创建新的 CTS，再取消旧的，避免旧 token 在使用中被 Dispose
         var newCts = new CancellationTokenSource();
         var oldCts = _cancellationTokenSource;
         _cancellationTokenSource = newCts;
-        oldCts?.Cancel();
+        if (oldCts != null)
+        {
+            oldCts.Cancel();
+            oldCts.Dispose();
+        }
 
         try
         {
@@ -51,13 +53,21 @@ public class CameraService
 
             await Task.Run(() => InitializeCameraDevice(), _cancellationTokenSource.Token);
 
+            lock (_lockObject)
+            {
+                _isRunning = true;
+            }
+
             _statusCallback?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
 
             _cameraTask = KeepCameraActiveAsync(_cancellationTokenSource.Token);
         }
         catch (Exception ex)
         {
-            _isRunning = false;
+            lock (_lockObject)
+            {
+                _isRunning = false;
+            }
             _errorCallback?.Invoke($"摄像头打开失败: {ex.Message}");
         }
     }
@@ -171,7 +181,7 @@ public class CameraService
                 {
                     if (_cameraDevice != null)
                     {
-                        try { _cameraDevice.Stop(); } catch { }
+                        try { _cameraDevice.Stop(); _cameraDevice.Dispose(); } catch { }
                         _cameraDevice = null;
                     }
                     _isRunning = false;
@@ -181,6 +191,8 @@ public class CameraService
 
                 if (_cameraDevice != null && !_cameraDevice.IsRunning)
                 {
+                    try { _cameraDevice.Dispose(); } catch { }
+                    _cameraDevice = null;
                     _isRunning = false;
                     _errorCallback?.Invoke("摄像头意外断开");
                     return;
