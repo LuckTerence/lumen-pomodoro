@@ -16,9 +16,9 @@ public class StorageService
     private DateTime _cacheDate;
     private readonly object _fileLock = new object();
 
-    public StorageService()
+    public StorageService(string? appDataPath = null)
     {
-        _appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LumenPomodoro");
+        _appDataPath = appDataPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LumenPomodoro");
         Directory.CreateDirectory(_appDataPath);
 
         _settingsFile = Path.Combine(_appDataPath, "settings.json");

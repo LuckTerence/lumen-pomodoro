@@ -1,5 +1,22 @@
 # 开发日志
 
+## [2026-05-07] 上线前复扫修复
+
+**涉及模块**: SettingsWindow, MainViewModel, StorageService, StorageServiceTests, README
+
+### 改动摘要
+
+1. 修复设置页开关控件使用 `DoubleAnimation` 动画 `Margin` 的运行时风险，改为匹配 `Thickness` 属性的 `ThicknessAnimation`。
+2. 修复 `CameraFollowBreakEnabled` 设置只保存但未参与休息亮灯判断的问题；跟随休息模式下会同时尊重总开关与“休息期间亮灯”开关。
+3. 为 `StorageService` 增加可选数据目录参数，测试改用临时目录并在结束后清理，避免测试读写用户正式 `%AppData%\LumenPomodoro` 数据。
+4. 移除 xUnit 对 `DateTime` 值类型的无效 `Assert.NotNull`，消除测试分析器警告。
+5. 更新 README 项目结构与当前阶段描述，避免文档与真实工程结构不一致。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+
 ## [2026-05-07] 全项目 Bug/性能修复 — 30+ 问题
 
 **涉及模块**: TimerService, StorageService, CameraService, SoundService, TrayService, MainViewModel, SettingsViewModel, App, MainWindow, TaskManagerWindow, SettingsWindow, FocusCompleteDialog, BreakCompleteDialog, TimerServiceTests, TaskItem/TaskCategories

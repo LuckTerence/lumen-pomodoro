@@ -310,7 +310,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         int breakMinutes = isLongBreak ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
         _timerService.StartBreak(breakMinutes);
 
-        if (AppSettings.CameraAlertMode == CameraAlertMode.FollowBreak && AppSettings.CameraAlertEnabled)
+        if (AppSettings.CameraAlertMode == CameraAlertMode.FollowBreak &&
+            AppSettings.CameraAlertEnabled &&
+            AppSettings.CameraFollowBreakEnabled)
         {
             FireAndForget(_cameraService.StartCameraAsync(), "启动摄像头(跟随休息)");
         }

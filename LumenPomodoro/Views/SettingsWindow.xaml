@@ -68,13 +68,13 @@
                                     <VisualState Name="Checked">
                                         <Storyboard>
                                             <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="#3B82F6" />
-                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Margin)" To="26,2,2,2" />
+                                            <ThicknessAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="Margin" To="26,2,2,2" Duration="0:0:0.12" />
                                         </Storyboard>
                                     </VisualState>
                                     <VisualState Name="Unchecked">
                                         <Storyboard>
                                             <ColorAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Fill).(SolidColorBrush.Color)" To="White" />
-                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(Margin)" To="2,2,2,2" />
+                                            <ThicknessAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="Margin" To="2,2,2,2" Duration="0:0:0.12" />
                                         </Storyboard>
                                     </VisualState>
                                 </VisualStateGroup>

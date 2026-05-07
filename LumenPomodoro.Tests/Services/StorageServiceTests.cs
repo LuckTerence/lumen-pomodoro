@@ -1,15 +1,26 @@
+using System.IO;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 
 namespace LumenPomodoro.Tests;
 
-public class StorageServiceTests
+public class StorageServiceTests : IDisposable
 {
     private readonly StorageService _storageService;
+    private readonly string _testDataPath;
 
     public StorageServiceTests()
     {
-        _storageService = new StorageService();
+        _testDataPath = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", Guid.NewGuid().ToString("N"));
+        _storageService = new StorageService(_testDataPath);
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_testDataPath))
+        {
+            Directory.Delete(_testDataPath, true);
+        }
     }
 
     [Fact]
@@ -184,7 +195,6 @@ public class StorageServiceTests
         Assert.Equal("Test", session.TaskName);
         Assert.True(session.Completed);
         Assert.Equal(25, session.FocusMinutes);
-        Assert.NotNull(session.StartTime);
         Assert.NotNull(session.EndTime);
     }
 

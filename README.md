@@ -26,14 +26,15 @@ lumen-pomodoro/
 ├── docs/
 │   ├── PRD.md          # 产品需求文档
 │   └── dev_log.md      # 开发日志
-├── src/                 # 源代码（待创建）
+├── LumenPomodoro/       # WPF 应用源码
+├── LumenPomodoro.Tests/ # xUnit 测试
 ├── LICENSE
 └── README.md
 ```
 
 ## 开发进度
 
-当前阶段：V1.0 MVP 开发准备中。详见 [PRD 产品需求文档](docs/PRD.md)。
+当前阶段：V1.0 MVP 可用性收口中。详见 [PRD 产品需求文档](docs/PRD.md) 与 [开发日志](docs/dev_log.md)。
 
 ## 隐私声明
 
