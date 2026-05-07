@@ -235,7 +235,31 @@
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
 
-## [2026-05-07] 二级窗口全部对齐极简 Apple 风格
+## [2026-05-07] MainWindow 第二次根本性重构 — Apple Timer
+
+**涉及模块**: MainWindow, MainWindow.xaml.cs
+
+**修改文件数**: 2 个
+
+### 改动摘要
+
+1. **去掉 GlassPanel 边框** — Window Background 直接 Transparent，内层 Border CornerRadius 从 18 降到 12，无 border line，消除"卡片感"。
+2. **时间 96px InterLight** — 从 80px 提升到 96px，视觉核心更震撼。
+3. **去掉状态标签** — "专注中"/"待开始" 文字完全删除，状态通过按钮和上下文传达。
+4. **进度条 2px** — 从 4px 减到 2px，几乎隐形。
+5. **任务选择器简化** — 从 ComboBox 改为 TextBlock 显示当前任务名 + ▾ 箭头，点击打开 TaskManagerWindow。仅 Idle 可见。
+6. **按钮紧凑化** — PrimaryButton padding 32x12 → 22x11（DESIGN.md button-primary 规范）。
+7. **窗口控制极简化** — 28x28 → 24x24，描边 1.5px → 1px，默认 TertiaryText 极淡色。
+8. **页脚统计文字** — 12px → 11px (DESIGN.md fine-print)，数字颜色从 Primary/Success 改为 SecondaryText 更克制。
+9. **设置齿轮** — CircleButton 改为 24x24 透明 Path 图标，更轻量。
+10. **动画简化** — 去掉 Border translateY 动画，改为纯窗口 Opacity fade-in。
+11. **垂直间距重分配** — 任务选择器下方留白 48px，时间下方留白 24px，进度条下方留白 48px。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+- Release 启动：进程正常启动并显示窗口。
 
 **涉及模块**: TaskManagerWindow, StatsWindow, FocusCompleteDialog, BreakCompleteDialog, SettingsWindow
 

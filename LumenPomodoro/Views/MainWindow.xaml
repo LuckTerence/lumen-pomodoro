@@ -16,24 +16,17 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <converters:StatusConverter x:Key="StatusConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
 
         <QuadraticEase x:Key="QuadraticEase" EasingMode="EaseOut" />
 
-        <!-- Glass panel -->
-        <Style x:Key="GlassPanel" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="18" />
-        </Style>
-
-        <!-- Primary button: pill, scale(0.95) pressed -->
+        <!-- Primary pill: DESIGN.md button-primary = 17/400, pill, padding 22x11, scale(0.95) -->
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="FontSize" Value="17" />
-            <Setter Property="Padding" Value="32,12" />
+            <Setter Property="Padding" Value="22,11" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -74,13 +67,13 @@
             </Setter>
         </Style>
 
-        <!-- Small secondary: pill, transparent bg + blue text, scale(0.95) pressed -->
+        <!-- Small secondary pill: transparent + blue border -->
         <Style x:Key="SmallSecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="Padding" Value="18,9" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Cursor" Value="Hand" />
@@ -125,13 +118,13 @@
             </Setter>
         </Style>
 
-        <!-- Text link: no bg, no border, just colored text -->
+        <!-- Text link: no bg, no border, just text -->
         <Style x:Key="TextLinkButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Padding" Value="10,6" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -172,120 +165,17 @@
             </Setter>
         </Style>
 
-        <!-- Circle button for settings gear -->
-        <Style x:Key="CircleButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource TertiaryTextBrush}" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="9999"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <ScaleTransform ScaleX="1" ScaleY="1" />
-                            </Border.RenderTransform>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.95" Duration="0:0:0.08" />
-                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.95" Duration="0:0:0.08" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.08" />
-                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.08" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Task ComboBox -->
-        <Style x:Key="TaskComboBox" TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
-                        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-                        <Setter Property="Padding" Value="10,8" />
-                    </Style>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Background="{TemplateBinding Background}"
-                                          BorderThickness="0"
-                                          Focusable="False"
-                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                          ClickMode="Press">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="18" Padding="12,8" TextElement.Foreground="{DynamicResource PrimaryTextBrush}">
-                                            <Grid>
-                                                <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  VerticalAlignment="Center" />
-                                                <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
-                                                           Foreground="{DynamicResource SecondaryTextBrush}"
-                                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="18" Padding="4" MinWidth="{TemplateBinding ActualWidth}">
-                                    <ScrollViewer MaxHeight="220">
-                                        <ItemsPresenter />
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Settings inline styles -->
+        <!-- Settings section styles (unchanged) -->
         <Style x:Key="SettingsSectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
-
         <Style x:Key="SettingsLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
         </Style>
-
         <Style x:Key="SettingsToggle" TargetType="ToggleButton">
             <Setter Property="Width" Value="44" />
             <Setter Property="Height" Value="24" />
@@ -294,8 +184,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <Border Background="{DynamicResource BorderBrush}" CornerRadius="12">
-                            <Ellipse x:Name="Thumb" Fill="White" Width="20" Height="20" Margin="2"
-                                     HorizontalAlignment="Left" />
+                            <Ellipse x:Name="Thumb" Fill="White" Width="20" Height="20" Margin="2" HorizontalAlignment="Left" />
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup Name="CheckStates">
                                     <VisualState Name="Checked">
@@ -317,7 +206,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Key="SettingsInput" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
@@ -335,7 +223,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Key="SettingsCombo" TargetType="ComboBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
@@ -347,10 +234,8 @@
     </Window.Resources>
 
     <Grid MouseLeftButtonDown="Window_MouseLeftButtonDown">
-        <Border x:Name="MainBorder" Style="{StaticResource GlassPanel}" RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <TranslateTransform Y="0" />
-            </Border.RenderTransform>
+        <!-- Full window surface: subtle rounded corners, no border line -->
+        <Border x:Name="RootSurface" Background="{DynamicResource GlassBackgroundBrush}" CornerRadius="12">
 
             <Grid x:Name="ContentRoot">
                 <Grid.RowDefinitions>
@@ -359,71 +244,57 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- ===== WINDOW CONTROLS (top-right) ===== -->
-                <Grid Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,8,0">
+                <!-- ===== WINDOW CONTROLS ===== -->
+                <Grid Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,6,0">
                     <StackPanel Orientation="Horizontal">
-                        <Button Width="28" Height="28" Padding="0" Click="MinimizeButton_Click"
+                        <Button Width="24" Height="24" Padding="0" Click="MinimizeButton_Click"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand">
-                            <Path Data="M2,12 L22,12" Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1.5" Width="24" Height="24" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            <Path Data="M5,12 L19,12" Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1"
+                                  Width="24" Height="24" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Button>
-                        <Button Width="28" Height="28" Padding="0" Click="CloseButton_Click"
+                        <Button Width="24" Height="24" Padding="0" Click="CloseButton_Click"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand">
-                            <Path Data="M7,7 L17,17 M17,7 L7,17" Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1.5" Width="24" Height="24" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            <Path Data="M7,7 L17,17 M17,7 L7,17" Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1"
+                                  Width="24" Height="24" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Button>
                     </StackPanel>
                 </Grid>
 
                 <!-- ===== TIMER VIEW ===== -->
                 <Grid x:Name="TimerView" Grid.Row="1">
-                    <Grid x:Name="TimerContent" VerticalAlignment="Center" Margin="32,0">
+                    <Grid VerticalAlignment="Center" Margin="32,0">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Task selector (only in Idle) -->
-                        <StackPanel Grid.Row="0" x:Name="TaskSelectorPanel"
-                                    HorizontalAlignment="Center" Margin="0,0,0,32"
-                                    Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <ComboBox x:Name="TaskComboBox" Style="{StaticResource TaskComboBox}" Width="220"
-                                          ItemsSource="{Binding Tasks}"
-                                          SelectedItem="{Binding SelectedTask}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <Rectangle Width="8" Height="8" Fill="{Binding Color}" RadiusX="4" RadiusY="4" Margin="0,0,8,0" />
-                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource PrimaryTextBrush}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <Button Style="{StaticResource CircleButton}" Margin="8,0,0,0" Padding="0" Click="ManageTasksButton_Click">
-                                    <Path Data="M3,3 L21,3 M3,10 L21,10 M3,17 L14,17"
-                                          Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1.5"
-                                          Width="24" Height="20" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
+                        <!-- Task name (Idle only, minimal) -->
+                        <TextBlock Grid.Row="0" x:Name="TaskNameDisplay"
+                                   HorizontalAlignment="Center" Margin="0,0,0,48"
+                                   FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Cursor" Value="Hand" />
+                                    <EventSetter Event="MouseDown" Handler="ManageTasksButton_Click" />
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
+                            <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource TertiaryTextBrush}" />
+                        </TextBlock>
 
-                        <!-- Status label -->
-                        <TextBlock Grid.Row="1" Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
-                                   FontSize="14" Foreground="{DynamicResource TertiaryTextBrush}"
-                                   HorizontalAlignment="Center" Margin="0,0,0,8" />
-
-                        <!-- HERO time display -->
-                        <TextBlock Grid.Row="2" Text="{Binding RemainingTime}"
-                                   FontSize="80" FontWeight="Light" Foreground="{DynamicResource PrimaryTextBrush}"
+                        <!-- HERO: 96px time -->
+                        <TextBlock Grid.Row="1" Text="{Binding RemainingTime}"
+                                   FontSize="96" FontWeight="Light" Foreground="{DynamicResource PrimaryTextBrush}"
                                    HorizontalAlignment="Center" FontFamily="{DynamicResource InterLight}"
-                                   LineHeight="1" Margin="0,0,0,16" />
+                                   LineHeight="1" Margin="0,0,0,24" />
 
-                        <!-- Progress bar (thin) -->
-                        <Border Grid.Row="3" Margin="0,0,0,32" ClipToBounds="True">
+                        <!-- Progress: 2px, almost invisible -->
+                        <Border Grid.Row="2" Margin="48,0,48,48" ClipToBounds="True">
                             <ProgressBar x:Name="ProgressBar" Value="{Binding Progress}" Minimum="0" Maximum="100"
-                                         Height="4" Background="{DynamicResource BorderBrush}" BorderThickness="0">
+                                         Height="2" Background="{DynamicResource BorderBrush}" BorderThickness="0">
                                 <ProgressBar.Foreground>
                                     <SolidColorBrush Color="{DynamicResource PrimaryColor}" />
                                 </ProgressBar.Foreground>
@@ -431,24 +302,20 @@
                         </Border>
 
                         <!-- ===== ACTION BUTTONS ===== -->
-                        <Grid Grid.Row="4">
-                            <!-- Idle: 开始专注 (no pending break) -->
+                        <Grid Grid.Row="3">
+                            <!-- Idle: 开始专注 -->
                             <StackPanel x:Name="IdlePanel"
                                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}"
                                         Orientation="Vertical" HorizontalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
-                                        开始专注
-                                    </Button>
-                                </StackPanel>
-
-                                <!-- Pending break options -->
+                                <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
+                                    开始专注
+                                </Button>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"
                                             Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <Button x:Name="PendingShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
                                         短休息
                                     </Button>
-                                    <Button x:Name="PendingLongBreakButton" Style="{StaticResource TextLinkButton}" Click="StartLongBreakButton_Click" Margin="12,0,0,0">
+                                    <Button x:Name="PendingLongBreakButton" Style="{StaticResource TextLinkButton}" Click="StartLongBreakButton_Click" Margin="8,0,0,0">
                                         长休息
                                     </Button>
                                     <Button x:Name="PendingSkipBreakButton" Style="{StaticResource TextLinkButton}" Click="SkipBreakButton_Click">
@@ -457,26 +324,26 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- Focus: 暂停 + 重置 -->
+                            <!-- Focus: 暂停 · 重置 -->
                             <StackPanel x:Name="FocusPanel"
                                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
                                         Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button x:Name="PauseButton" Style="{StaticResource SmallSecondaryButton}" Click="PauseButton_Click">
                                     暂停
                                 </Button>
-                                <Button x:Name="ResetButton" Style="{StaticResource TextLinkButton}" Click="ResetButton_Click" Margin="12,0,0,0">
+                                <Button x:Name="ResetButton" Style="{StaticResource TextLinkButton}" Click="ResetButton_Click" Margin="8,0,0,0">
                                     重置
                                 </Button>
                             </StackPanel>
 
-                            <!-- Paused: 继续 + 重置 -->
+                            <!-- Paused: 继续 · 重置 -->
                             <StackPanel x:Name="PausedPanel"
                                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                                         Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button x:Name="ResumeButton" Style="{StaticResource PrimaryButton}" Click="ResumeButton_Click">
                                     继续
                                 </Button>
-                                <Button x:Name="ResetButton2" Style="{StaticResource TextLinkButton}" Click="ResetButton_Click" Margin="12,0,0,0">
+                                <Button x:Name="ResetButton2" Style="{StaticResource TextLinkButton}" Click="ResetButton_Click" Margin="8,0,0,0">
                                     重置
                                 </Button>
                             </StackPanel>
@@ -490,14 +357,14 @@
                                 </Button>
                             </StackPanel>
 
-                            <!-- Focus completed: 短休息 + 长休息 + 跳过 -->
+                            <!-- Focus completed -->
                             <StackPanel x:Name="CompletedPanel"
                                         Visibility="{Binding IsFocusCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"
                                         Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button x:Name="StartShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
                                     短休息
                                 </Button>
-                                <Button x:Name="StartLongBreakButton" Style="{StaticResource TextLinkButton}" Click="StartLongBreakButton_Click" Margin="12,0,0,0">
+                                <Button x:Name="StartLongBreakButton" Style="{StaticResource TextLinkButton}" Click="StartLongBreakButton_Click" Margin="8,0,0,0">
                                     长休息
                                 </Button>
                                 <Button x:Name="SkipBreakButton" Style="{StaticResource TextLinkButton}" Click="SkipBreakButton_Click">
@@ -506,27 +373,6 @@
                             </StackPanel>
                         </Grid>
                     </Grid>
-
-                    <!-- Camera status (minimal, bottom of timer view) -->
-                    <StackPanel x:Name="CameraStatusPanel"
-                                Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8">
-                        <Ellipse Width="6" Height="6" Fill="{DynamicResource SuccessBrush}" Margin="0,0,6,0">
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.3" Duration="0:0:0.8" AutoReverse="True" RepeatBehavior="Forever" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <TextBlock Text="{Binding CameraStatus}" FontSize="11" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,6,0" />
-                        <Button Style="{StaticResource TextLinkButton}" Padding="4,2" FontSize="11" Click="StopCameraButton_Click">
-                            关闭
-                        </Button>
-                    </StackPanel>
                 </Grid>
 
                 <!-- ===== SETTINGS VIEW ===== -->
@@ -537,11 +383,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Settings header -->
                     <Grid Grid.Row="0" Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <Button Style="{StaticResource CircleButton}" Padding="0" Click="SettingsButton_Click">
-                                <Path Data="M15,4 L7,12 L15,20" Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1.5"
+                            <Button Width="24" Height="24" Padding="0" Click="SettingsButton_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <Path Data="M15,4 L7,12 L15,20" Stroke="{DynamicResource SecondaryTextBrush}" StrokeThickness="1.5"
                                       Width="22" Height="24" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Fill="Transparent" />
                             </Button>
                             <TextBlock Text="设置" FontSize="21" FontWeight="SemiBold"
@@ -549,77 +395,45 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Settings content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel DataContext="{Binding SettingsVM}">
-                            <!-- Timer settings -->
                             <TextBlock Text="计时" Style="{StaticResource SettingsSectionTitle}" />
-
                             <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="专注时间（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="短休息（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="长休息（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
 
-                            <!-- Alert settings -->
                             <TextBlock Text="提醒" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="声音提醒" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding SoundEnabled}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="弹窗提醒" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding PopupEnabled}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="系统通知" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding SystemNotificationEnabled}" />
                             </Grid>
 
-                            <!-- Appearance settings -->
                             <TextBlock Text="外观" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="主题" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ComboBox Grid.Column="1" Style="{StaticResource SettingsCombo}" MinWidth="100"
                                           SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
@@ -628,80 +442,58 @@
                                     <ComboBoxItem Content="深色" Tag="dark" />
                                 </ComboBox>
                             </Grid>
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="动画效果" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AnimationEnabled}" />
                             </Grid>
 
-                            <!-- System settings -->
                             <TextBlock Text="系统" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="托盘运行" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding TrayEnabled}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="关闭时最小化到托盘" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding CloseToTray}" />
                             </Grid>
-
                             <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="开机自启" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AutoStartEnabled}" />
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- Save / Cancel -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                        <Button Style="{StaticResource TextLinkButton}" Click="CancelSettings_Click" Margin="0,0,12,0">
-                            取消
-                        </Button>
-                        <Button Style="{StaticResource PrimaryButton}" FontSize="14" Padding="24,10" Click="SaveSettings_Click">
-                            保存
-                        </Button>
+                        <Button Style="{StaticResource TextLinkButton}" Click="CancelSettings_Click" Margin="0,0,8,0">取消</Button>
+                        <Button Style="{StaticResource PrimaryButton}" FontSize="14" Padding="22,10" Click="SaveSettings_Click">保存</Button>
                     </StackPanel>
                 </Grid>
 
                 <!-- ===== FOOTER ===== -->
-                <Grid Grid.Row="2" Margin="24,12,24,16" x:Name="FooterPanel">
+                <Grid Grid.Row="2" Margin="24,0,24,14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
-                        <TextBlock FontSize="12" Foreground="{DynamicResource TertiaryTextBrush}">
-                            <Run Text="今日 " />
-                            <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" />
-                            <Run Text=" · 专注 " />
-                            <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold" />
-                            <Run Text="分" />
-                        </TextBlock>
-                    </StackPanel>
+                    <TextBlock Grid.Column="0" FontSize="11" Foreground="{DynamicResource TertiaryTextBrush}"
+                               VerticalAlignment="Center" Cursor="Hand" MouseDown="StatsPanel_MouseDown">
+                        <Run Text="今日 " />
+                        <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" />
+                        <Run Text=" · 专注 " />
+                        <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" />
+                        <Run Text="分" />
+                    </TextBlock>
 
-                    <Button Grid.Column="1" Style="{StaticResource CircleButton}" Click="SettingsButton_Click">
-                        <Path Data="M12,15.5 A3.5,3.5 0 1,1 12,8.5 A3.5,3.5 0 1,1 12,15.5 M19.4,15 A1.65,1.65 0 0,0 18.65,13.28 L18.72,11.55 A1.65,1.65 0 0,0 17.27,10.23 L15.65,9.77 A7.83,7.83 0 0,0 14.23,8.35 L13.77,6.73 A1.65,1.65 0 0,0 12.45,5.28 L10.55,5.28 A1.65,1.65 0 0,0 9.23,6.73 L8.77,8.35 A7.83,7.83 0 0,0 7.35,9.77 L5.73,10.23 A1.65,1.65 0 0,0 4.28,11.55 L4.28,13.45 A1.65,1.65 0 0,0 5.73,14.77 L7.35,15.23 A7.83,7.83 0 0,0 8.77,16.65 L9.23,18.27 A1.65,1.65 0 0,0 10.55,19.72 L12.45,19.72 A1.65,1.65 0 0,0 13.77,18.27 L14.23,16.65 A7.83,7.83 0 0,0 15.65,15.23 L17.27,14.77 A1.65,1.65 0 0,0 19.4,15 Z"
-                              Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="1"
-                              Width="24" Height="24" Fill="Transparent" />
+                    <Button Grid.Column="1" Width="24" Height="24" Padding="0" Click="SettingsButton_Click"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <Path Data="M12,15 A3,3 0 1,1 12,9 A3,3 0 1,1 12,15 M19.4,15 A1.65,1.65 0 0,0 18.65,13.28 L18.72,11.55 A1.65,1.65 0 0,0 17.27,10.23 L15.65,9.77 A7.83,7.83 0 0,0 14.23,8.35 L13.77,6.73 A1.65,1.65 0 0,0 12.45,5.28 L10.55,5.28 A1.65,1.65 0 0,0 9.23,6.73 L8.77,8.35 A7.83,7.83 0 0,0 7.35,9.77 L5.73,10.23 A1.65,1.65 0 0,0 4.28,11.55 L4.28,13.45 A1.65,1.65 0 0,0 5.73,14.77 L7.35,15.23 A7.83,7.83 0 0,0 8.77,16.65 L9.23,18.27 A1.65,1.65 0 0,0 10.55,19.72 L12.45,19.72 A1.65,1.65 0 0,0 13.77,18.27 L14.23,16.65 A7.83,7.83 0 0,0 15.65,15.23 L17.27,14.77 A1.65,1.65 0 0,0 19.4,15 Z"
+                              Stroke="{DynamicResource TertiaryTextBrush}" StrokeThickness="0.8"
+                              Width="20" Height="20" Fill="Transparent" />
                     </Button>
                 </Grid>
             </Grid>

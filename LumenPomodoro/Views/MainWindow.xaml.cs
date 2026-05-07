@@ -93,41 +93,15 @@ public partial class MainWindow : Window
 
     private void ApplyFadeInAnimation()
     {
-        var border = (Border?)FindName("MainBorder");
-        if (border == null)
-        {
-            Opacity = 0;
-            var fadeIn = new DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromSeconds(0.3)
-            };
-            BeginAnimation(OpacityProperty, fadeIn);
-            return;
-        }
-
-        border.Opacity = 0;
-        border.RenderTransform = new TranslateTransform(0, 20);
-
-        var opacityAnim = new DoubleAnimation
+        Opacity = 0;
+        var fadeIn = new DoubleAnimation
         {
             From = 0,
             To = 1,
-            Duration = TimeSpan.FromSeconds(0.4),
+            Duration = TimeSpan.FromSeconds(0.3),
             EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
         };
-
-        var translateYAnim = new DoubleAnimation
-        {
-            From = 20,
-            To = 0,
-            Duration = TimeSpan.FromSeconds(0.4),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-        };
-
-        border.BeginAnimation(OpacityProperty, opacityAnim);
-        border.RenderTransform.BeginAnimation(TranslateTransform.YProperty, translateYAnim);
+        BeginAnimation(OpacityProperty, fadeIn);
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
