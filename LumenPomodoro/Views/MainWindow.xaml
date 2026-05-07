@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewmodels="clr-namespace:LumenPomodoro.ViewModels"
+        xmlns:models="clr-namespace:LumenPomodoro.Models"
         xmlns:converters="clr-namespace:LumenPomodoro.Converters"
         mc:Ignorable="d"
         Title="Lumen Pomodoro" Height="520" Width="420"
@@ -413,6 +414,43 @@
                                 <TextBlock Grid.Column="0" Text="长休息（分钟）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
                                 <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
+
+                            <TextBlock Text="摄像头" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="启用摄像头提醒" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding CameraAlertEnabled}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="提醒模式" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Style="{StaticResource SettingsCombo}" MinWidth="100"
+                                          SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
+                                    <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" />
+                                    <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" />
+                                    <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" />
+                                </ComboBox>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="固定亮灯时长（秒）" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{StaticResource SettingsInput}" Text="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="休息期间亮灯" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ToggleButton Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding CameraFollowBreakEnabled}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="摄像头选择" Style="{StaticResource SettingsLabel}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" Style="{StaticResource SettingsCombo}" MinWidth="120"
+                                          ItemsSource="{Binding AvailableCameras}"
+                                          SelectedIndex="{Binding SelectedCameraIndex}" />
+                            </Grid>
+                            <Button Style="{StaticResource TextLinkButton}" Click="TestCameraButton_Click" Padding="10,6" FontSize="12">
+                                测试摄像头
+                            </Button>
 
                             <TextBlock Text="提醒" Style="{StaticResource SettingsSectionTitle}" Margin="0,16,0,0" />
                             <Grid Margin="0,0,0,10">

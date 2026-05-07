@@ -176,7 +176,7 @@ public partial class MainWindow : Window
         {
             TimerView.Visibility = Visibility.Collapsed;
             SettingsView.Visibility = Visibility.Visible;
-            Height = 680;
+            Height = 740;
         }
         else
         {
@@ -200,6 +200,11 @@ public partial class MainWindow : Window
         SettingsView.Visibility = Visibility.Collapsed;
         TimerView.Visibility = Visibility.Visible;
         Height = 520;
+    }
+
+    private void TestCameraButton_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SettingsVM?.TestCameraAlert();
     }
 
     private void ManageTasksButton_Click(object sender, RoutedEventArgs e)

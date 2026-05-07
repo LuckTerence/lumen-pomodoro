@@ -281,13 +281,19 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             var startupPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
             using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(startupPath, true))
             {
+                if (key == null) return;
+
                 if (AutoStartEnabled)
                 {
-                    key?.SetValue("LumenPomodoro", System.Windows.Forms.Application.ExecutablePath);
+                    var exePath = Environment.ProcessPath;
+                    if (!string.IsNullOrEmpty(exePath))
+                    {
+                        key.SetValue("LumenPomodoro", $"\"{exePath}\"");
+                    }
                 }
                 else
                 {
-                    key?.DeleteValue("LumenPomodoro", false);
+                    key.DeleteValue("LumenPomodoro", false);
                 }
             }
         }

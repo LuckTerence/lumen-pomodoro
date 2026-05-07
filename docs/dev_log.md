@@ -177,6 +177,24 @@
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
 
+## [2026-05-07] P0 功能闭环
+
+**涉及模块**: SettingsViewModel, MainWindow, MainWindow.xaml.cs
+
+**修改文件数**: 3 个
+
+### 改动摘要
+
+1. **开机自启路径修复** — `UpdateAutoStart()` 从 `System.Windows.Forms.Application.ExecutablePath` 改为 `Environment.ProcessPath`，避免对 Windows Forms 的依赖；注册表值用引号包裹路径以处理空格；增加 key null 检查。
+2. **内联设置补齐摄像头配置** — 在 MainWindow 内联设置面板的"计时"和"提醒"之间新增"摄像头"分组，包含：启用摄像头提醒开关、提醒模式选择（固定时长/直到确认/跟随休息）、固定亮灯时长输入、休息期间亮灯开关、摄像头选择下拉框、测试摄像头按钮。
+3. **设置面板高度调整** — 展开设置时窗口高度从 680 调整为 740，容纳新增的摄像头配置项。
+4. **测试摄像头事件处理** — MainWindow.xaml.cs 新增 `TestCameraButton_Click`，委托给 `SettingsVM.TestCameraAlert()`。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+
 ## [2026-05-07] 设置内联化 + UI 视觉优化
 
 **涉及模块**: MainViewModel, MainWindow, MainWindow.xaml.cs
