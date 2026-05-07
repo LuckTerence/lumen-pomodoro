@@ -19,12 +19,27 @@
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
-    <ui:NavigationView x:Name="NavView" PaneDisplayMode="Bottom">
-        <ui:NavigationView.MenuItems>
-            <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
-            <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
-            <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}" />
-            <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}" />
-        </ui:NavigationView.MenuItems>
-    </ui:NavigationView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar x:Name="AppTitleBar"
+                     Title="Lumen Pomodoro"
+                     Grid.Row="0"
+                     ShowMaximize="False" />
+
+        <ui:NavigationView x:Name="NavView" Grid.Row="1" PaneDisplayMode="Bottom">
+            <ui:NavigationView.TitleBar>
+                <ui:TitleBar Title="Lumen Pomodoro" ShowMaximize="False" />
+            </ui:NavigationView.TitleBar>
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
+                <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
+                <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}" />
+                <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}" />
+            </ui:NavigationView.MenuItems>
+        </ui:NavigationView>
+    </Grid>
 </ui:FluentWindow>
