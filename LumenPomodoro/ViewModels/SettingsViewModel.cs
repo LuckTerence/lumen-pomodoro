@@ -240,6 +240,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private bool _cameraStartedByTest;
+
     public void TestCameraAlert()
     {
         if (!CameraAlertEnabled)
@@ -250,18 +252,20 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+            _cameraStartedByTest = true;
             FireAndForget(_cameraService.StartCameraForDurationAsync(5), "测试摄像头");
             MessageBox.Show("摄像头测试中，5秒后自动关闭", "测试摄像头", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
+            _cameraStartedByTest = false;
             MessageBox.Show($"摄像头测试失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     public void Cleanup()
     {
-        if (_cameraService.IsRunning)
+        if (_cameraStartedByTest && _cameraService.IsRunning)
         {
             try
             {
@@ -270,6 +274,10 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             catch (Exception ex)
             {
                 Debug.WriteLine($"[SettingsViewModel] Cleanup 停止摄像头异常: {ex.Message}");
+            }
+            finally
+            {
+                _cameraStartedByTest = false;
             }
         }
     }
