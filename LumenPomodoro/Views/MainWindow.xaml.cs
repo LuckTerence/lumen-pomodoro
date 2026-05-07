@@ -12,7 +12,7 @@ namespace LumenPomodoro.Views;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
-    private readonly TrayService _trayService;
+    private readonly TrayService? _trayService;
 
     private bool _isFirstLoad = true;
 
@@ -22,16 +22,19 @@ public partial class MainWindow : Window
 
         var storageService = ((App)Application.Current).StorageService;
         _viewModel = new MainViewModel(storageService);
-        _trayService = new TrayService(_viewModel, _viewModel.CameraService, _viewModel.StorageService);
 
         DataContext = _viewModel;
 
-        _trayService.AttachToWindow(this);
-
-        _viewModel.TrayMenuNeedsUpdate += () =>
+        if (_viewModel.AppSettings.TrayEnabled)
         {
-            Dispatcher.BeginInvoke(() => _trayService.UpdateMenuState());
-        };
+            _trayService = new TrayService(_viewModel, _viewModel.CameraService, _viewModel.StorageService);
+            _trayService.AttachToWindow(this);
+
+            _viewModel.TrayMenuNeedsUpdate += () =>
+            {
+                Dispatcher.BeginInvoke(() => _trayService.UpdateMenuState());
+            };
+        }
 
         Loaded += MainWindow_Loaded;
         IsVisibleChanged += MainWindow_IsVisibleChanged;
@@ -135,7 +138,7 @@ public partial class MainWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         var settings = _viewModel.AppSettings;
-        if (settings.TrayEnabled && settings.CloseToTray)
+        if (settings.TrayEnabled && settings.CloseToTray && _trayService != null)
         {
             Hide();
             _trayService.ShowNotification("Lumen Pomodoro", "已最小化到托盘");
@@ -251,7 +254,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.Dispose();
-        _trayService.Dispose();
+        _trayService?.Dispose();
         base.OnClosed(e);
     }
 }

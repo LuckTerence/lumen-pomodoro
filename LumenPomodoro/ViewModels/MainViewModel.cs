@@ -135,11 +135,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback);
 
-        _trayUpdateTimer = new System.Timers.Timer(2000);
-        _trayUpdateTimer.Elapsed += (s, e) => TrayMenuNeedsUpdate?.Invoke();
-        _trayUpdateTimer.Start();
-
         LoadData();
+
+        if (AppSettings.TrayEnabled)
+        {
+            _trayUpdateTimer = new System.Timers.Timer(2000);
+            _trayUpdateTimer.Elapsed += (s, e) => TrayMenuNeedsUpdate?.Invoke();
+            _trayUpdateTimer.Start();
+        }
 
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         CurrentStatus = TimerMode.Idle;

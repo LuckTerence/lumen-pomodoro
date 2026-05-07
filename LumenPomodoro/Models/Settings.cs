@@ -19,8 +19,8 @@ public class Settings
     public bool PopupEnabled { get; set; } = true;
     public bool SystemNotificationEnabled { get; set; } = true;
     
-    public bool TrayEnabled { get; set; } = true;
-    public bool CloseToTray { get; set; } = true;
+    public bool TrayEnabled { get; set; } = false;
+    public bool CloseToTray { get; set; } = false;
     public bool AutoStartEnabled { get; set; } = false;
     
     public string Theme { get; set; } = "system";

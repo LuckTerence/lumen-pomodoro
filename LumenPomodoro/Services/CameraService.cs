@@ -73,7 +73,7 @@ public class CameraService
             }
 
             var deviceIndex = Math.Min(_cameraIndex, devices.Count - 1);
-            _cameraDevice = new MediaFoundationCamera(devices[deviceIndex].SymbolicLink);
+            _cameraDevice = new MediaFoundationCamera(devices[deviceIndex].SymbolicLink, _errorCallback);
             _cameraDevice.Start();
 
             await Task.Delay(500);
@@ -274,15 +274,17 @@ public class CameraService
 internal class MediaFoundationCamera : IDisposable
 {
     private readonly string _symbolicLink;
+    private readonly Action<string>? _errorCallback;
     private volatile bool _isRunning;
     private Thread? _captureThread;
     private CancellationTokenSource? _internalToken;
 
     public bool IsRunning => _isRunning;
 
-    public MediaFoundationCamera(string symbolicLink)
+    public MediaFoundationCamera(string symbolicLink, Action<string>? errorCallback = null)
     {
         _symbolicLink = symbolicLink;
+        _errorCallback = errorCallback;
     }
 
     public void Start()
@@ -297,6 +299,19 @@ internal class MediaFoundationCamera : IDisposable
         _captureThread.Start();
     }
 
+    private static string HResultToString(int hr) => hr switch
+    {
+        0 => "S_OK",
+        unchecked((int)0x80004003) => "E_POINTER (无效指针)",
+        unchecked((int)0x80070057) => "E_INVALIDARG (无效参数)",
+        unchecked((int)0x80070005) => "E_ACCESSDENIED (摄像头权限被拒绝)",
+        unchecked((int)0x80070015) => "E_NOTREADY (设备未就绪)",
+        unchecked((int)0x8007001F) => "E_FAIL (设备故障)",
+        unchecked((int)0x80070490) => "E_NOTFOUND (未找到设备)",
+        unchecked((int)0x80004005) => "E_UNEXPECTED (未预期错误)",
+        _ => $"0x{hr:X8}"
+    };
+
     private void CaptureLoop(CancellationToken token)
     {
         IMFSourceReader? sourceReader = null;
@@ -305,10 +320,18 @@ internal class MediaFoundationCamera : IDisposable
         try
         {
             int hr = NativeMethods.MFStartup(0x20070, NativeMethods.MFSTARTUP_LITE);
-            if (hr < 0) return;
+            if (hr < 0)
+            {
+                _errorCallback?.Invoke($"Media Foundation 初始化失败: {HResultToString(hr)}");
+                return;
+            }
 
             var sourceAttributes = NativeMethods.CreateAttributes();
-            if (sourceAttributes == null) return;
+            if (sourceAttributes == null)
+            {
+                _errorCallback?.Invoke("创建媒体属性失败 (MFCreateAttributes 返回 null)");
+                return;
+            }
 
             var sourceType = NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
             sourceAttributes.SetGUID(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, ref sourceType);
@@ -324,6 +347,8 @@ internal class MediaFoundationCamera : IDisposable
             if (hr < 0 || mediaSource == null)
             {
                 if (mediaSource != null) Marshal.ReleaseComObject(mediaSource);
+                var linkInfo = string.IsNullOrEmpty(_symbolicLink) ? "(空符号链接 - 使用默认设备)" : _symbolicLink;
+                _errorCallback?.Invoke($"创建摄像头设备源失败: {HResultToString(hr)}\n符号链接: {linkInfo}");
                 return;
             }
 
@@ -335,7 +360,11 @@ internal class MediaFoundationCamera : IDisposable
             Marshal.ReleaseComObject(mediaSource);
             mediaSource = null;
 
-            if (hr < 0 || sourceReader == null) return;
+            if (hr < 0 || sourceReader == null)
+            {
+                _errorCallback?.Invoke($"创建摄像头读取器失败: {HResultToString(hr)}");
+                return;
+            }
 
             while (!token.IsCancellationRequested)
             {
@@ -357,10 +386,20 @@ internal class MediaFoundationCamera : IDisposable
                     Marshal.ReleaseComObject(sample);
                 }
 
-                if (hr < 0 ||
-                    flags.HasFlag(NativeMethods.MF_SOURCE_READER_FLAG.MF_SOURCE_READER_F_ENDOFSTREAM) ||
-                    flags.HasFlag(NativeMethods.MF_SOURCE_READER_FLAG.MF_SOURCE_READER_F_ERROR))
+                if (hr < 0)
                 {
+                    _errorCallback?.Invoke($"摄像头读取帧失败: {HResultToString(hr)}");
+                    break;
+                }
+
+                if (flags.HasFlag(NativeMethods.MF_SOURCE_READER_FLAG.MF_SOURCE_READER_F_ENDOFSTREAM))
+                {
+                    break;
+                }
+
+                if (flags.HasFlag(NativeMethods.MF_SOURCE_READER_FLAG.MF_SOURCE_READER_F_ERROR))
+                {
+                    _errorCallback?.Invoke("摄像头流发生错误 (MF_SOURCE_READER_F_ERROR)");
                     break;
                 }
 
@@ -371,6 +410,7 @@ internal class MediaFoundationCamera : IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"[MediaFoundationCamera] CaptureLoop 异常: {ex.Message}");
+            _errorCallback?.Invoke($"摄像头运行时异常: {ex.Message}");
         }
         finally
         {

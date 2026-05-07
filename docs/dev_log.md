@@ -195,3 +195,20 @@
 
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
+
+## [2026-05-07] 摄像头错误暴露 + 移除默认托盘行为
+
+**涉及模块**: CameraService, Settings, MainViewModel, MainWindow
+
+**修改文件数**: 4 个
+
+### 改动摘要
+
+1. **摄像头错误码暴露** — `MediaFoundationCamera.CaptureLoop` 之前在 COM 调用失败时静默 return（`if (hr < 0) return;`），用户只看到"摄像头意外断开"的误导信息。新增 `HResultToString` 方法将 HRESULT 翻译为中文可读描述（E_ACCESSDENIED/E_NOTFOUND 等），通过 error 回调逐级传递到 UI 弹窗。
+2. **MediaFoundationCamera 接受 error 回调** — 构造函数新增 `Action<string>? errorCallback` 参数，`CameraService.InitializeCameraDevice` 创建实例时传入 `_errorCallback`，使 CaptureLoop 中的错误能正确传递到 `MainViewModel.CameraErrorCallback`。
+3. **移除默认托盘行为** — `Settings.TrayEnabled` 和 `Settings.CloseToTray` 默认值从 `true` 改为 `false`。关闭窗口直接退出应用，不再隐藏到托盘。
+4. **条件化 TrayService** — `MainWindow` 构造函数仅在 `TrayEnabled=true` 时创建 `TrayService` 实例和订阅托盘菜单更新事件。`MainViewModel` 的 2 秒托盘更新定时器同理条件化启动，避免无意义的定时器开销。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
