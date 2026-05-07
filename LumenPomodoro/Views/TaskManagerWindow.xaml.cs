@@ -107,7 +107,7 @@ public partial class TaskManagerWindow : Window
         var border = new System.Windows.Controls.Border
         {
             Background = (System.Windows.Media.Brush)FindResource("GlassBackgroundBrush"),
-            CornerRadius = new CornerRadius(16),
+            CornerRadius = new CornerRadius(18),
             Padding = new Thickness(24)
         };
 
@@ -146,7 +146,7 @@ public partial class TaskManagerWindow : Window
             Content = "取消",
             Background = (System.Windows.Media.Brush)FindResource("ControlBackgroundBrush"),
             Foreground = (System.Windows.Media.Brush)FindResource("PrimaryTextBrush"),
-            FontSize = 13,
+            FontSize = 14,
             Padding = new Thickness(12, 8, 12, 8),
             BorderThickness = new Thickness(0),
             Cursor = System.Windows.Input.Cursors.Hand,
@@ -160,8 +160,7 @@ public partial class TaskManagerWindow : Window
             Content = "保存",
             Background = (System.Windows.Media.Brush)FindResource("PrimaryBrush"),
             Foreground = System.Windows.Media.Brushes.White,
-            FontSize = 13,
-            FontWeight = FontWeights.SemiBold,
+            FontSize = 14,
             Padding = new Thickness(12, 8, 12, 8),
             BorderThickness = new Thickness(0),
             Cursor = System.Windows.Input.Cursors.Hand

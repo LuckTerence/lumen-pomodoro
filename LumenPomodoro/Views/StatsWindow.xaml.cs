@@ -47,7 +47,7 @@ public partial class StatsWindow : Window
             var card = new Border
             {
                 Background = (Brush)FindResource("CardBackgroundBrush"),
-                CornerRadius = new CornerRadius(12),
+                CornerRadius = new CornerRadius(18),
                 Padding = new Thickness(16),
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -59,13 +59,12 @@ public partial class StatsWindow : Window
             {
                 Text = kvp.Key,
                 FontSize = 14,
-                FontWeight = FontWeights.Medium,
                 Foreground = (Brush)FindResource("PrimaryTextBrush")
             };
             var countText = new TextBlock
             {
                 Text = $"{kvp.Value} 个番茄钟",
-                FontSize = 13,
+                FontSize = 14,
                 Foreground = (Brush)FindResource("SecondaryTextBrush"),
                 HorizontalAlignment = HorizontalAlignment.Right
             };

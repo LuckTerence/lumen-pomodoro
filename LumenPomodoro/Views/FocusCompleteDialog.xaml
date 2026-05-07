@@ -10,7 +10,103 @@
         ResizeMode="NoResize"
         Topmost="True"
         WindowStartupLocation="CenterOwner">
-    <!-- DESIGN.md rounded.lg = 18, no shadow on UI chrome -->
+
+    <Window.Resources>
+        <!-- Primary pill button -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="22,11" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="9999" Padding="{TemplateBinding Padding}"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.95" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.95" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Text link button -->
+        <Style x:Key="TextLinkButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.95" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.95" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Border Background="{DynamicResource GlassBackgroundBrush}"
             CornerRadius="18">
         <Grid Margin="24">
@@ -22,12 +118,13 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Ellipse Grid.Row="0" Width="64" Height="64" Fill="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" Margin="0,0,0,16" />
+            <!-- Checkmark icon -->
+            <Ellipse Grid.Row="0" Width="56" Height="56" Fill="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" Margin="0,0,0,16" />
             <Path Grid.Row="0" Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="White"
                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,16"
-                  Width="32" Height="32" Stretch="Uniform" />
+                  Width="28" Height="28" Stretch="Uniform" />
 
-            <!-- DESIGN.md tagline = 21/600 -->
+            <!-- Title: tagline = 21/600 -->
             <TextBlock Grid.Row="1"
                        Text="专注完成！"
                        FontSize="21"
@@ -36,6 +133,7 @@
                        HorizontalAlignment="Center"
                        Margin="0,0,0,8" />
 
+            <!-- Suggestion text -->
             <TextBlock x:Name="SuggestionText" Grid.Row="2"
                        FontSize="14"
                        Foreground="{DynamicResource WarningBrush}"
@@ -45,7 +143,7 @@
                        Visibility="Collapsed"
                        Margin="0,0,0,8" />
 
-            <!-- DESIGN.md body = 17/400 -->
+            <!-- Body: 17/400 -->
             <TextBlock Grid.Row="3"
                        Text="您已完成本轮专注，现在该休息一下了。建议起身活动、喝水或做些简单的伸展运动。"
                        FontSize="17"
@@ -56,56 +154,20 @@
                        VerticalAlignment="Center"
                        Margin="0,0,0,16" />
 
-            <!-- DESIGN.md buttons = pill, caption = 14/400 -->
+            <!-- Buttons -->
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                <Button Content="开始短休息"
-                        Padding="22,11"
-                        Background="{DynamicResource SuccessBrush}"
-                        Foreground="White"
-                        FontSize="14"
-                        FontWeight="Normal"
-                        BorderThickness="0"
-                        Cursor="Hand"
+                <Button x:Name="ShortBreakButton" Content="开始短休息"
+                        Style="{StaticResource PrimaryButton}"
                         Click="StartBreak_Click"
-                        Margin="0,0,8,0">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="9999" />
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                        Margin="0,0,8,0" />
                 <Button x:Name="LongBreakButton" Content="长休息"
-                        Padding="22,11"
-                        Background="{DynamicResource PrimaryBrush}"
-                        Foreground="White"
-                        FontSize="14"
-                        FontWeight="Normal"
-                        BorderThickness="0"
-                        Cursor="Hand"
+                        Style="{StaticResource TextLinkButton}"
                         Click="StartLongBreak_Click"
                         Visibility="Collapsed"
-                        Margin="0,0,8,0">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="9999" />
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                        Margin="0,0,4,0" />
                 <Button Content="稍后休息"
-                        Padding="22,11"
-                        Background="{DynamicResource ControlBackgroundBrush}"
-                        Foreground="{DynamicResource PrimaryTextBrush}"
-                        FontSize="14"
-                        FontWeight="Normal"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        Click="LaterBreak_Click">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="9999" />
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                        Style="{StaticResource TextLinkButton}"
+                        Click="LaterBreak_Click" />
             </StackPanel>
         </Grid>
     </Border>

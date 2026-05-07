@@ -234,3 +234,24 @@
 
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
+
+## [2026-05-07] 二级窗口全部对齐极简 Apple 风格
+
+**涉及模块**: TaskManagerWindow, StatsWindow, FocusCompleteDialog, BreakCompleteDialog, SettingsWindow
+
+**修改文件数**: 7 个
+
+### 改动摘要
+
+1. **统一窗口控制** — 所有二级窗口关闭按钮改为 Path 几何图形绘制的极简 X，透明背景，28x28，与 MainWindow 一致。移除所有 Segoe MDL2 图标字体引用。
+2. **标题统一 tagline** — TaskManagerWindow、StatsWindow 标题从 24px 降为 21/SemiBold（DESIGN.md tagline）。FocusCompleteDialog、BreakCompleteDialog 保持 21/SemiBold。
+3. **按钮样式统一** — 所有窗口使用 PrimaryButton（pill, 14px）、TextLinkButton（无边框纯文字）、DangerLinkButton（错误色文字）三套样式。移除 inline Button.Resources + CornerRadius 方案。
+4. **文字按钮替代图标按钮** — TaskManagerWindow 的编辑/删除从 Segoe MDL2 图标按钮改为纯文字链接（"编辑"/"删除"）。
+5. **StatsWindow 对齐** — 任务统计卡片 CornerRadius 12→18，任务名字重 Medium→移除（默认 400），计数文字 13→14。
+6. **SettingsWindow 完全重写** — 布局从 Label+StackPanel 改为 Grid 行对齐（label+input/toggle），Toggle 宽度 48→44，ComboBox 增加 pill 模板，段落分组对齐 MainWindow 内联设置。
+7. **FocusCompleteDialog/BreakCompleteDialog** — 按钮从 inline pill 定义改为 Style 引用，图标缩小（64→56, 32→28）。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
