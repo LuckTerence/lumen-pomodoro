@@ -249,13 +249,23 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource SecondaryButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
+                <Grid Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Border Width="32" Height="32" CornerRadius="10" Background="{DynamicResource ControlBackgroundBrush}">
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="设置" FontSize="24" FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" Margin="12,0,0,0" />
+                    </StackPanel>
+                    <Button Style="{StaticResource SecondaryButton}" Width="32" Height="32" Padding="0"
+                            HorizontalAlignment="Right" Click="CloseButton_Click">
                         <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                     </Button>
-                </StackPanel>
+                </Grid>
                 
-                <TextBlock Grid.Row="1" Text="设置" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,16,0,0" />
+                <TextBlock Grid.Row="1" Text=" " FontSize="1" Margin="0,16,0,0" />
                 
                 <StackPanel Grid.Row="2">
                     <TextBlock Text="计时设置" Style="{StaticResource SectionHeader}" />
@@ -304,7 +314,10 @@
                     
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                         <Button Style="{StaticResource SecondaryButton}" Click="TestCameraButton_Click">
-                            测试摄像头
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="测试摄像头" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </StackPanel>
@@ -365,10 +378,16 @@
                 
                 <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
                     <Button Style="{StaticResource SecondaryButton}" Click="CloseButton_Click">
-                        取消
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                            <TextBlock Text="取消" />
+                        </StackPanel>
                     </Button>
                     <Button Style="{StaticResource PrimaryButton}" Click="SaveButton_Click">
-                        保存
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                            <TextBlock Text="保存" />
+                        </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>

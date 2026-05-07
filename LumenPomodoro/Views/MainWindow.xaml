@@ -206,14 +206,26 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                    <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="MinimizeButton_Click">
-                        <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                    </Button>
-                    <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
-                        <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                    </Button>
-                </StackPanel>
+                <Grid Grid.Row="0" VerticalAlignment="Top">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Border Width="32" Height="32" CornerRadius="10" Background="{DynamicResource ControlBackgroundBrush}">
+                            <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="Lumen" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   VerticalAlignment="Center" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                        <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="MinimizeButton_Click">
+                            <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                        <Button Style="{StaticResource CircleButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
+                            <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
                 
                 <StackPanel Grid.Row="1" Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Center">
                     <ComboBox x:Name="TaskComboBox" Style="{StaticResource TaskComboBox}" Width="200"
@@ -229,7 +241,7 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                     <Button x:Name="ManageTasksButton" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Padding="8" Click="ManageTasksButton_Click">
-                        <TextBlock Text="&#xE87A;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        <TextBlock Text="&#xE179;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                     </Button>
                 </StackPanel>
                 
@@ -289,7 +301,10 @@
                         <TextBlock Text="{Binding CameraStatus}" FontSize="12" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,8,0" />
                         <Button x:Name="StopCameraButton" Style="{StaticResource SecondaryButton}" 
                                 Padding="8,4" FontSize="12" Click="StopCameraButton_Click">
-                            关闭提醒
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,6,0" />
+                                <TextBlock Text="关闭提醒" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -299,19 +314,31 @@
                                 Orientation="Vertical" HorizontalAlignment="Center">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="StartFocusButton" Style="{StaticResource PrimaryButton}" Click="StartFocusButton_Click">
-                                开始专注
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                    <TextBlock Text="开始专注" />
+                                </StackPanel>
                             </Button>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"
                                     Visibility="{Binding IsPendingBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Button x:Name="PendingShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click" Background="#10B981">
-                                开始短休息
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                    <TextBlock Text="短休息" />
+                                </StackPanel>
                             </Button>
                             <Button x:Name="PendingLongBreakButton" Style="{StaticResource SecondaryButton}" Click="StartLongBreakButton_Click" Margin="8,0,0,0">
-                                长休息
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                    <TextBlock Text="长休息" />
+                                </StackPanel>
                             </Button>
                             <Button x:Name="PendingSkipBreakButton" Style="{StaticResource SecondaryButton}" Click="SkipBreakButton_Click" Margin="8,0,0,0">
-                                跳过
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                    <TextBlock Text="跳过" />
+                                </StackPanel>
                             </Button>
                         </StackPanel>
                     </StackPanel>
@@ -319,40 +346,64 @@
                     <StackPanel x:Name="FocusPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="PauseButton" Style="{StaticResource SecondaryButton}" Click="PauseButton_Click">
-                            暂停
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE769;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="暂停" />
+                            </StackPanel>
                         </Button>
                         <Button x:Name="ResetButton" Style="{StaticResource SecondaryButton}" Click="ResetButton_Click">
-                            重置
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="重置" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                     
                     <StackPanel x:Name="PausedPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="ResumeButton" Style="{StaticResource PrimaryButton}" Click="ResumeButton_Click">
-                            继续
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                <TextBlock Text="继续" />
+                            </StackPanel>
                         </Button>
                         <Button x:Name="ResetButton2" Style="{StaticResource SecondaryButton}" Click="ResetButton_Click">
-                            重置
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="重置" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                     
                     <StackPanel x:Name="CompletedPanel" Visibility="{Binding IsFocusCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="StartShortBreakButton" Style="{StaticResource PrimaryButton}" Click="StartShortBreakButton_Click">
-                            开始短休息
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                <TextBlock Text="短休息" />
+                            </StackPanel>
                         </Button>
                         <Button x:Name="StartLongBreakButton" Style="{StaticResource SecondaryButton}" Click="StartLongBreakButton_Click">
-                            长休息
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="长休息" />
+                            </StackPanel>
                         </Button>
                         <Button x:Name="SkipBreakButton" Style="{StaticResource SecondaryButton}" Click="SkipBreakButton_Click">
-                            跳过休息
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" />
+                                <TextBlock Text="跳过" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                     
                     <StackPanel x:Name="BreakPanel" Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="EndBreakButton" Style="{StaticResource PrimaryButton}" Click="EndBreakButton_Click">
-                            结束休息
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" />
+                                <TextBlock Text="结束休息" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </Grid>

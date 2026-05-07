@@ -1,5 +1,21 @@
 # 开发日志
 
+## [2026-05-07] 图标化按钮与品牌栏收口
+
+**涉及模块**: MainWindow, SettingsWindow
+
+### 改动摘要
+
+1. 主窗口增加轻量品牌栏，使用 Segoe MDL2 图标标识应用。
+2. 主窗口主要操作改为图标+文字：开始、暂停、继续、重置、短休息、长休息、跳过、结束休息、关闭提醒。
+3. 设置页标题、关闭、测试摄像头、保存、取消补齐图标，统一交互识别。
+4. 任务管理按钮更换为更贴近“列表/任务”的图标。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+
 ## [2026-05-07] 深色主题 UI 与窗口拖动修复
 
 **涉及模块**: MainWindow, SettingsWindow
