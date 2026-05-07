@@ -1,5 +1,42 @@
 # 开发日志
 
+## [2026-05-08] 全项目 Bug 扫描修复 — 14 项
+
+**涉及模块**: SettingsViewModel, MainViewModel, MainWindow, CameraService, StorageService, TaskManagerWindow, StorageServiceTests
+
+**修改文件数**: 7 个
+
+### P0 — 严重问题修复
+
+1. **SettingsViewModel.Cleanup 误杀摄像头提醒** — 引入 `_cameraStartedByTest` 标记，Cleanup 仅停止由测试按钮启动的摄像头，不再无条件停止共享 CameraService。
+2. **IdlePanel 与 CompletedPanel 叠加显示** — PopupEnabled=false 时专注完成不再设 CurrentStatus=Idle；XAML 中 IdlePanel 增加 DataTrigger 在 IsFocusCompleted 时隐藏，CompletedPanel 改用 MultiDataTrigger 同时检查 IsFocusCompleted 和 CurrentStatus。
+3. **SelectedTask 删除后引用失效** — UpdateTasks 增加 ID 匹配检查，当前选中任务不在新列表时自动重选；移除冗余的 SaveTasks 调用（调用方已保存）。
+
+### P1 — 高优先级修复
+
+4. **SaveSessionsWithTransaction 改为 private** — 消除外部无锁调用风险，测试改用 AddSession 间接验证。
+5. **AutoStartEnabled/Theme setter 即时副作用** — 移除 setter 中的 UpdateAutoStart/ApplyTheme 调用，延迟到 SaveSettings 时统一执行。
+6. **双重托盘图标** — 移除 MainViewModel 中的 _notifyIcon 长驻实例，改为 NotificationRequested 事件委托给 TrayService；无订阅者时创建临时 NotifyIcon 用后即弃。
+7. **KeepCameraActiveAsync 超时/断连不 Dispose _cameraDevice** — 超时分支增加 Dispose 调用；意外断开分支增加 Dispose 并置 null。
+8. **_notifyIcon Dispose 前未设 Visible=false** — 已随 P1-6 重构消除，不再有长驻 _notifyIcon。
+
+### P2 — 中优先级修复
+
+9. **StartCameraAsync 旧 CTS 只 Cancel 不 Dispose** — 增加 oldCts.Dispose() 调用。
+10. **ForceStopCameraAlert 异步时序** — 移除立即设 IsCameraAlertActive=false，改为由 CameraStatusCallback 在 Stop 完成后自然更新。
+11. **TaskManager 编辑对话框 SelectAll 无效** — 改为 textBox.Loaded 事件中调用 SelectAll。
+12. **GetTodayStats TOCTOU 三段式加锁** — 合并为单次 lock(_fileLock) 块，消除中间状态窗口。
+
+### P3 — 低优先级修复
+
+13. **SettingsWindow.Closing 误杀摄像头** — 随 P0-1 修复（Cleanup 已改为条件停止）。
+14. **StartCameraAsync 先设 _isRunning 再初始化** — _isRunning=true 移到初始化成功后，失败路径统一在 lock 下设 false。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+
 ## [2026-05-07] 根目录启动入口
 
 **涉及模块**: Start-LumenPomodoro.cmd, README
