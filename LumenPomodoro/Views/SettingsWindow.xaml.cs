@@ -1,4 +1,8 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
 using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
 
@@ -18,6 +22,29 @@ public partial class SettingsWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ButtonState == MouseButtonState.Pressed && !HasInteractiveParent(e.OriginalSource as DependencyObject))
+        {
+            DragMove();
+        }
+    }
+
+    private static bool HasInteractiveParent(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is ButtonBase || source is TextBox || source is ComboBox || source is ToggleButton)
+            {
+                return true;
+            }
+
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)

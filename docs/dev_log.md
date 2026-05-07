@@ -1,5 +1,22 @@
 # 开发日志
 
+## [2026-05-07] 深色主题 UI 与窗口拖动修复
+
+**涉及模块**: MainWindow, SettingsWindow
+
+### 改动摘要
+
+1. 为主窗口按钮、任务下拉框补齐深色模板，修复系统默认控件造成的黑白块和黑字问题。
+2. 为设置页按钮、输入框、下拉框、开关、滚动条补齐深色模板，修复深色主题下的白底控件和浅色滚动条。
+3. 设置页加入滚动容器，避免底部设置项在固定窗口高度下不可达。
+4. 主窗口和设置页支持在非控件区域拖动窗口。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，21/21。
+- Release 启动验证：主窗口正常显示，未写入启动错误日志。
+
 ## [2026-05-07] 启动失败修复
 
 **涉及模块**: App, MainWindow

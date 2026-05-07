@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -62,6 +63,29 @@ public partial class MainWindow : Window
                 BeginAnimation(OpacityProperty, fadeIn);
             }
         }
+    }
+
+    private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ButtonState == MouseButtonState.Pressed && !HasInteractiveParent(e.OriginalSource as DependencyObject))
+        {
+            DragMove();
+        }
+    }
+
+    private static bool HasInteractiveParent(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is ButtonBase || source is TextBox || source is ComboBox || source is ProgressBar)
+            {
+                return true;
+            }
+
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     private void ApplyFadeInAnimation()
