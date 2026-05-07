@@ -10,23 +10,20 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
-    
+
     <Window.Resources>
+        <!-- DESIGN.md rounded.lg = 18, no shadow on UI chrome -->
         <Style x:Key="GlassPanel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="20" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="20" Color="{DynamicResource PrimaryTextColor}" Opacity="0.15" />
-                </Setter.Value>
-            </Setter>
+            <Setter Property="CornerRadius" Value="18" />
         </Style>
 
+        <!-- DESIGN.md button-primary = 17/400, pill -->
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource WindowBackgroundBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -37,11 +34,12 @@
             </Style.Triggers>
         </Style>
 
+        <!-- DESIGN.md button-utility = 14/400, no weight 500 -->
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -62,7 +60,7 @@
             <Setter Property="Cursor" Value="Hand" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#B91C1C" />
+                    <Setter Property="Opacity" Value="0.8" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -82,7 +80,7 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    
+
     <Grid>
         <Border Style="{StaticResource GlassPanel}">
             <Grid Margin="24">
@@ -93,16 +91,16 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                
+
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Style="{StaticResource SecondaryButton}" Width="32" Height="32" Padding="0" Click="CloseButton_Click">
                         <TextBlock Text="&#xE92B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                     </Button>
                 </StackPanel>
-                
-                <TextBlock Grid.Row="1" Text="任务管理" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,16,0,0" />
-                
-                <ListBox Grid.Row="2" x:Name="TaskListBox" Margin="0,16,0,0" BorderThickness="0">
+
+                <TextBlock Grid.Row="1" Text="任务管理" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,17,0,0" />
+
+                <ListBox Grid.Row="2" x:Name="TaskListBox" Margin="0,17,0,0" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4">
@@ -121,8 +119,8 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                
-                <StackPanel Grid.Row="3" Margin="0,16,0,0">
+
+                <StackPanel Grid.Row="3" Margin="0,17,0,0">
                     <Grid>
                         <TextBox x:Name="NewTaskNameTextBox" Margin="0,0,8,0" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}" />
                         <TextBlock x:Name="PlaceholderText" Text="任务名称" Margin="4,3"
@@ -147,8 +145,8 @@
                         <ComboBoxItem Content="其他" />
                     </ComboBox>
                 </StackPanel>
-                
-                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,17,0,0">
                     <Button Style="{StaticResource SecondaryButton}" Click="CloseButton_Click" Margin="0,0,12,0">
                         取消
                     </Button>
@@ -160,4 +158,3 @@
         </Border>
     </Grid>
 </Window>
-

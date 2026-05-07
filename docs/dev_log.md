@@ -153,3 +153,26 @@
 32. **_theme 字段 CS8618** — 声明默认值 "system"。
 
 **测试结果**: 18/18 通过 (2.2s)
+
+## [2026-05-07] DESIGN.md 全面对齐修复
+
+**涉及模块**: LightTheme, DarkTheme, MainWindow, SettingsWindow, StatsWindow, TaskManagerWindow, FocusCompleteDialog, BreakCompleteDialog, LumenPomodoro.csproj
+
+**修改文件数**: 9 个 + Fonts 目录
+
+### 改动摘要
+
+1. **嵌入 Inter 字体** — 下载 Inter Light/Regular/SemiBold TTF 到 `Fonts/`，csproj 添加 Resource 引用，两个 Theme 定义 `InterLight`/`InterRegular`/`InterSemiBold` FontFamily 资源。
+2. **颜色 Token 对齐 DESIGN.md** — SecondaryTextColor → #7a7a7a (ink-muted-48)，TertiaryTextColor → #cccccc (body-muted)，BorderColor → #e0e0e0 (hairline)，ControlBackgroundColor → #d2d2d7 (surface-chip-translucent)。新增 SurfacePearlColor/SurfacePearlBrush。
+3. **CornerRadius 统一到 `{rounded.*}` scale** — GlassPanel 统一 18 (lg)，PrimaryButton/CircleButton 9999 (pill/full)，ComboBox/StatCard 18 (lg)，TextBox 9999 (pill)，ScrollBar 5 (xs)。
+4. **移除所有 DropShadowEffect** — StatsWindow、TaskManagerWindow、FocusCompleteDialog、BreakCompleteDialog 共 4 处阴影全部移除。
+5. **按钮交互改为 scale(0.95)** — PrimaryButton/SecondaryButton/CircleButton 的 IsPressed 触发器从 Opacity 0.86 改为 ScaleTransform 动画 (Storyboard EnterActions/ExitActions)。
+6. **SecondaryButton 重做为 button-secondary-pill** — 透明背景、PrimaryBrush 前景、1px PrimaryBrush 边框、pill 圆角、17px/400。
+7. **Font Weight 修正** — 消除所有 weight 500 (Medium)，统计数字 Bold→SemiBold，对话框标题 Bold→SemiBold。
+8. **Spacing 对齐 token** — 16→17 (md)，36→32 (xl)，10→8 (xs)。
+9. **Timer FontFamily** — Segoe UI Light → InterLight。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
