@@ -13,18 +13,35 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        StorageService = new StorageService();
-
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+        StorageService = new StorageService();
 
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
 
-        base.OnStartup(e);
+        try
+        {
+            base.OnStartup(e);
+        }
+        catch (Exception ex)
+        {
+            LogException(ex);
+            MessageBox.Show($"启动失败：{ex.Message}\n\n{ex.InnerException?.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+            return;
+        }
 
         SoundService.GenerateDefaultWavFiles();
 
         ApplyThemeOnStartup();
+    }
+
+    private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        LogException(e.Exception);
+        e.SetObserved();
     }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
