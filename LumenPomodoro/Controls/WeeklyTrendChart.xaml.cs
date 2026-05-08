@@ -23,6 +23,13 @@ public partial class WeeklyTrendChart : UserControl
         InitializeComponent();
         SizeChanged += (_, _) => Render();
         Loaded += (_, _) => Render();
+        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
+        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
+    }
+
+    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
+    {
+        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

@@ -21,6 +21,13 @@ public partial class TaskDonutChart : UserControl
     public TaskDonutChart()
     {
         InitializeComponent();
+        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
+        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
+    }
+
+    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
+    {
+        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -40,18 +47,18 @@ public partial class TaskDonutChart : UserControl
         var radius = 42.0;
         var thickness = 18.0;
 
-        // 中心文字
+        // 中心文字（Measure 居中）
         var totalText = new TextBlock
         {
             Text = total.ToString(),
             FontSize = 24,
             FontWeight = FontWeights.SemiBold,
             FontFamily = (FontFamily)Application.Current.TryFindResource("InterSemiBold")!,
-            Foreground = Application.Current.TryFindResource("TextFillColorPrimaryBrush") as Brush ?? Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center
+            Foreground = Application.Current.TryFindResource("TextFillColorPrimaryBrush") as Brush ?? Brushes.White
         };
-        Canvas.SetLeft(totalText, center - 16);
-        Canvas.SetTop(totalText, center - 16);
+        totalText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        Canvas.SetLeft(totalText, center - totalText.DesiredSize.Width / 2);
+        Canvas.SetTop(totalText, center - totalText.DesiredSize.Height / 2 - 6);
         DonutCanvas.Children.Add(totalText);
 
         var subText = new TextBlock
@@ -59,11 +66,11 @@ public partial class TaskDonutChart : UserControl
             Text = "总计",
             FontSize = 10,
             Foreground = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray,
-            FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!,
-            HorizontalAlignment = HorizontalAlignment.Center
+            FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!
         };
-        Canvas.SetLeft(subText, center - 10);
-        Canvas.SetTop(subText, center + 12);
+        subText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        Canvas.SetLeft(subText, center - subText.DesiredSize.Width / 2);
+        Canvas.SetTop(subText, center - subText.DesiredSize.Height / 2 + 12);
         DonutCanvas.Children.Add(subText);
 
         // 环形切片
