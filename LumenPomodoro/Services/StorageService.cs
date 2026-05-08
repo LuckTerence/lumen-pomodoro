@@ -140,7 +140,6 @@ public class StorageService
             sessions.Add(session);
             SaveSessionsWithTransaction(sessions);
         }
-        InvalidateStatsCache();
     }
 
     private void InvalidateStatsCache()
@@ -156,17 +155,14 @@ public class StorageService
         {
             var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
 
-            // Create backup if original exists
             if (File.Exists(_sessionsFile))
             {
                 File.Copy(_sessionsFile, backupFile, true);
             }
 
-            // Write to temp file first
             var tempFile = _sessionsFile + ".tmp";
             File.WriteAllText(tempFile, content);
 
-            // Replace original file with temp file
             if (File.Exists(_sessionsFile))
             {
                 File.Replace(tempFile, _sessionsFile, backupFile);
@@ -175,10 +171,11 @@ public class StorageService
             {
                 File.Move(tempFile, _sessionsFile);
             }
+
+            InvalidateStatsCache();
         }
         catch
         {
-            // Restore from backup if exists
             if (File.Exists(backupFile))
             {
                 File.Copy(backupFile, _sessionsFile, true);

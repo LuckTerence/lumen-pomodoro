@@ -292,7 +292,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             var startupPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
             using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(startupPath, true))
             {
-                if (key == null) return;
+                if (key == null)
+                {
+                    MessageBox.Show("无法访问系统自启动注册表，请以管理员权限运行。", "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 if (AutoStartEnabled)
                 {
@@ -304,12 +308,17 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
                 }
                 else
                 {
-                    key.DeleteValue("LumenPomodoro", false);
+                    try { key.DeleteValue("LumenPomodoro", false); } catch { }
                 }
             }
         }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show("无权修改注册表，请以管理员权限运行。", "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
         catch (Exception ex)
         {
+            MessageBox.Show($"设置开机自启失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             Debug.WriteLine($"[SettingsViewModel] 更新自启动失败: {ex.Message}");
         }
     }

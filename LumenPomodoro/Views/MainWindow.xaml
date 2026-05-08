@@ -26,13 +26,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar x:Name="AppTitleBar"
-                     Title="Lumen Pomodoro"
-                     Grid.Row="0"
-                     ShowMaximize="False"
-                     Icon="pack://application:,,,/LOGO.png" />
-
-        <ui:NavigationView x:Name="NavView" Grid.Row="1" PaneDisplayMode="Bottom">
+        <ui:NavigationView x:Name="NavView" Grid.Row="1" PaneDisplayMode="Bottom" Transition="SlideBottom">
             <ui:NavigationView.TitleBar>
                 <ui:TitleBar Title="Lumen Pomodoro" ShowMaximize="False" Icon="pack://application:,,,/LOGO.png" />
             </ui:NavigationView.TitleBar>

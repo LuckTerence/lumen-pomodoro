@@ -1,5 +1,36 @@
 # 开发日志
 
+## [2026-05-08] Bug 修复 — COM 双重释放、摄像头残留、VB Runtime 移除、Registry 失败感知
+
+**涉及模块**: CameraService, SettingsPage, SettingsViewModel, TasksPage
+
+**修改文件数**: 4 个
+
+### 修复摘要
+
+1. **CameraService COM 双重释放 [高]** — `EnumerateDevices()` 和 `EnumerateDeviceActivates()` 在 `Marshal.GetObjectForIUnknown` 将 IntPtr 转为 RCW 后，finally 块仍对同一 IntPtr 调用 `Marshal.Release()`，造成双重释放。`CaptureLoop` 中 `Marshal.ReleaseComObject(activate)` 后，finally 也重复释放同一指针。修复：不再在 finally 中释放已转交 RCW 的 IntPtr，改为将指针置 null；激活失败时才主动释放。
+2. **摄像头测试后残留 [高]** — `SettingsPage` 未实现 `IDisposable`，用户测试摄像头后切换页面，`Cleanup()` 永远不被调用，摄像头继续后台运行。修复：`SettingsPage` 实现 `IDisposable`，`Unloaded` 事件中调用 `_viewModel.Cleanup()`。
+3. **VB Runtime 依赖 [中]** — `TasksPage` 使用 `Microsoft.VisualBasic.Interaction.InputBox` 弹窗，引入 VB 依赖。修复：改用 WPF 原生 `Window` + `TextBox` + `Button` 实现。
+4. **Registry 自启失败静默 [中]** — `UpdateAutoStart()` 操作注册表失败时只有 `Debug.WriteLine`，用户开启自启但实际无效无感知。修复：增加 `UnauthorizedAccessException` 专项处理 + `MessageBox` 明确告知用户。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+- `dotnet test`：通过，21/21。
+
+## [2026-05-08] TimerPage 垂直居中修复 + CameraService Marshal.Release 编译错误
+
+**涉及模块**: TimerPage, CameraService
+
+### 修复摘要
+
+1. **TimerPage 内容偏上不居中 [UI]** — WPF-UI `NavigationViewContentPresenter` 默认 `IsDynamicScrollViewerEnabled=true`，页面内容被 `DynamicScrollViewer` 包裹，ScrollViewer 给子元素无限高度，`VerticalAlignment="Center"` 完全失效。修复：在 `Page` 根元素添加 `ScrollViewer.CanContentScroll="False"`，NavigationViewContentPresenter 切换到无 ScrollViewer 模板，`VerticalAlignment="Center"` 正常生效。
+2. **CameraService 两处编译错误 [编译]** — `Marshal.Release(Marshal.GetObjectForIUnknown(...))` 类型错误，`Marshal.Release` 需要 `IntPtr` 而非 `object`。修复：改为 `Marshal.Release(activates[i])` 直接释放指针。
+
+### 验证结果
+
+- `dotnet build`：通过，0 warning / 0 error。
+
 ## [2026-05-08] WPF-UI FluentWindow + NavigationView 架构迁移
 
 **涉及模块**: MainWindow, App, TimerPage, TasksPage, StatsPage, SettingsPage, MainViewModel, TasksViewModel, StatsViewModel, SettingsViewModel, CustomStyles, DESIGN.md, TrayService

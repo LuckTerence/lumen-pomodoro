@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace LumenPomodoro.Controls;
 
@@ -21,6 +22,10 @@ public partial class ArcProgress : UserControl
     public static readonly DependencyProperty BackgroundArcBrushProperty =
         DependencyProperty.Register(nameof(BackgroundArcBrush), typeof(Brush), typeof(ArcProgress),
             new PropertyMetadata(null, OnProgressChanged));
+
+    public static readonly DependencyProperty AnimationDurationProperty =
+        DependencyProperty.Register(nameof(AnimationDuration), typeof(Duration), typeof(ArcProgress),
+            new PropertyMetadata(new Duration(TimeSpan.FromMilliseconds(300))));
 
     public double Progress
     {
@@ -46,6 +51,21 @@ public partial class ArcProgress : UserControl
         set => SetValue(BackgroundArcBrushProperty, value);
     }
 
+    public Duration AnimationDuration
+    {
+        get => (Duration)GetValue(AnimationDurationProperty);
+        set => SetValue(AnimationDurationProperty, value);
+    }
+
+    private double _currentProgressFraction = 1.0;
+    private DoubleAnimation? _currentAnimation;
+    private Action<object?, EventArgs>? _runningRendering;
+    private bool _isRenderingSubscribed;
+    private double _animStartFraction;
+    private double _animTargetFraction;
+    private DateTime _animStartTime;
+    private TimeSpan _animDuration;
+
     public ArcProgress()
     {
         InitializeComponent();
@@ -55,10 +75,78 @@ public partial class ArcProgress : UserControl
 
     private static void OnProgressChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((ArcProgress)d).UpdateArcs();
+        ((ArcProgress)d).OnProgressValueChanged();
+    }
+
+    private void OnProgressValueChanged()
+    {
+        var targetFraction = Math.Clamp(Progress / 100.0, 0.0, 1.0);
+
+        if (!IsLoaded || AnimationDuration.TimeSpan.TotalMilliseconds <= 0)
+        {
+            _currentProgressFraction = targetFraction;
+            UpdateArcs();
+            return;
+        }
+
+        if (_runningRendering != null)
+        {
+            _runningRendering -= OnAnimationStep;
+        }
+
+        _animStartFraction = _currentProgressFraction;
+        _animTargetFraction = targetFraction;
+        _animStartTime = DateTime.Now;
+        _animDuration = AnimationDuration.TimeSpan;
+
+        _currentAnimation = new DoubleAnimation(0, 1, AnimationDuration);
+        _currentAnimation.Completed += Animation_Completed;
+
+        if (!_isRenderingSubscribed)
+        {
+            _isRenderingSubscribed = true;
+            CompositionTarget.Rendering += OnRendering;
+        }
+
+        _runningRendering += OnAnimationStep;
+        RenderArcs(_currentProgressFraction);
+    }
+
+    private void OnAnimationStep(object? sender, EventArgs e)
+    {
+        var elapsed = (DateTime.Now - _animStartTime).TotalMilliseconds;
+        var durationMs = _animDuration.TotalMilliseconds;
+        if (durationMs <= 0) durationMs = 1;
+        var progress = Math.Min(1.0, elapsed / durationMs);
+        var eased = EaseOutQuad(progress);
+        var easedValue = _animStartFraction + (_animTargetFraction - _animStartFraction) * eased;
+        RenderArcs(easedValue);
+        if (progress >= 1.0)
+        {
+            _runningRendering -= OnAnimationStep;
+            _currentProgressFraction = _animTargetFraction;
+            RenderArcs(_animTargetFraction);
+        }
+    }
+
+    private void OnRendering(object? sender, EventArgs e)
+    {
+        _runningRendering?.Invoke(sender, e);
+    }
+
+    private static double EaseOutQuad(double t) => 1 - (1 - t) * (1 - t);
+
+    private void Animation_Completed(object? sender, EventArgs e)
+    {
+        _currentAnimation = null;
     }
 
     private void UpdateArcs()
+    {
+        RenderArcs(_currentProgressFraction);
+    }
+
+    private void RenderArcs(double fraction)
     {
         var size = Math.Min(ActualWidth, ActualHeight);
         if (size <= 0) return;
@@ -71,7 +159,7 @@ public partial class ArcProgress : UserControl
         BackgroundArc.Stroke = BackgroundArcBrush ?? new SolidColorBrush(Color.FromArgb(30, 128, 128, 128));
         BackgroundArc.StrokeThickness = StrokeThickness;
 
-        ForegroundArc.Data = CreateArcGeometry(center, radius, Progress / 100.0);
+        ForegroundArc.Data = CreateArcGeometry(center, radius, fraction);
         ForegroundArc.Stroke = ForegroundArcBrush ?? (Brush)Application.Current.FindResource("AccentFillColorDefaultBrush");
         ForegroundArc.StrokeThickness = StrokeThickness;
         ForegroundArc.StrokeStartLineCap = PenLineCap.Round;

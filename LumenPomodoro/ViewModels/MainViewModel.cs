@@ -25,8 +25,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isFocusCompleted;
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
+    private bool _isWindowActive;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public bool IsWindowActive
+    {
+        get => _isWindowActive;
+        set { if (_isWindowActive != value) { _isWindowActive = value; OnPropertyChanged(); } }
+    }
 
     public TimerMode CurrentStatus
     {
@@ -409,6 +416,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void ShowSystemNotification(string title, string message)
     {
         if (!AppSettings.SystemNotificationEnabled) return;
+        if (IsWindowActive) return;
 
         if (NotificationRequested != null)
         {

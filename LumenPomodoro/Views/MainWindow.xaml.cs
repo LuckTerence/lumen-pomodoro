@@ -40,6 +40,18 @@ public partial class MainWindow : FluentWindow
         NavView.SetPageProviderService(_pageProvider);
 
         Loaded += MainWindow_Loaded;
+        Activated += MainWindow_Activated;
+        Deactivated += MainWindow_Deactivated;
+    }
+
+    private void MainWindow_Activated(object? sender, EventArgs e)
+    {
+        _viewModel.IsWindowActive = true;
+    }
+
+    private void MainWindow_Deactivated(object? sender, EventArgs e)
+    {
+        _viewModel.IsWindowActive = false;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)

@@ -92,7 +92,7 @@ public class CameraService
             }
 
             var deviceIndex = Math.Min(_cameraIndex, devices.Count - 1);
-            _cameraDevice = new MediaFoundationCamera(devices[deviceIndex].SymbolicLink, _errorCallback);
+            _cameraDevice = new MediaFoundationCamera(deviceIndex, _errorCallback);
             _cameraDevice.Start();
 
             await Task.Delay(500);
@@ -181,7 +181,7 @@ public class CameraService
         {
             try
             {
-                await Task.Delay(100, token);
+                await Task.Delay(1000, token);
             }
             catch (OperationCanceledException)
             {
@@ -223,6 +223,13 @@ public class CameraService
             var devices = GetAvailableCameraDevices();
             _cachedCameraNames = devices.Select(d => d.Name).ToList();
             _cachedCameraCount = _cachedCameraNames.Count;
+
+            if (_cachedCameraNames.Count == 0)
+            {
+                _cachedCameraNames = new List<string> { "默认摄像头" };
+                _cachedCameraCount = 1;
+            }
+
             return _cachedCameraNames;
         }
         catch (Exception ex)
@@ -241,6 +248,7 @@ public class CameraService
         try
         {
             _cachedCameraCount = GetAvailableCameraDevices().Count;
+            if (_cachedCameraCount == 0) _cachedCameraCount = 1;
             return _cachedCameraCount;
         }
         catch (Exception ex)
@@ -251,54 +259,26 @@ public class CameraService
         }
     }
 
+    public void ClearCache()
+    {
+        _cachedCameraNames = null;
+        _cachedCameraCount = -1;
+    }
+
     private List<CameraInfo> GetAvailableCameraDevices()
     {
-        var devices = new List<CameraInfo>();
-
-        try
-        {
-            using var searcher = new System.Management.ManagementObjectSearcher(
-                "SELECT * FROM Win32_PnPEntity WHERE (PNPClass = 'Camera' OR PNPClass = 'Image')");
-
-            foreach (var device in searcher.Get())
-            {
-                using (device)
-                {
-                    var name = device["Name"]?.ToString() ?? "Unknown Camera";
-                    var deviceId = device["DeviceID"]?.ToString() ?? "";
-
-                    var symbolicLink = GetSymbolicLinkFromDeviceId(deviceId);
-                    devices.Add(new CameraInfo(name, symbolicLink));
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[CameraService] WMI 查询摄像头失败: {ex.Message}");
-            devices.Add(new CameraInfo("默认摄像头", ""));
-        }
-
+        var devices = MediaFoundationCamera.EnumerateDevices();
         if (devices.Count == 0)
         {
             devices.Add(new CameraInfo("默认摄像头", ""));
         }
-
         return devices;
-    }
-
-    private static string GetSymbolicLinkFromDeviceId(string deviceId)
-    {
-        if (string.IsNullOrEmpty(deviceId))
-            return "";
-
-        var escaped = deviceId.Replace('\\', '#');
-        return $@"\\?\{escaped}";
     }
 }
 
 internal class MediaFoundationCamera : IDisposable
 {
-    private readonly string _symbolicLink;
+    private readonly int _deviceIndex;
     private readonly Action<string>? _errorCallback;
     private volatile bool _isRunning;
     private Thread? _captureThread;
@@ -306,9 +286,9 @@ internal class MediaFoundationCamera : IDisposable
 
     public bool IsRunning => _isRunning;
 
-    public MediaFoundationCamera(string symbolicLink, Action<string>? errorCallback = null)
+    public MediaFoundationCamera(int deviceIndex, Action<string>? errorCallback = null)
     {
-        _symbolicLink = symbolicLink;
+        _deviceIndex = deviceIndex;
         _errorCallback = errorCallback;
     }
 
@@ -351,29 +331,28 @@ internal class MediaFoundationCamera : IDisposable
                 return;
             }
 
-            var sourceAttributes = NativeMethods.CreateAttributes();
-            if (sourceAttributes == null)
+            // 枚举所有视频捕获设备
+            var devices = EnumerateDeviceActivates();
+            if (devices.Count == 0)
             {
-                _errorCallback?.Invoke("创建媒体属性失败 (MFCreateAttributes 返回 null)");
+                _errorCallback?.Invoke("未找到任何摄像头设备");
                 return;
             }
 
-            var sourceType = NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
-            sourceAttributes.SetGUID(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, ref sourceType);
-
-            if (!string.IsNullOrEmpty(_symbolicLink))
+            if (_deviceIndex >= devices.Count)
             {
-                sourceAttributes.SetString(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, _symbolicLink);
+                _errorCallback?.Invoke($"摄像头索引 {_deviceIndex} 超出范围 (共 {devices.Count} 个)");
+                return;
             }
 
-            hr = NativeMethods.MFCreateDeviceSource(sourceAttributes, out mediaSource);
-            Marshal.ReleaseComObject(sourceAttributes);
+            var activate = devices[_deviceIndex];
+            hr = activate.ActivateObject(typeof(IMFMediaSource).GUID, out mediaSource);
 
             if (hr < 0 || mediaSource == null)
             {
+                Marshal.ReleaseComObject(activate);
                 if (mediaSource != null) Marshal.ReleaseComObject(mediaSource);
-                var linkInfo = string.IsNullOrEmpty(_symbolicLink) ? "(空符号链接 - 使用默认设备)" : _symbolicLink;
-                _errorCallback?.Invoke($"创建摄像头设备源失败: {HResultToString(hr)}\n符号链接: {linkInfo}");
+                _errorCallback?.Invoke($"激活摄像头设备失败: {HResultToString(hr)}");
                 return;
             }
 
@@ -390,6 +369,9 @@ internal class MediaFoundationCamera : IDisposable
                 _errorCallback?.Invoke($"创建摄像头读取器失败: {HResultToString(hr)}");
                 return;
             }
+
+            // 设置最低分辨率以减少带宽和 CPU 占用
+            SetLowResolutionMediaType(sourceReader);
 
             while (!token.IsCancellationRequested)
             {
@@ -428,8 +410,8 @@ internal class MediaFoundationCamera : IDisposable
                     break;
                 }
 
-                // 仅点亮指示灯，1fps 足够，降低 CPU 和 USB 带宽消耗
-                token.WaitHandle.WaitOne(1000);
+                // 仅点亮指示灯，0.2fps 足够，大幅降低 CPU 和 USB 带宽消耗
+                token.WaitHandle.WaitOne(5000);
             }
         }
         catch (Exception ex)
@@ -446,6 +428,176 @@ internal class MediaFoundationCamera : IDisposable
 
             _isRunning = false;
         }
+    }
+
+    private static void SetLowResolutionMediaType(IMFSourceReader sourceReader)
+    {
+        try
+        {
+            // 尝试设置 160x120 或最低可用分辨率
+            IntPtr mediaTypePtr = IntPtr.Zero;
+            int hr = sourceReader.GetNativeMediaType(
+                NativeMethods.MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+                0,
+                out mediaTypePtr);
+
+            if (hr < 0 || mediaTypePtr == IntPtr.Zero) return;
+
+            // 获取 IMFMediaType 接口来修改分辨率
+            var mediaType = (IMFMediaType)Marshal.GetObjectForIUnknown(mediaTypePtr);
+
+            // 设置低分辨率
+            mediaType.SetUINT32(NativeMethods.MF_MT_FRAME_SIZE, (160u << 32) | 120u);
+            mediaType.SetUINT32(NativeMethods.MF_MT_FRAME_RATE, (1u << 32) | 1u);
+
+            hr = sourceReader.SetCurrentMediaType(
+                NativeMethods.MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+                IntPtr.Zero,
+                mediaTypePtr);
+
+            Marshal.ReleaseComObject(mediaType);
+            Marshal.FreeCoTaskMem(mediaTypePtr);
+        }
+        catch
+        {
+            // 设置分辨率失败不影响主流程
+        }
+    }
+
+    public static List<CameraInfo> EnumerateDevices()
+    {
+        var devices = new List<CameraInfo>();
+        IMFAttributes? attributes = null;
+        IntPtr[]? activates = null;
+        int count = 0;
+
+        try
+        {
+            int hr = NativeMethods.MFStartup(0x20070, NativeMethods.MFSTARTUP_LITE);
+            if (hr < 0) return devices;
+
+            attributes = NativeMethods.CreateAttributes();
+            if (attributes == null) return devices;
+
+            var sourceType = NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
+            attributes.SetGUID(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, ref sourceType);
+
+            hr = NativeMethods.MFEnumDeviceSources(attributes, out activates, out count);
+            Marshal.ReleaseComObject(attributes);
+            attributes = null;
+
+            if (hr < 0 || activates == null || count == 0)
+            {
+                if (activates != null)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (activates[i] != IntPtr.Zero)
+                            Marshal.Release(activates[i]);
+                    }
+                }
+                try { NativeMethods.MFShutdown(); } catch { }
+                return devices;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (activates[i] == IntPtr.Zero) continue;
+
+                var activate = (IMFActivate)Marshal.GetObjectForIUnknown(activates[i]);
+                string? name = null;
+
+                try
+                {
+                    activate.GetAllocatedString(
+                        NativeMethods.MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
+                        out name,
+                        out _);
+                }
+                catch { }
+
+                devices.Add(new CameraInfo(name ?? $"摄像头 {i + 1}", ""));
+                Marshal.ReleaseComObject(activate);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MediaFoundationCamera] 枚举设备失败: {ex.Message}");
+        }
+        finally
+        {
+            if (attributes != null)
+            {
+                try { Marshal.ReleaseComObject(attributes); } catch { }
+            }
+
+            activates = null;
+            count = 0;
+
+            try { NativeMethods.MFShutdown(); } catch { }
+        }
+
+        return devices;
+    }
+
+    public static List<IMFActivate> EnumerateDeviceActivates()
+    {
+        var result = new List<IMFActivate>();
+        IMFAttributes? attributes = null;
+        IntPtr[]? activates = null;
+        int count = 0;
+
+        try
+        {
+            int hr = NativeMethods.MFStartup(0x20070, NativeMethods.MFSTARTUP_LITE);
+            if (hr < 0) return result;
+
+            attributes = NativeMethods.CreateAttributes();
+            if (attributes == null) return result;
+
+            var sourceType = NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
+            attributes.SetGUID(NativeMethods.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, ref sourceType);
+
+            hr = NativeMethods.MFEnumDeviceSources(attributes, out activates, out count);
+            Marshal.ReleaseComObject(attributes);
+            attributes = null;
+
+            if (hr < 0 || activates == null || count == 0)
+            {
+                if (activates != null && count > 0)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (activates[i] != IntPtr.Zero)
+                            Marshal.Release(activates[i]);
+                    }
+                }
+                return result;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (activates[i] == IntPtr.Zero) continue;
+                var activate = (IMFActivate)Marshal.GetObjectForIUnknown(activates[i]);
+                result.Add(activate);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MediaFoundationCamera] 枚举设备失败: {ex.Message}");
+        }
+        finally
+        {
+            if (attributes != null)
+            {
+                try { Marshal.ReleaseComObject(attributes); } catch { }
+            }
+
+            activates = null;
+            count = 0;
+        }
+
+        return result;
     }
 
     public void Stop()
@@ -544,6 +696,34 @@ internal interface IMFSample
     int CopyToBuffer([MarshalAs(UnmanagedType.IUnknown)] object pBuffer);
 }
 
+[ComImport]
+[Guid("7FEE9E9A-1A8A-4AE2-A5F2-CD617F27E4B1")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMFActivate : IMFAttributes
+{
+    int ActivateObject(ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] out object ppv);
+    int ShutdownObject();
+    int DetachObject();
+}
+
+[ComImport]
+[Guid("279A808D-AEC7-40C8-9C6B-A6B492C78A66")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMFMediaSource
+{
+    int GetEventObject(out object ppEventQueue);
+    int BeginGetEvent(object pCallback, object pUnkState);
+    int EndGetEvent(object pResult, out object ppEvent);
+    int QueueEvent(int met, ref Guid guidExtendedType, int hrStatus, [MarshalAs(UnmanagedType.Struct)] ref object pvValue);
+}
+
+[ComImport]
+[Guid("44AE0FA8-EA31-4109-8D2E-4CAE4997C555")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMFMediaType : IMFAttributes
+{
+}
+
 internal static class NativeMethods
 {
     public const int MFSTARTUP_LITE = 1;
@@ -567,6 +747,11 @@ internal static class NativeMethods
     public static readonly Guid MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE = new Guid("C60ACD28-1847-44BA-9782-EF1C183E1D5D");
     public static readonly Guid MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID = new Guid("C60ACD28-1847-44BA-9782-EF1C183E1D5D");
     public static readonly Guid MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK = new Guid("A80C8198-4DC6-46C2-9BF8-9C8D6E4F9C3D");
+    public static readonly Guid MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME = new Guid("A8E065AD-4F9A-4F31-A1D5-AB89D6A0E78E");
+
+    // Media Type attributes for resolution
+    public static readonly Guid MF_MT_FRAME_SIZE = new Guid("1652C33D-D6B2-4012-B834-72060849A11D");
+    public static readonly Guid MF_MT_FRAME_RATE = new Guid("C459A2E8-3D2C-4E44-B132-FEE5156C7BB0");
 
     [DllImport("mfplat.dll", PreserveSig = true)]
     public static extern int MFStartup(int version, int flags);
@@ -582,6 +767,9 @@ internal static class NativeMethods
 
     [DllImport("mfreadwrite.dll", PreserveSig = true)]
     public static extern int MFCreateSourceReaderFromMediaSource(object mediaSource, IMFAttributes? attributes, out IMFSourceReader? sourceReader);
+
+    [DllImport("mfplat.dll", PreserveSig = true)]
+    public static extern int MFEnumDeviceSources(IMFAttributes attributes, out IntPtr[]? pppSourceActivate, out int pcSourceActivate);
 
     public static IMFAttributes? CreateAttributes()
     {

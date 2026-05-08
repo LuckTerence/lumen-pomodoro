@@ -5,6 +5,15 @@
     <FontFamily x:Key="InterRegular">pack://application:,,,/Fonts/#Inter</FontFamily>
     <FontFamily x:Key="InterSemiBold">pack://application:,,,/Fonts/#Inter SemiBold</FontFamily>
 
+    <!-- 主题无关的语义色 -->
+    <Color x:Key="SuccessColor">#10B981</Color>
+    <Color x:Key="FallbackTaskColor">#6B7280</Color>
+    <Color x:Key="ArcBackgroundColor">#1A808080</Color>
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="FallbackTaskBrush" Color="{StaticResource FallbackTaskColor}" />
+    <SolidColorBrush x:Key="ArcBackgroundBrush" Color="{StaticResource ArcBackgroundColor}" />
+
     <Style x:Key="TimerText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="56" />
         <Setter Property="FontWeight" Value="Normal" />

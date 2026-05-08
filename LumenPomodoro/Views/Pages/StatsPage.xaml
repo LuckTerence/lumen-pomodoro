@@ -21,7 +21,28 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="今日统计" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{Binding StatsDateLabel}" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="日" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <ui:ToggleSwitch IsChecked="{Binding IsDayPeriod}" />
+                <TextBlock Text="周" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="4,0,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <ui:Button Appearance="Transparent" Click="PrevDate_Click" FontSize="12" Padding="6,2">
+                    <ui:SymbolIcon Symbol="ChevronLeft24" />
+                </ui:Button>
+                <ui:Button Appearance="Transparent" Click="NextDate_Click" FontSize="12" Padding="6,2" IsEnabled="{Binding CanGoNext}">
+                    <ui:SymbolIcon Symbol="ChevronRight24" />
+                </ui:Button>
+            </StackPanel>
+        </Grid>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
             <ui:CardControl Margin="0,0,12,0" Padding="24">
@@ -39,7 +60,7 @@
                 <ui:CardControl.Content>
                     <StackPanel HorizontalAlignment="Center" Width="140">
                         <TextBlock Text="{Binding TotalFocusMinutes}" Style="{StaticResource StatNumber}"
-                                   Foreground="#10B981" />
+                                   Foreground="{StaticResource SuccessBrush}" />
                         <TextBlock Text="专注时长(分)" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                    HorizontalAlignment="Center" />
                     </StackPanel>

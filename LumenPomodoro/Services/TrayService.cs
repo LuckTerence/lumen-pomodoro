@@ -84,6 +84,12 @@ public class TrayService
 
     public void UpdateMenuState()
     {
+        if (!Application.Current.Dispatcher.CheckAccess())
+        {
+            Application.Current.Dispatcher.BeginInvoke(UpdateMenuState);
+            return;
+        }
+
         if (_mainViewModel.CurrentStatus == TimerMode.Idle)
         {
             _startPauseItem.Header = "开始专注";

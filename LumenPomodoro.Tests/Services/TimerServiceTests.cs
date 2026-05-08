@@ -179,9 +179,8 @@ public class TimerServiceTests
         // Act
         var cameras = cameraService.GetAvailableCameras();
 
-        // Assert
+        // Assert — 无摄像头时返回 ["默认摄像头"] 占位
         Assert.NotEmpty(cameras);
-        Assert.True(cameras.Count > 0);
     }
 
     [Fact]
@@ -194,7 +193,7 @@ public class TimerServiceTests
         // Act
         var count = cameraService.GetCameraCount();
 
-        // Assert
-        Assert.True(count > 0);
+        // Assert — 无摄像头时返回 1 作为占位值
+        Assert.True(count >= 1);
     }
 }

@@ -216,7 +216,10 @@ public class TimerService : IDisposable
             }
         }
 
-        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
+        if (!shouldComplete)
+        {
+            TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
+        }
 
         if (shouldComplete)
         {

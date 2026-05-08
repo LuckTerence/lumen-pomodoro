@@ -55,7 +55,29 @@
                                         <TextBlock Text="{Binding Category}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Opacity="0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ui:CardControl}, Path=IsMouseOver}" Value="True">
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
                                         <ui:Button Appearance="Secondary" Click="EditTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4">
                                             编辑
                                         </ui:Button>
@@ -95,6 +117,7 @@
             <StackPanel Orientation="Horizontal">
                 <ComboBox x:Name="CategoryComboBox" MinWidth="120" Margin="0,0,8,0"
                           ItemsSource="{Binding Categories}" SelectedIndex="0" />
+                <ComboBox x:Name="ColorComboBox" MinWidth="80" Margin="0,0,8,0" SelectedIndex="0" />
                 <ui:Button Appearance="Primary" Click="AddTask_Click">添加</ui:Button>
             </StackPanel>
         </StackPanel>

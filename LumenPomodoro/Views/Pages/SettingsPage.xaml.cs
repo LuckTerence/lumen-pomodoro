@@ -4,7 +4,7 @@ using LumenPomodoro.ViewModels;
 
 namespace LumenPomodoro.Views.Pages;
 
-public partial class SettingsPage : Page
+public partial class SettingsPage : Page, IDisposable
 {
     private readonly SettingsViewModel _viewModel;
 
@@ -15,6 +15,12 @@ public partial class SettingsPage : Page
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = _viewModel;
+        Unloaded += SettingsPage_Unloaded;
+    }
+
+    private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        _viewModel.Cleanup();
     }
 
     private void TestCamera_Click(object sender, RoutedEventArgs e)
@@ -26,5 +32,11 @@ public partial class SettingsPage : Page
     {
         _viewModel.SaveSettings();
         SettingsSaved?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        Unloaded -= SettingsPage_Unloaded;
+        _viewModel.Dispose();
     }
 }
