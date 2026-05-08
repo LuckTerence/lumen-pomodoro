@@ -1,7 +1,8 @@
 <Page x:Class="LumenPomodoro.Views.Pages.StatsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:controls="clr-namespace:LumenPomodoro.Controls">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -11,64 +12,138 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
+        <StackPanel Margin="24">
 
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="{Binding StatsDateLabel}" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="日" Style="{StaticResource FinePrint}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                <ui:ToggleSwitch IsChecked="{Binding IsDayPeriod}" />
-                <TextBlock Text="周" Style="{StaticResource FinePrint}" VerticalAlignment="Center" Margin="4,0,0,0" />
-            </StackPanel>
-            <StackPanel Grid.Column="3" Orientation="Horizontal">
-                <ui:Button Appearance="Transparent" Click="PrevDate_Click" FontSize="12" Padding="6,2">
-                    <ui:SymbolIcon Symbol="ChevronLeft24" />
-                </ui:Button>
-                <ui:Button Appearance="Transparent" Click="NextDate_Click" FontSize="12" Padding="6,2" IsEnabled="{Binding CanGoNext}">
-                    <ui:SymbolIcon Symbol="ChevronRight24" />
-                </ui:Button>
-            </StackPanel>
-        </Grid>
+            <!-- 标题区 -->
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="统计" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ComboBox x:Name="PeriodCombo" SelectedIndex="0" MinWidth="60"
+                              SelectionChanged="PeriodCombo_SelectionChanged">
+                        <ComboBoxItem Content="日" />
+                        <ComboBoxItem Content="周" />
+                        <ComboBoxItem Content="月" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button Appearance="Transparent" Click="PrevDate_Click" FontSize="12" Padding="6,2">
+                        <ui:SymbolIcon Symbol="ChevronLeft24" />
+                    </ui:Button>
+                    <ui:Button Appearance="Transparent" Click="NextDate_Click" FontSize="12" Padding="6,2"
+                               IsEnabled="{Binding CanGoNext}">
+                        <ui:SymbolIcon Symbol="ChevronRight24" />
+                    </ui:Button>
+                </StackPanel>
+            </Grid>
 
-        <Grid Grid.Row="1" VerticalAlignment="Center">
-            <StackPanel HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
-                    <ui:CardControl Margin="0,0,12,0" Padding="28,20">
-                        <ui:CardControl.Content>
-                            <StackPanel HorizontalAlignment="Center" Width="140">
+            <!-- 日期标签 -->
+            <TextBlock Text="{Binding StatsDateLabel}" Style="{StaticResource FinePrint}"
+                       HorizontalAlignment="Center" Margin="0,0,0,16"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <!-- 概览卡片 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="概览" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <ui:CardControl Margin="0,0,12,0" Padding="24,16">
+                            <StackPanel HorizontalAlignment="Center" Width="120">
                                 <TextBlock Text="{Binding CompletedPomodoros}" Style="{StaticResource StatNumber}"
                                            Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
                                 <TextBlock Text="完成番茄钟" Style="{StaticResource Caption}"
                                            HorizontalAlignment="Center" Margin="0,4,0,0" />
                             </StackPanel>
-                        </ui:CardControl.Content>
-                    </ui:CardControl>
-
-                    <ui:CardControl Padding="28,20">
-                        <ui:CardControl.Content>
-                            <StackPanel HorizontalAlignment="Center" Width="140">
+                        </ui:CardControl>
+                        <ui:CardControl Padding="24,16">
+                            <StackPanel HorizontalAlignment="Center" Width="120">
                                 <TextBlock Text="{Binding TotalFocusMinutes}" Style="{StaticResource StatNumber}"
                                            Foreground="{StaticResource SuccessBrush}" />
                                 <TextBlock Text="专注时长(分)" Style="{StaticResource Caption}"
                                            HorizontalAlignment="Center" Margin="0,4,0,0" />
                             </StackPanel>
-                        </ui:CardControl.Content>
-                    </ui:CardControl>
+                        </ui:CardControl>
+                    </StackPanel>
                 </StackPanel>
+            </ui:CardControl>
 
-                <TextBlock Text="{Binding StatsDateLabel}" Style="{StaticResource FinePrint}"
-                           HorizontalAlignment="Center" />
-            </StackPanel>
-        </Grid>
-    </Grid>
+            <!-- 年度热力图 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="年度热力图" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <controls:HeatmapCalendar HeatmapDays="{Binding HeatmapDays}" />
+                </StackPanel>
+            </ui:CardControl>
+
+            <!-- 时段分布 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="时段分布" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <controls:HourlyDistributionChart HourlyData="{Binding HourlyData}" />
+                </StackPanel>
+            </ui:CardControl>
+
+            <!-- 任务分布 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="任务分布" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <controls:TaskDonutChart TaskSlices="{Binding TaskBreakdown}" />
+                </StackPanel>
+            </ui:CardControl>
+
+            <!-- 周趋势 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="周趋势" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <controls:WeeklyTrendChart WeeklyData="{Binding WeeklyTrend}" />
+                </StackPanel>
+            </ui:CardControl>
+
+            <!-- 智能洞察 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="智能洞察" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding Insights}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8" Padding="12"
+                                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                        CornerRadius="6">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource Caption}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Description}" Style="{StaticResource FinePrint}"
+                                                   Margin="0,4,0,0" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ui:CardControl>
+
+            <!-- 数据导出 -->
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="数据导出" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Appearance="Secondary" Click="ExportCsv_Click" Padding="12,8" Margin="0,0,8,0">
+                            导出 CSV
+                        </ui:Button>
+                        <ui:Button Appearance="Secondary" Click="ExportJson_Click" Padding="12,8">
+                            导出 JSON
+                        </ui:Button>
+                    </StackPanel>
+                </StackPanel>
+            </ui:CardControl>
+
+        </StackPanel>
+    </ScrollViewer>
 </Page>

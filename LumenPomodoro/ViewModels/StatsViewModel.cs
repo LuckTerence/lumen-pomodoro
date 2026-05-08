@@ -8,12 +8,14 @@ namespace LumenPomodoro.ViewModels;
 public enum StatsPeriod
 {
     Day,
-    Week
+    Week,
+    Month
 }
 
 public class StatsViewModel : INotifyPropertyChanged
 {
     private readonly StorageService _storageService;
+    private readonly InsightEngine _insightEngine = new();
 
     private int _completedPomodoros;
     private int _totalFocusMinutes;
@@ -21,7 +23,13 @@ public class StatsViewModel : INotifyPropertyChanged
     private StatsPeriod _currentPeriod = StatsPeriod.Day;
     private string _statsDateLabel = "今日统计";
     private bool _canGoNext;
-    private bool _isDayPeriod = true;
+    private string _periodSelection = "Day";
+
+    private List<HeatmapDay> _heatmapDays = [];
+    private List<HourlyDataPoint> _hourlyData = [];
+    private List<TaskSlice> _taskBreakdown = [];
+    private List<WeeklyDataPoint> _weeklyTrend = [];
+    private List<Insight> _insights = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -49,19 +57,55 @@ public class StatsViewModel : INotifyPropertyChanged
         set { if (_canGoNext != value) { _canGoNext = value; OnPropertyChanged(); } }
     }
 
-    public bool IsDayPeriod
+    public string PeriodSelection
     {
-        get => _isDayPeriod;
+        get => _periodSelection;
         set
         {
-            if (_isDayPeriod != value)
+            if (_periodSelection != value)
             {
-                _isDayPeriod = value;
-                _currentPeriod = value ? StatsPeriod.Day : StatsPeriod.Week;
+                _periodSelection = value;
+                _currentPeriod = value switch
+                {
+                    "Week" => StatsPeriod.Week,
+                    "Month" => StatsPeriod.Month,
+                    _ => StatsPeriod.Day
+                };
+                _currentDate = DateTime.Today;
                 OnPropertyChanged();
                 LoadStatsForCurrentPeriod();
             }
         }
+    }
+
+    public List<HeatmapDay> HeatmapDays
+    {
+        get => _heatmapDays;
+        set { if (_heatmapDays != value) { _heatmapDays = value; OnPropertyChanged(); } }
+    }
+
+    public List<HourlyDataPoint> HourlyData
+    {
+        get => _hourlyData;
+        set { if (_hourlyData != value) { _hourlyData = value; OnPropertyChanged(); } }
+    }
+
+    public List<TaskSlice> TaskBreakdown
+    {
+        get => _taskBreakdown;
+        set { if (_taskBreakdown != value) { _taskBreakdown = value; OnPropertyChanged(); } }
+    }
+
+    public List<WeeklyDataPoint> WeeklyTrend
+    {
+        get => _weeklyTrend;
+        set { if (_weeklyTrend != value) { _weeklyTrend = value; OnPropertyChanged(); } }
+    }
+
+    public List<Insight> Insights
+    {
+        get => _insights;
+        set { if (_insights != value) { _insights = value; OnPropertyChanged(); } }
     }
 
     public StatsViewModel(StorageService storageService)
@@ -76,59 +120,100 @@ public class StatsViewModel : INotifyPropertyChanged
 
     public void ShiftDate(int direction)
     {
-        if (_currentPeriod == StatsPeriod.Day)
+        switch (_currentPeriod)
         {
-            var newDate = _currentDate.AddDays(direction);
-            if (newDate > DateTime.Today) return;
-            _currentDate = newDate;
-        }
-        else
-        {
-            var newDate = _currentDate.AddDays(direction * 7);
-            var maxDate = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-            if (newDate > maxDate) return;
-            _currentDate = newDate;
+            case StatsPeriod.Day:
+                var newDay = _currentDate.AddDays(direction);
+                if (newDay > DateTime.Today) return;
+                _currentDate = newDay;
+                break;
+            case StatsPeriod.Week:
+                var newWeek = _currentDate.AddDays(direction * 7);
+                var maxWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                if (newWeek > maxWeek) return;
+                _currentDate = newWeek;
+                break;
+            case StatsPeriod.Month:
+                var newMonth = _currentDate.AddMonths(direction);
+                var maxMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                if (newMonth > maxMonth) return;
+                _currentDate = newMonth;
+                break;
         }
         LoadStatsForCurrentPeriod();
     }
 
+    public List<FocusSession> GetAllSessions() => _storageService.LoadSessions();
+
     private void LoadStatsForCurrentPeriod()
     {
         var sessions = _storageService.LoadSessions();
+        var tasks = _storageService.LoadTasks();
 
+        // 按当前周期过滤
+        DateTime periodStart, periodEnd;
         List<FocusSession> filteredSessions;
 
-        if (_currentPeriod == StatsPeriod.Day)
+        switch (_currentPeriod)
         {
-            filteredSessions = sessions
-                .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == _currentDate.Date)
-                .ToList();
+            case StatsPeriod.Day:
+                filteredSessions = sessions
+                    .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == _currentDate.Date)
+                    .ToList();
+                StatsDateLabel = _currentDate.Date == DateTime.Today
+                    ? "今日统计"
+                    : _currentDate.ToString("M月d日");
+                periodStart = _currentDate.Date;
+                periodEnd = _currentDate.Date;
+                CanGoNext = _currentDate.Date < DateTime.Today;
+                break;
 
-            StatsDateLabel = _currentDate.Date == DateTime.Today
-                ? "今日统计"
-                : _currentDate.ToString("M月d日");
-        }
-        else
-        {
-            var weekStart = _currentDate.AddDays(-(int)_currentDate.DayOfWeek);
-            var weekEnd = weekStart.AddDays(6);
-            filteredSessions = sessions
-                .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date >= weekStart.Date && s.EndTime.Value.Date <= weekEnd.Date)
-                .ToList();
+            case StatsPeriod.Week:
+                var weekStart = _currentDate.AddDays(-(int)_currentDate.DayOfWeek);
+                var weekEnd = weekStart.AddDays(6);
+                filteredSessions = sessions
+                    .Where(s => s.Completed && s.EndTime.HasValue
+                        && s.EndTime.Value.Date >= weekStart.Date
+                        && s.EndTime.Value.Date <= weekEnd.Date)
+                    .ToList();
+                StatsDateLabel = $"{weekStart:M月d日}-{weekEnd:M月d日}";
+                periodStart = weekStart;
+                periodEnd = weekEnd;
+                var maxWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                CanGoNext = _currentDate < maxWeek;
+                break;
 
-            StatsDateLabel = $"{weekStart:M月d日}-{weekEnd:M月d日}";
+            case StatsPeriod.Month:
+                var monthStart = new DateTime(_currentDate.Year, _currentDate.Month, 1);
+                var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+                filteredSessions = sessions
+                    .Where(s => s.Completed && s.EndTime.HasValue
+                        && s.EndTime.Value.Date >= monthStart.Date
+                        && s.EndTime.Value.Date <= monthEnd.Date)
+                    .ToList();
+                StatsDateLabel = $"{_currentDate.Year}年{_currentDate.Month}月";
+                periodStart = monthStart;
+                periodEnd = monthEnd;
+                var maxMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                CanGoNext = _currentDate < maxMonth;
+                break;
+
+            default:
+                filteredSessions = [];
+                periodStart = DateTime.Today;
+                periodEnd = DateTime.Today;
+                break;
         }
 
         CompletedPomodoros = filteredSessions.Count;
         TotalFocusMinutes = filteredSessions.Sum(s => s.FocusMinutes);
 
-        if (_currentPeriod == StatsPeriod.Day)
-            CanGoNext = _currentDate.Date < DateTime.Today;
-        else
-        {
-            var maxDate = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-            CanGoNext = _currentDate < maxDate;
-        }
+        // 图表数据
+        HeatmapDays = _insightEngine.GetHeatmapData(sessions);
+        HourlyData = _insightEngine.GetHourlyDistribution(sessions, periodStart, periodEnd);
+        TaskBreakdown = _insightEngine.GetTaskBreakdown(sessions, periodStart, periodEnd, tasks);
+        WeeklyTrend = _insightEngine.GetWeeklyTrend(sessions);
+        Insights = _insightEngine.GetInsights(sessions, tasks);
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
