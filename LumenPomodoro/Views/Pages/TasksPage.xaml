@@ -53,8 +53,6 @@
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <TextBlock Text="{Binding Category}" FontSize="12"
-                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Opacity="0">
@@ -80,7 +78,10 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-                                        <ui:Button Appearance="Secondary" Click="EditTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4">
+                                        <ui:Button Appearance="Primary" Click="SelectTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4">
+                                            选择
+                                        </ui:Button>
+                                        <ui:Button Appearance="Secondary" Click="EditTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4" Margin="4,0,0,0">
                                             编辑
                                         </ui:Button>
                                         <ui:Button Appearance="Danger" Click="DeleteTask_Click" Tag="{Binding Id}" FontSize="12" Padding="8,4" Margin="4,0,0,0">
@@ -120,8 +121,6 @@
             <StackPanel>
                 <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称" Margin="0,0,0,8" />
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox x:Name="CategoryComboBox" MinWidth="120" Margin="0,0,8,0"
-                              ItemsSource="{Binding Categories}" SelectedIndex="0" />
                     <ComboBox x:Name="ColorComboBox" MinWidth="80" Margin="0,0,8,0" SelectedIndex="0" />
                     <ui:Button Appearance="Primary" Click="AddTask_Click" Padding="16,6">添加</ui:Button>
                 </StackPanel>

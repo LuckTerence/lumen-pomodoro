@@ -200,6 +200,10 @@ public partial class ArcProgress : UserControl
         fraction = Math.Clamp(fraction, 0.0, 1.0);
         if (fraction <= 0) return Geometry.Empty;
 
+        // fraction 接近 1.0 时，起点和终点重合，WPF 无法渲染，需要微小偏移
+        if (fraction >= 0.999)
+            return CreateCircleGeometry(center, radius);
+
         var startAngle = -Math.PI / 2;
         var endAngle = startAngle + 2 * Math.PI * fraction;
 

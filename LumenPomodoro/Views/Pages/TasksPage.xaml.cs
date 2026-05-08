@@ -57,20 +57,23 @@ public partial class TasksPage : Page
         _viewModel.LoadTasks();
     }
 
+    private void SelectTask_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element) return;
+        var taskId = element.Tag?.ToString();
+        if (taskId == null) return;
+        _viewModel.SelectTask(taskId);
+    }
+
     private void AddTask_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.NewTaskName = NewTaskNameBox.Text;
-        if (CategoryComboBox.SelectedItem is string category)
-        {
-            _viewModel.SelectedCategory = category;
-        }
         if (ColorComboBox.SelectedItem is ColorOption colorOption)
         {
             _viewModel.SelectedColor = $"#{colorOption.Color.R:X2}{colorOption.Color.G:X2}{colorOption.Color.B:X2}";
         }
         _viewModel.AddTask();
         NewTaskNameBox.Text = string.Empty;
-        CategoryComboBox.SelectedIndex = 0;
         ColorComboBox.SelectedIndex = 0;
     }
 

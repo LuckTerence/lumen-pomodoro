@@ -144,6 +144,12 @@ public partial class MainWindow : FluentWindow
         {
             var tasksVM = new TasksViewModel(_viewModel.StorageService);
             tasksVM.TasksChanged += () => _viewModel.ReloadTasks();
+            tasksVM.TaskSelected += (task) =>
+            {
+                _viewModel.SelectedTask = task;
+                var mainWindow = (MainWindow?)Application.Current.MainWindow;
+                mainWindow?.NavigateToPage(typeof(TimerPage));
+            };
             return new TasksPage(tasksVM);
         }
 

@@ -12,12 +12,12 @@ public class TasksViewModel : INotifyPropertyChanged
 
     private ObservableCollection<TaskItem> _tasks = new();
     private string _newTaskName = string.Empty;
-    private string _selectedCategory = TaskCategories.Categories.First();
-    private string _selectedColor = TaskCategories.GetCategoryColor(TaskCategories.Categories.First());
+    private string _selectedColor = "#3B82F6";
     private string? _editingTaskId;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? TasksChanged;
+    public event Action<TaskItem>? TaskSelected;
 
     public ObservableCollection<TaskItem> Tasks
     {
@@ -29,12 +29,6 @@ public class TasksViewModel : INotifyPropertyChanged
     {
         get => _newTaskName;
         set { if (_newTaskName != value) { _newTaskName = value; OnPropertyChanged(); } }
-    }
-
-    public string SelectedCategory
-    {
-        get => _selectedCategory;
-        set { if (_selectedCategory != value) { _selectedCategory = value; OnPropertyChanged(); } }
     }
 
     public string SelectedColor
@@ -62,8 +56,6 @@ public class TasksViewModel : INotifyPropertyChanged
         return color.ToUpperInvariant();
     }
 
-    public string[] Categories => TaskCategories.Categories;
-
     public string? EditingTaskId
     {
         get => _editingTaskId;
@@ -88,7 +80,7 @@ public class TasksViewModel : INotifyPropertyChanged
         var task = new TaskItem
         {
             Name = NewTaskName.Trim(),
-            Category = SelectedCategory,
+            Category = string.Empty,
             Color = SelectedColor,
             CreatedAt = DateTime.Now
         };
@@ -105,6 +97,13 @@ public class TasksViewModel : INotifyPropertyChanged
 
         Tasks.Remove(task);
         SaveAndNotify();
+    }
+
+    public void SelectTask(string taskId)
+    {
+        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task != null)
+            TaskSelected?.Invoke(task);
     }
 
     public void StartEdit(TaskItem task)

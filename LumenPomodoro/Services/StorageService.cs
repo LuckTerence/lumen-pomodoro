@@ -80,25 +80,24 @@ public class StorageService
         }
     }
 
+    private static readonly (string Name, string Color)[] DefaultTaskData =
+    [
+        ("专注", "#3B82F6"),
+        ("学习", "#10B981"),
+        ("阅读", "#8B5CF6"),
+        ("复习", "#EF4444"),
+    ];
+
     private List<TaskItem> GetDefaultTasks()
     {
-        var tasks = new List<TaskItem>();
-        int index = 0;
-        foreach (var category in TaskCategories.DefaultTasks)
+        return DefaultTaskData.Select((t, i) => new TaskItem
         {
-            foreach (var taskName in category.Value)
-            {
-                tasks.Add(new TaskItem
-                {
-                    Id = $"default_{index++}",
-                    Name = taskName,
-                    Category = category.Key,
-                    Color = TaskCategories.GetCategoryColor(category.Key),
-                    CreatedAt = DateTime.Now
-                });
-            }
-        }
-        return tasks;
+            Id = $"default_{i}",
+            Name = t.Name,
+            Category = string.Empty,
+            Color = t.Color,
+            CreatedAt = DateTime.Now
+        }).ToList();
     }
 
     public List<FocusSession> LoadSessions()

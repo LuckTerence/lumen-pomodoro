@@ -17,7 +17,7 @@
         <StackPanel Margin="24">
             <TextBlock Text="设置" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16">
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
                 <ui:CardControl.Content>
                     <StackPanel>
                         <TextBlock Text="计时" Style="{StaticResource SectionTitle}" />
@@ -45,7 +45,7 @@
                 </ui:CardControl.Content>
             </ui:CardControl>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16">
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
                 <ui:CardControl.Content>
                     <StackPanel>
                         <TextBlock Text="摄像头" Style="{StaticResource SectionTitle}" />
@@ -95,7 +95,7 @@
                 </ui:CardControl.Content>
             </ui:CardControl>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16">
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
                 <ui:CardControl.Content>
                     <StackPanel>
                         <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" />
@@ -118,7 +118,7 @@
                 </ui:CardControl.Content>
             </ui:CardControl>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16">
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
                 <ui:CardControl.Content>
                     <StackPanel>
                         <TextBlock Text="外观" Style="{StaticResource SectionTitle}" />
@@ -141,7 +141,7 @@
                 </ui:CardControl.Content>
             </ui:CardControl>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16">
+            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
                 <ui:CardControl.Content>
                     <StackPanel>
                         <TextBlock Text="系统" Style="{StaticResource SectionTitle}" />
