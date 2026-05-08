@@ -245,6 +245,13 @@ public partial class TimerPage : Page
                 panel.Opacity = 0;
             }
         }
+
+        // 状态标签同步淡入
+        if (StateLabelBlock != null)
+        {
+            var labelAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
+            StateLabelBlock.BeginAnimation(UIElement.OpacityProperty, labelAnim);
+        }
     }
 
     private void TaskName_MouseDown(object sender, MouseButtonEventArgs e)
@@ -266,6 +273,6 @@ public partial class TimerPage : Page
     private void SkipBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.SkipBreak();
     private void EndBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.EndBreak();
     private void StopCameraButton_Click(object sender, RoutedEventArgs e) => _viewModel.StopCameraAlert();
-    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(1);
-    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(-1);
+    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(5);
+    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(-5);
 }

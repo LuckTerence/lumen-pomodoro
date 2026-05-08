@@ -21,7 +21,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -30,9 +30,9 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="{Binding StatsDateLabel}" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="日" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <TextBlock Text="日" Style="{StaticResource FinePrint}" VerticalAlignment="Center" Margin="0,0,4,0" />
                 <ui:ToggleSwitch IsChecked="{Binding IsDayPeriod}" />
-                <TextBlock Text="周" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="4,0,0,0" />
+                <TextBlock Text="周" Style="{StaticResource FinePrint}" VerticalAlignment="Center" Margin="4,0,0,0" />
             </StackPanel>
             <StackPanel Grid.Column="3" Orientation="Horizontal">
                 <ui:Button Appearance="Transparent" Click="PrevDate_Click" FontSize="12" Padding="6,2">
@@ -44,25 +44,25 @@
             </StackPanel>
         </Grid>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
-            <ui:CardControl Margin="0,0,12,0" Padding="24">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+            <ui:CardControl Margin="0,0,12,0" Padding="28,20">
                 <ui:CardControl.Content>
                     <StackPanel HorizontalAlignment="Center" Width="140">
                         <TextBlock Text="{Binding CompletedPomodoros}" Style="{StaticResource StatNumber}"
                                    Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
-                        <TextBlock Text="完成番茄钟" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="完成番茄钟" Style="{StaticResource Caption}"
+                                   HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Content>
             </ui:CardControl>
 
-            <ui:CardControl Padding="24">
+            <ui:CardControl Padding="28,20">
                 <ui:CardControl.Content>
                     <StackPanel HorizontalAlignment="Center" Width="140">
                         <TextBlock Text="{Binding TotalFocusMinutes}" Style="{StaticResource StatNumber}"
                                    Foreground="{StaticResource SuccessBrush}" />
-                        <TextBlock Text="专注时长(分)" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="专注时长(分)" Style="{StaticResource Caption}"
+                                   HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                 </ui:CardControl.Content>
             </ui:CardControl>
@@ -84,40 +84,52 @@
             <ItemsControl ItemsSource="{Binding TaskStats}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                        <Border Margin="0,0,0,12" Padding="8,6" CornerRadius="6"
+                                Background="Transparent">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                            <Ellipse Grid.Row="0" Grid.Column="0" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
-                                <Ellipse.Fill>
-                                    <SolidColorBrush Color="{Binding Color}" />
-                                </Ellipse.Fill>
-                            </Ellipse>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TaskName}" FontSize="13"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Count}" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                <Ellipse Grid.Row="0" Grid.Column="0" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <Ellipse.Fill>
+                                        <SolidColorBrush Color="{Binding Color}" />
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TaskName}" FontSize="13"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Count}" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
 
-                            <Rectangle Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="4" RadiusX="2" RadiusY="2"
-                                       Margin="0,4,0,0" HorizontalAlignment="Left">
-                                <Rectangle.Fill>
-                                    <SolidColorBrush Color="{Binding Color}" Opacity="0.5" />
-                                </Rectangle.Fill>
-                                <Rectangle.Width>
-                                    <MultiBinding Converter="{StaticResource BarRatioToWidthConverter}">
-                                        <Binding Path="BarRatio" />
-                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ScrollViewer}" />
-                                    </MultiBinding>
-                                </Rectangle.Width>
-                            </Rectangle>
-                        </Grid>
+                                <Rectangle Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="4" RadiusX="2" RadiusY="2"
+                                           Margin="0,6,0,0" HorizontalAlignment="Left">
+                                    <Rectangle.Fill>
+                                        <SolidColorBrush Color="{Binding Color}" Opacity="0.5" />
+                                    </Rectangle.Fill>
+                                    <Rectangle.Width>
+                                        <MultiBinding Converter="{StaticResource BarRatioToWidthConverter}">
+                                            <Binding Path="BarRatio" />
+                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ScrollViewer}" />
+                                        </MultiBinding>
+                                    </Rectangle.Width>
+                                </Rectangle>
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -134,11 +146,11 @@
                     </Style.Triggers>
                 </Style>
             </StackPanel.Style>
-            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="36"
-                       HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,8" />
-            <TextBlock Text="还没有完成记录" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <ui:SymbolIcon Symbol="ChartMultiple24" FontSize="36"
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,12" />
+            <TextBlock Text="还没有完成记录" FontSize="15" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        HorizontalAlignment="Center" />
-            <TextBlock Text="完成第一个番茄钟后这里会显示统计" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <TextBlock Text="完成第一个番茄钟后这里会显示统计" Style="{StaticResource FinePrint}"
                        HorizontalAlignment="Center" Margin="0,4,0,0" />
         </StackPanel>
     </Grid>

@@ -15,11 +15,12 @@
     <SolidColorBrush x:Key="ArcBackgroundBrush" Color="{StaticResource ArcBackgroundColor}" />
 
     <Style x:Key="TimerText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="56" />
-        <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="80" />
+        <Setter Property="FontWeight" Value="Light" />
+        <Setter Property="FontFamily" Value="{StaticResource InterLight}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
         <Setter Property="RenderTransform">
             <Setter.Value>
@@ -55,6 +56,31 @@
         <Setter Property="FontFamily" Value="{StaticResource InterRegular}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="BodyText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontFamily" Value="{StaticResource InterRegular}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="Caption" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource InterRegular}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style x:Key="FinePrint" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="{StaticResource InterRegular}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style x:Key="StateLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontFamily" Value="{StaticResource InterSemiBold}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
 
 </ResourceDictionary>
