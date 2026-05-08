@@ -266,6 +266,6 @@ public partial class TimerPage : Page
     private void SkipBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.SkipBreak();
     private void EndBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.EndBreak();
     private void StopCameraButton_Click(object sender, RoutedEventArgs e) => _viewModel.StopCameraAlert();
-    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(5);
-    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(-5);
+    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(1);
+    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(-1);
 }
