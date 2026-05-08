@@ -84,11 +84,10 @@
                     </Style>
                 </StackPanel.Style>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
-                    <ui:Button Appearance="Secondary" Click="AdjustTimeDown_Click" FontSize="16" Padding="8,2">-5</ui:Button>
-                    <TextBlock Text="{Binding AppSettings.WorkMinutes}" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                    <ui:Button Appearance="Secondary" Click="AdjustTimeDown_Click" FontSize="16" Padding="8,2">-</ui:Button>
+                    <TextBlock Text="5 分钟" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                VerticalAlignment="Center" Margin="6,0" />
-                    <TextBlock Text="分钟" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
-                    <ui:Button Appearance="Secondary" Click="AdjustTimeUp_Click" FontSize="16" Padding="8,2">+5</ui:Button>
+                    <ui:Button Appearance="Secondary" Click="AdjustTimeUp_Click" FontSize="16" Padding="8,2">+</ui:Button>
                 </StackPanel>
                 <ui:Button Appearance="Primary" Click="StartFocusButton_Click" FontSize="15" Padding="20,10">
                     开始专注
