@@ -463,7 +463,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void AdjustWorkMinutes(int delta)
     {
-        var newVal = Math.Clamp(AppSettings.WorkMinutes + delta, 1, 120);
+        var raw = AppSettings.WorkMinutes + delta;
+        // 对齐到最近的 5 分钟倍数，避免 1+5=6 这类非整数步长
+        var rounded = (int)(Math.Round(raw / 5.0) * 5);
+        var newVal = Math.Clamp(rounded, 1, 120);
         if (newVal == AppSettings.WorkMinutes) return;
         AppSettings.WorkMinutes = newVal;
         _storageService.SaveSettings(AppSettings);
