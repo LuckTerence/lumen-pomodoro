@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LumenPomodoro.ViewModels;
 
 namespace LumenPomodoro.Views.Pages;
@@ -32,6 +33,15 @@ public partial class SettingsPage : Page, IDisposable
     {
         _viewModel.SaveSettings();
         SettingsSaved?.Invoke();
+    }
+
+    private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is ScrollViewer sv)
+        {
+            sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 
     public void Dispose()

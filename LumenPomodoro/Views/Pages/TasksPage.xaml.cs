@@ -17,11 +17,11 @@ public partial class TasksPage : Page
     private readonly TasksViewModel _viewModel;
     private static readonly ColorOption[] _colorOptions = new[]
     {
-        new ColorOption { Name = "数学", Color = (Color)ColorConverter.ConvertFromString("#3B82F6")! },
-        new ColorOption { Name = "英语", Color = (Color)ColorConverter.ConvertFromString("#10B981")! },
-        new ColorOption { Name = "政治", Color = (Color)ColorConverter.ConvertFromString("#EF4444")! },
-        new ColorOption { Name = "专业课", Color = (Color)ColorConverter.ConvertFromString("#8B5CF6")! },
-        new ColorOption { Name = "其他", Color = (Color)ColorConverter.ConvertFromString("#6B7280")! },
+        new ColorOption { Name = "蓝色", Color = (Color)ColorConverter.ConvertFromString("#3B82F6")! },
+        new ColorOption { Name = "绿色", Color = (Color)ColorConverter.ConvertFromString("#10B981")! },
+        new ColorOption { Name = "红色", Color = (Color)ColorConverter.ConvertFromString("#EF4444")! },
+        new ColorOption { Name = "紫色", Color = (Color)ColorConverter.ConvertFromString("#8B5CF6")! },
+        new ColorOption { Name = "灰色", Color = (Color)ColorConverter.ConvertFromString("#6B7280")! },
     };
 
     public TasksPage(TasksViewModel viewModel)
@@ -37,22 +37,11 @@ public partial class TasksPage : Page
     private static DataTemplate CreateColorTemplate()
     {
         var template = new DataTemplate();
-        var factory = new FrameworkElementFactory(typeof(StackPanel));
-        factory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
-
-        var ellipseFactory = new FrameworkElementFactory(typeof(Ellipse));
-        ellipseFactory.SetValue(Ellipse.WidthProperty, 12.0);
-        ellipseFactory.SetValue(Ellipse.HeightProperty, 12.0);
-        ellipseFactory.SetValue(Ellipse.MarginProperty, new Thickness(0, 0, 6, 0));
-        ellipseFactory.SetValue(Ellipse.VerticalAlignmentProperty, VerticalAlignment.Center);
-        ellipseFactory.SetBinding(Ellipse.FillProperty, new System.Windows.Data.Binding("Color") { Converter = new ColorToBrushConverter() });
-        factory.AppendChild(ellipseFactory);
-
-        var textFactory = new FrameworkElementFactory(typeof(TextBlock));
-        textFactory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
-        textFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("Name"));
-        factory.AppendChild(textFactory);
-
+        var factory = new FrameworkElementFactory(typeof(Ellipse));
+        factory.SetValue(Ellipse.WidthProperty, 16.0);
+        factory.SetValue(Ellipse.HeightProperty, 16.0);
+        factory.SetValue(Ellipse.StrokeThicknessProperty, 0.0);
+        factory.SetBinding(Ellipse.FillProperty, new System.Windows.Data.Binding("Color") { Converter = new ColorToBrushConverter() });
         template.VisualTree = factory;
         return template;
     }

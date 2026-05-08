@@ -28,9 +28,16 @@ public partial class TimerPage : Page
         _viewModel = viewModel;
         DataContext = _viewModel;
         _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Loaded += (_, _) => UpdateStepLabel();
 
         CommandBindings.Add(new CommandBinding(ToggleCommand, Toggle_Executed));
         CommandBindings.Add(new CommandBinding(ResetCommand, Reset_Executed));
+    }
+
+    private void UpdateStepLabel()
+    {
+        if (StepLabel != null)
+            StepLabel.Text = $"{_viewModel.AppSettings.WorkMinutes} 分钟";
     }
 
     private void Toggle_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -273,6 +280,6 @@ public partial class TimerPage : Page
     private void SkipBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.SkipBreak();
     private void EndBreakButton_Click(object sender, RoutedEventArgs e) => _viewModel.EndBreak();
     private void StopCameraButton_Click(object sender, RoutedEventArgs e) => _viewModel.StopCameraAlert();
-    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(5);
-    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) => _viewModel.AdjustWorkMinutes(-5);
+    private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(5); UpdateStepLabel(); }
+    private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(-5); UpdateStepLabel(); }
 }

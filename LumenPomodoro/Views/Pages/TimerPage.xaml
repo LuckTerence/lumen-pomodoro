@@ -32,7 +32,7 @@
         <Border Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,24"
                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                 CornerRadius="12" Padding="12,6" Cursor="Hand"
-                MouseDown="TaskName_MouseDown"
+                PreviewMouseDown="TaskName_MouseDown"
                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
             <StackPanel Orientation="Horizontal">
                 <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
@@ -108,11 +108,8 @@
                 </StackPanel.Style>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
                     <ui:Button Appearance="Secondary" Click="AdjustTimeDown_Click" FontSize="14" Padding="10,4">-</ui:Button>
-                    <TextBlock FontSize="15" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                               VerticalAlignment="Center" Margin="12,0">
-                        <Run Text="{Binding AppSettings.WorkMinutes, Mode=OneWay}" FontWeight="SemiBold" />
-                        <Run Text=" 分钟" />
-                    </TextBlock>
+                    <TextBlock x:Name="StepLabel" FontSize="15" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="12,0" />
                     <ui:Button Appearance="Secondary" Click="AdjustTimeUp_Click" FontSize="14" Padding="10,4">+</ui:Button>
                 </StackPanel>
                 <ui:Button Appearance="Primary" Click="StartFocusButton_Click" FontSize="17" Padding="24,12">
@@ -164,7 +161,7 @@
         <!-- 底部统计摘要 + 快捷键提示 -->
         <StackPanel Grid.Row="6" HorizontalAlignment="Center" Margin="0,20,0,0">
             <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       HorizontalAlignment="Center" Cursor="Hand" MouseDown="StatsSummary_MouseDown">
+                       HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
                 <Run Text="今日 " />
                 <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" · 专注 " />

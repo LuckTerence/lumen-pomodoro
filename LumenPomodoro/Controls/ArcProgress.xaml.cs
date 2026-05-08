@@ -82,7 +82,8 @@ public partial class ArcProgress : UserControl
     {
         var targetFraction = Math.Clamp(Progress / 100.0, 0.0, 1.0);
 
-        if (!IsLoaded || AnimationDuration.TimeSpan.TotalMilliseconds <= 0)
+        if (!IsLoaded || AnimationDuration.TimeSpan.TotalMilliseconds <= 0
+            || Math.Abs(targetFraction - _currentProgressFraction) < 0.001)
         {
             _currentProgressFraction = targetFraction;
             UpdateArcs();
