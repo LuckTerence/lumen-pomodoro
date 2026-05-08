@@ -64,6 +64,7 @@ public partial class TimerPage : Page
                 {
                     if (_viewModel.IsFocusCompleted)
                     {
+                        StopBreathingAnimation();
                         PlayCompletionAnimation();
                         StartBreathingAnimation();
                     }

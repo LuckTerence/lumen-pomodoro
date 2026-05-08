@@ -89,9 +89,17 @@ public partial class ArcProgress : UserControl
             return;
         }
 
+        // 清理旧动画回调，防止重叠累积
         if (_runningRendering != null)
         {
             _runningRendering -= OnAnimationStep;
+            _runningRendering = null;
+        }
+
+        if (_isRenderingSubscribed)
+        {
+            CompositionTarget.Rendering -= OnRendering;
+            _isRenderingSubscribed = false;
         }
 
         _animStartFraction = _currentProgressFraction;
@@ -126,6 +134,13 @@ public partial class ArcProgress : UserControl
             _runningRendering -= OnAnimationStep;
             _currentProgressFraction = _animTargetFraction;
             RenderArcs(_animTargetFraction);
+
+            // 无剩余回调时取消订阅，停止每帧渲染
+            if (_runningRendering == null && _isRenderingSubscribed)
+            {
+                CompositionTarget.Rendering -= OnRendering;
+                _isRenderingSubscribed = false;
+            }
         }
     }
 

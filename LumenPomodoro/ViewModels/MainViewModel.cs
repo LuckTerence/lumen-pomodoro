@@ -180,6 +180,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                     _currentSession = null;
                 }
 
+                Progress = 0;
                 IsFocusCompleted = true;
                 IsPendingBreak = true;
                 StartCameraAlert();
