@@ -550,3 +550,19 @@
 
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
+## [2026-05-09] 修复摄像头指示灯无法点亮
+
+**涉及模块**: CameraService, CameraTest
+
+**修改文件数**: 2 个
+
+### 改动摘要
+
+1. **启动真实视频帧读取** — 摄像头初始化后新增 `MediaFrameReader.StartAsync()`，持续读取最新帧，避免只初始化 `MediaCapture` 但没有真正打开视频流导致硬件指示灯不亮。
+2. **修正测试提示** — `CameraTest` 延长观察时间到 8 秒，并明确说明测试目标是视频流启动与指示灯观察，不再把对象初始化误判为指示灯已点亮。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --no-build`：通过，34/34。
+- `dotnet run --project CameraTest\CameraTest.csproj`：检测到 `Integrated Camera`，视频流启动并保持 8 秒后正常停止；物理指示灯需人工观察确认。

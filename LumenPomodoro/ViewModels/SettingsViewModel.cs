@@ -193,9 +193,9 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         AnimationEnabled = settings.AnimationEnabled;
     }
 
-    private void LoadAvailableCameras()
+    private async void LoadAvailableCameras()
     {
-        var cameras = _cameraService.GetAvailableCameras();
+        var cameras = await _cameraService.GetAvailableCamerasAsync();
         AvailableCameras.Clear();
         foreach (var camera in cameras)
         {
@@ -253,17 +253,21 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        try
+        _cameraStartedByTest = true;
+        Task.Run(async () =>
         {
-            _cameraStartedByTest = true;
-            FireAndForget(_cameraService.StartCameraForDurationAsync(5), "测试摄像头");
-            MessageBox.Show("摄像头测试中，5秒后自动关闭", "测试摄像头", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            _cameraStartedByTest = false;
-            MessageBox.Show($"摄像头测试失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+            try
+            {
+                await _cameraService.StartCameraForDurationAsync(5);
+            }
+            catch (Exception ex)
+            {
+                _cameraStartedByTest = false;
+                Application.Current.Dispatcher.Invoke(() =>
+                    MessageBox.Show($"摄像头测试失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+            }
+        });
+        MessageBox.Show("摄像头测试中，5秒后自动关闭", "测试摄像头", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     public void Cleanup()

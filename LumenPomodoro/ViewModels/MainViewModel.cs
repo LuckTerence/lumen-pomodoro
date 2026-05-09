@@ -309,7 +309,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             AppSettings.CameraAlertEnabled &&
             AppSettings.CameraFollowBreakEnabled)
         {
-            FireAndForget(_cameraService.StartCameraAsync(), "启动摄像头(跟随休息)");
+            FireAndForget(_cameraService.StartCameraAsync(), "启动摄像头(跟随休息)",
+                ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
         }
 
         IsFocusCompleted = false;
@@ -367,10 +368,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             switch (AppSettings.CameraAlertMode)
             {
                 case CameraAlertMode.FixedDuration:
-                    FireAndForget(_cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds), "摄像头固定时长提醒");
+                    FireAndForget(_cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds), "摄像头固定时长提醒",
+                        ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
                     break;
                 case CameraAlertMode.UntilConfirm:
-                    FireAndForget(_cameraService.StartCameraAsync(), "摄像头直到确认提醒");
+                    FireAndForget(_cameraService.StartCameraAsync(), "摄像头直到确认提醒",
+                        ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
                     break;
                 case CameraAlertMode.FollowBreak:
                     break;
@@ -519,7 +522,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private static async void FireAndForget(Task task, string operationName)
+    private static async void FireAndForget(Task task, string operationName, Action<Exception>? onError = null)
     {
         try
         {
@@ -528,6 +531,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"[MainViewModel] FireAndForget [{operationName}] 异常: {ex.Message}");
+            onError?.Invoke(ex);
         }
     }
 

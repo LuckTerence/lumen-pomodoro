@@ -170,28 +170,28 @@ public class TimerServiceTests
     }
 
     [Fact]
-    public void GetAvailableCameras_ShouldReturnAtLeastOneCamera()
+    public async Task GetAvailableCameras_ShouldReturnAtLeastOneCamera()
     {
         // Arrange
         var cameraService = new CameraService();
         cameraService.Initialize(0, _ => { }, _ => { });
 
         // Act
-        var cameras = cameraService.GetAvailableCameras();
+        var cameras = await cameraService.GetAvailableCamerasAsync();
 
         // Assert — 无摄像头时返回 ["默认摄像头"] 占位
         Assert.NotEmpty(cameras);
     }
 
     [Fact]
-    public void GetCameraCount_ShouldReturnPositiveNumber()
+    public async Task GetCameraCount_ShouldReturnPositiveNumber()
     {
         // Arrange
         var cameraService = new CameraService();
         cameraService.Initialize(0, _ => { }, _ => { });
 
         // Act
-        var count = cameraService.GetCameraCount();
+        var count = await cameraService.GetCameraCountAsync();
 
         // Assert — 无摄像头时返回 1 作为占位值
         Assert.True(count >= 1);
