@@ -566,3 +566,22 @@
 - `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
 - `dotnet test LumenPomodoro.sln --no-build`：通过，34/34。
 - `dotnet run --project CameraTest\CameraTest.csproj`：检测到 `Integrated Camera`，视频流启动并保持 8 秒后正常停止；物理指示灯需人工观察确认。
+
+## [2026-05-09] 降低摄像头提醒 CPU 占用
+
+**涉及模块**: CameraService
+
+**修改文件数**: 1 个
+
+### 改动摘要
+
+1. **取消强制 BGRA 转换** — `MediaFrameReader` 改为读取摄像头原生帧，避免仅用于点亮指示灯时发生不必要的像素格式转换。
+2. **选择低成本格式** — 启动读取器前优先选择最低帧率、最低分辨率的视频格式，减少持续读取帧时的 CPU 和带宽占用。
+3. **使用自动内存偏好** — `MediaCaptureMemoryPreference` 从 `Cpu` 改为 `Auto`，让系统选择更低开销的帧内存路径。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：首次因已启动的本地 `LumenPomodoro.exe` 锁定输出文件失败；关闭本地进程后通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --no-build`：通过，34/34。
+- `dotnet run --project CameraTest\CameraTest.csproj`：检测到 `Integrated Camera`，视频流启动并保持 8 秒后正常停止。
+- 本机粗略采样：CameraTest 视频流保持期间 8 秒 CPU 时间增长约 0.156 秒。

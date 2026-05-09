@@ -4,11 +4,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Windows.Devices.Enumeration;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
-using Windows.Media.MediaProperties;
 
 namespace LumenPomodoro.Services;
 
@@ -123,7 +121,7 @@ public class CameraService
             SourceGroup = sourceGroup,
             StreamingCaptureMode = StreamingCaptureMode.Video,
             SharingMode = MediaCaptureSharingMode.ExclusiveControl,
-            MemoryPreference = MediaCaptureMemoryPreference.Cpu
+            MemoryPreference = MediaCaptureMemoryPreference.Auto
         };
 
         await mediaCapture.InitializeAsync(settings);
@@ -138,7 +136,9 @@ public class CameraService
             throw new InvalidOperationException($"摄像头 {device.Name} 初始化成功，但没有可用的视频帧源");
         }
 
-        var frameReader = await mediaCapture.CreateFrameReaderAsync(frameSource, MediaEncodingSubtypes.Bgra8);
+        await TrySetLowCostFormatAsync(frameSource);
+
+        var frameReader = await mediaCapture.CreateFrameReaderAsync(frameSource);
         frameReader.FrameArrived += OnFrameArrived;
 
         var startStatus = await frameReader.StartAsync();
@@ -157,6 +157,35 @@ public class CameraService
         }
 
         Debug.WriteLine("[CameraService] MediaCapture 视频流启动成功");
+    }
+
+    private static async Task TrySetLowCostFormatAsync(MediaFrameSource frameSource)
+    {
+        var format = frameSource.SupportedFormats
+            .Where(item => item.VideoFormat != null)
+            .OrderBy(GetFrameRate)
+            .ThenBy(item => (long)item.VideoFormat.Width * item.VideoFormat.Height)
+            .FirstOrDefault();
+
+        if (format == null) return;
+
+        try
+        {
+            await frameSource.SetFormatAsync(format);
+            Debug.WriteLine(
+                $"[CameraService] 使用低成本摄像头格式: {format.VideoFormat.Width}x{format.VideoFormat.Height}, {GetFrameRate(format):F1}fps");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[CameraService] 设置低成本摄像头格式失败: {ex.Message}");
+        }
+    }
+
+    private static double GetFrameRate(MediaFrameFormat format)
+    {
+        var frameRate = format.FrameRate;
+        if (frameRate == null || frameRate.Denominator == 0) return double.MaxValue;
+        return (double)frameRate.Numerator / frameRate.Denominator;
     }
 
     private static bool IsVideoSourceForDevice(MediaFrameSourceInfo source, string deviceId)
