@@ -506,6 +506,30 @@
 - `dotnet build`：通过，0 warning / 0 error。
 - `dotnet test`：通过，21/21。
 
+# [2026-05-09] 部署与开源收口
+
+**涉及模块**: 启动脚本、发布脚本、README、SoundService、Git 跟踪文件
+
+**修改文件数**: 14 个
+
+### 改动摘要
+
+1. **新增发布脚本** — 添加 `Publish-LumenPomodoro.cmd`，生成 Windows x64 自包含单文件发布包，输出到本地 `publish/LumenPomodoro.exe`；支持 `--no-pause` 供命令行验证使用。
+2. **修正启动脚本** — `Start-LumenPomodoro.cmd` 优先打开 `publish/LumenPomodoro.exe`；没有发布包时自动构建 Release，并修正 Release 输出目录为 `net9.0-windows10.0.22621.0`。
+3. **清理开源风险文件** — 从 Git 跟踪中移除 `.claude/settings.local.json`、独立 `CameraTest` 控制台工程、历史 AI 计划文档和旧 `publish` 二进制/PDB。
+4. **忽略本地构建产物** — `.gitignore` 新增 `publish/`、`.tmp-build/`、`.claude/`。
+5. **更新 README** — 补充直接打开发布包、生成发布包、GitHub Release 上传建议。
+6. **保持发布目录干净** — `SoundService` 默认音效改为生成到 `%APPDATA%/LumenPomodoro/Sounds`，避免启动发布版后在 `publish/` 生成额外目录。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln --configuration Release`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --configuration Release --no-build`：通过，34/34。
+- `Publish-LumenPomodoro.cmd --no-pause`：通过，生成 `publish/LumenPomodoro.exe`。
+- `publish/` 内容检查：仅包含 `LumenPomodoro.exe`，无 PDB。
+- `Start-LumenPomodoro.cmd`：通过，可从 `publish/LumenPomodoro.exe` 拉起应用进程；验证后已关闭测试进程。
+- 启动后复查 `publish/`：仍仅包含 `LumenPomodoro.exe`，默认音效生成到用户 AppData。
+
 ## [2026-05-07] MainWindow 第二次根本性重构 — Apple Timer
 
 **涉及模块**: MainWindow, MainWindow.xaml.cs

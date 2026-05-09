@@ -3,16 +3,18 @@ setlocal
 
 set "ROOT=%~dp0"
 set "SOLUTION=%ROOT%LumenPomodoro.sln"
-set "APP_EXE=%ROOT%LumenPomodoro\bin\Release\net9.0-windows\LumenPomodoro.exe"
+set "PUBLISH_EXE=%ROOT%publish\LumenPomodoro.exe"
+set "APP_EXE=%ROOT%LumenPomodoro\bin\Release\net9.0-windows10.0.22621.0\LumenPomodoro.exe"
 
-if exist "%APP_EXE%" (
-    start "" "%APP_EXE%"
+if exist "%PUBLISH_EXE%" (
+    start "" "%PUBLISH_EXE%"
     exit /b 0
 )
 
 where dotnet >nul 2>nul
 if errorlevel 1 (
-    echo .NET SDK was not found. Please install .NET SDK 9.0 or build the app in Visual Studio.
+    echo Lumen Pomodoro is not published yet.
+    echo Please run Publish-LumenPomodoro.cmd on a machine with .NET SDK 9.0, then open publish\LumenPomodoro.exe.
     pause
     exit /b 1
 )

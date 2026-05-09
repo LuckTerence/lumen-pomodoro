@@ -35,7 +35,7 @@ public class SoundService : IDisposable
     public SoundService()
     {
         _players = new Dictionary<string, SoundPlayer>();
-        _soundsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds");
+        _soundsDirectory = GetSoundsDirectory();
         Directory.CreateDirectory(_soundsDirectory);
 
         LoadDefaultSounds();
@@ -170,7 +170,7 @@ public class SoundService : IDisposable
 
     public static void GenerateDefaultWavFiles()
     {
-        var soundsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds");
+        var soundsDirectory = GetSoundsDirectory();
         Directory.CreateDirectory(soundsDirectory);
 
         var defaultSounds = new Dictionary<string, int[]>
@@ -193,6 +193,14 @@ public class SoundService : IDisposable
                 GenerateSimpleWav(filePath, kvp.Value);
             }
         }
+    }
+
+    private static string GetSoundsDirectory()
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "LumenPomodoro",
+            "Sounds");
     }
 
     private static void GenerateSimpleWav(string filePath, int[] frequencies)
