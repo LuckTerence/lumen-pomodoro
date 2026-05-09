@@ -88,7 +88,7 @@ lumen-pomodoro/
 
 ### 启动
 
-**普通用户** — 运行 `Publish-LumenPomodoro.cmd`，然后双击 `publish/LumenPomodoro.exe`。发布包为 Windows x64 自包含单文件，无需安装 .NET 运行时。
+**普通用户** — 运行 `Publish-LumenPomodoro.cmd`，exe 会自动复制到桌面，双击即可使用。无需安装 .NET 运行时。
 
 **开发者**
 
@@ -102,7 +102,7 @@ dotnet run --project LumenPomodoro
 Publish-LumenPomodoro.cmd
 ```
 
-发布输出位于 `publish/`。该目录是本地构建产物，不提交到 Git；GitHub 开源时建议通过 Release 页面上传生成后的 `LumenPomodoro.exe`。
+发布输出位于 `publish/`，同时自动复制到桌面。该目录是本地构建产物，不提交到 Git；GitHub 开源时建议通过 Release 页面上传生成后的 `LumenPomodoro.exe`。
 
 自动化环境可使用：
 

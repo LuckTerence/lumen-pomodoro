@@ -35,6 +35,15 @@ echo.
 echo Published successfully:
 echo %PUBLISH_DIR%\LumenPomodoro.exe
 echo.
-echo You can now double-click publish\LumenPomodoro.exe.
+
+set "DESKTOP_EXE=%USERPROFILE%\Desktop\LumenPomodoro.exe"
+copy "%PUBLISH_DIR%\LumenPomodoro.exe" "%DESKTOP_EXE%" >nul
+if errorlevel 1 (
+    echo Failed to copy to desktop. You can find the app at:
+    echo %PUBLISH_DIR%\LumenPomodoro.exe
+) else (
+    echo Copied to desktop: %DESKTOP_EXE%
+)
+
 if not defined NO_PAUSE pause
 exit /b 0
