@@ -32,8 +32,8 @@ public class InsightEngine
 
         var maxMinutes = dailyMinutes.Values.DefaultIfEmpty(0).Max();
 
-        var result = new List<HeatmapDay>(365);
-        for (int i = 0; i < 365; i++)
+        var result = new List<HeatmapDay>(daysToShow);
+        for (int i = 0; i < daysToShow; i++)
         {
             var date = startDate.AddDays(i);
             dailyMinutes.TryGetValue(date, out var minutes);
