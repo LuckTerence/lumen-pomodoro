@@ -1,5 +1,20 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 统计页滚动与对齐补修
+
+**涉及模块**: StatsPage
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **统计页无法滑动 [高]** — 统计页与设置页同样受到 WPF-UI `NavigationViewContentPresenter` 动态 ScrollViewer 包裹影响，内部 ScrollViewer 滚动不稳定。修复：在 `StatsPage` 根节点增加 `ScrollViewer.CanContentScroll="False"`。
+2. **统计页内容右对齐/对齐异常 [中]** — 统计页仍使用 `ui:CardControl` 承载复杂内容，在当前 WPF-UI 渲染下容易出现内容对齐不稳定。修复：统计分组统一改为普通 `Border + StackPanel/Grid`，内容容器居中但内部保持左对齐，并预留底部导航滚动余量。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o .tmp-build\LumenPomodoro`：通过，0 warning / 0 error。
+
 ## [2026-05-09] Bug 修复 — 设置页滚轮失效补修
 
 **涉及模块**: SettingsPage
