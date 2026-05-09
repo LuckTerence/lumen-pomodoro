@@ -76,7 +76,6 @@ lumen-pomodoro/
 │   └── dev_log.md                 # 开发日志
 ├── DESIGN.md                      # 设计语言规范
 ├── Publish-LumenPomodoro.cmd      # 生成 Windows x64 自包含发布包
-├── Start-LumenPomodoro.cmd        # 一键启动脚本
 └── LICENSE                        # Apache 2.0
 ```
 
@@ -85,29 +84,17 @@ lumen-pomodoro/
 ### 前置要求
 
 - Windows 10 1809+ 或 Windows 11
-- 普通使用：下载发布包后双击 `LumenPomodoro.exe`
-- 源码运行/重新发布：[.NET SDK 9.0](https://dotnet.microsoft.com/download/dotnet/9.0)
+- 开发者需要 [.NET SDK 9.0](https://dotnet.microsoft.com/download/dotnet/9.0)
 
-### 启动方式
+### 启动
 
-**方式一：直接打开发布包**
+**普通用户** — 运行 `Publish-LumenPomodoro.cmd`，然后双击 `publish/LumenPomodoro.exe`。发布包为 Windows x64 自包含单文件，无需安装 .NET 运行时。
 
-运行 `Publish-LumenPomodoro.cmd` 后，双击 `publish/LumenPomodoro.exe`。发布包为 Windows x64 自包含单文件，不要求用户另装 .NET 运行时。
-
-**方式二：双击启动脚本**
-
-在项目根目录双击 `Start-LumenPomodoro.cmd`。如果已经存在 `publish/LumenPomodoro.exe`，会直接打开发布包；否则会自动构建 Release 后启动。
-
-**方式三：命令行构建运行**
+**开发者**
 
 ```bash
-dotnet build LumenPomodoro.sln --configuration Release
-dotnet run --project LumenPomodoro --configuration Release
+dotnet run --project LumenPomodoro
 ```
-
-**方式四：Visual Studio**
-
-打开 `LumenPomodoro.sln`，选择 Release 配置，F5 运行。
 
 ### 生成发布包
 
