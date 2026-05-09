@@ -44,29 +44,24 @@
 
             <!-- 概览卡片 -->
             <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <StackPanel>
-                    <TextBlock Text="概览" Style="{StaticResource SectionTitle}" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,0,0,0">
-                            <TextBlock Text="{Binding CompletedPomodoros}" Style="{StaticResource StatNumber}"
-                                       HorizontalAlignment="Left" FontSize="32"
-                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
-                            <TextBlock Text=" 完成" Style="{StaticResource Caption}"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,8" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
-                            <TextBlock Text="{Binding TotalFocusMinutes}" Style="{StaticResource StatNumber}"
-                                       HorizontalAlignment="Left" FontSize="32"
-                                       Foreground="{StaticResource SuccessBrush}" />
-                            <TextBlock Text=" 分钟" Style="{StaticResource Caption}"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,8" />
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding CompletedPomodoros, StringFormat='{}{0}'}"
+                                   FontSize="36" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                        <TextBlock Text="完成番茄" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding TotalFocusMinutes, StringFormat='{}{0}'}"
+                                   FontSize="36" FontWeight="SemiBold"
+                                   Foreground="{StaticResource SuccessBrush}" />
+                        <TextBlock Text="专注分钟" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                    </StackPanel>
+                </Grid>
             </ui:CardControl>
 
             <!-- 年度热力图 -->

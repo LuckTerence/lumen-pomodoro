@@ -53,7 +53,7 @@ public partial class TaskDonutChart : UserControl
             Text = total.ToString(),
             FontSize = 24,
             FontWeight = FontWeights.SemiBold,
-            FontFamily = (FontFamily)Application.Current.TryFindResource("InterSemiBold")!,
+            FontFamily = FindResource("InterSemiBold") as FontFamily,
             Foreground = Application.Current.TryFindResource("TextFillColorPrimaryBrush") as Brush ?? Brushes.White
         };
         totalText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -65,8 +65,7 @@ public partial class TaskDonutChart : UserControl
         {
             Text = "总计",
             FontSize = 10,
-            Foreground = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray,
-            FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!
+            Foreground = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray
         };
         subText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         Canvas.SetLeft(subText, center - subText.DesiredSize.Width / 2);
@@ -108,7 +107,6 @@ public partial class TaskDonutChart : UserControl
             {
                 Text = $"{slice.TaskName}  {slice.PomodoroCount} ({slice.Percentage:F0}%)",
                 FontSize = 12,
-                FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!,
                 Foreground = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray,
                 VerticalAlignment = VerticalAlignment.Center
             });

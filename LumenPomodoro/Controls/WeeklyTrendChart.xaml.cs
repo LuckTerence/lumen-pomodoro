@@ -110,7 +110,7 @@ public partial class WeeklyTrendChart : UserControl
                 Text = data[i].WeekStart.ToString("M/d"),
                 FontSize = 9,
                 Foreground = textBrush,
-                FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!,
+                FontFamily = FindResource("InterRegular") as FontFamily,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             Canvas.SetLeft(label, points[i].X - 12);
@@ -139,7 +139,6 @@ public partial class WeeklyTrendChart : UserControl
             Text = $"均值 {(int)avgMinutes}分",
             FontSize = 9,
             Foreground = textBrush,
-            FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!,
             Opacity = 0.6
         };
         Canvas.SetLeft(avgLabel, marginLeft);

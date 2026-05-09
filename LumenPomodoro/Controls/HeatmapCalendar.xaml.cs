@@ -80,8 +80,7 @@ public partial class HeatmapCalendar : UserControl
                 {
                     Text = DayLabels[row],
                     FontSize = 10,
-                    Foreground = textBrush,
-                    FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!
+                    Foreground = textBrush
                 };
                 Canvas.SetLeft(label, 0);
                 Canvas.SetTop(label, marginTop + row * cellPlusGap - 2);
@@ -105,8 +104,7 @@ public partial class HeatmapCalendar : UserControl
                     {
                         Text = MonthLabels[m],
                         FontSize = 10,
-                        Foreground = textBrush,
-                        FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!
+                        Foreground = textBrush
                     };
                     Canvas.SetLeft(mLabel, marginLeft + col * cellPlusGap);
                     Canvas.SetTop(mLabel, 0);

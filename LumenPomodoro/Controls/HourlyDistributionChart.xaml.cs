@@ -89,7 +89,7 @@ public partial class HourlyDistributionChart : UserControl
                     Text = $"{h}",
                     FontSize = 10,
                     Foreground = textBrush,
-                    FontFamily = (FontFamily)Application.Current.TryFindResource("InterRegular")!,
+                    FontFamily = FindResource("InterRegular") as FontFamily,
                     HorizontalAlignment = HorizontalAlignment.Center
                 };
                 Canvas.SetLeft(label, x - 2);
