@@ -1,5 +1,19 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 恢复主窗口系统标题栏按钮
+
+**涉及模块**: MainWindow
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **右上角最小化/关闭按钮缺失 [高]** — 主窗口设置了 `ExtendsContentIntoTitleBar="True"`，但没有提供自定义标题栏控件，导致系统窗口按钮不可见。修复：关闭内容扩展进标题栏，恢复 Windows 原生最小化、最大化和关闭按钮。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
+
 ## [2026-05-09] Bug 修复 — 热力图自然周排布
 
 **涉及模块**: HeatmapCalendar

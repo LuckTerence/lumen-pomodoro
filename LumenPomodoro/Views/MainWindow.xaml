@@ -9,7 +9,7 @@
         Title="Lumen Pomodoro" Width="520" Height="640" MinHeight="520"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        ExtendsContentIntoTitleBar="True"
+        ExtendsContentIntoTitleBar="False"
         Icon="pack://application:,,,/LOGO.png">
 
     <ui:FluentWindow.Resources>
