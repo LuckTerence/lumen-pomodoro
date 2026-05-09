@@ -1,5 +1,22 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 统计页空引用弹窗、任务页与设置页布局修复
+
+**涉及模块**: StatsPage, TasksPage, SettingsPage
+
+**修改文件数**: 4 个
+
+### 修复摘要
+
+1. **统计页空引用弹窗 [高]** — `PeriodCombo.SelectionChanged` 在 `InitializeComponent()` 期间触发，当时 `_viewModel` 尚未完成赋值，导致全局异常弹窗显示 `Object reference not set to an instance of an object.`。修复：构造函数先保存 ViewModel，再初始化组件；事件中在 DataContext 未就绪时直接返回。
+2. **任务页布局 [中]** — 新增任务区固定在底部，任务少时中间留出大块空白；任务卡片使用 `CardControl.Content` 后在当前 WPF-UI 渲染下对齐不稳定。修复：新增任务区移到标题下方，任务列表占剩余空间；任务项改为普通 `Border + Grid`，内容左对齐，操作按钮稳定显示。
+3. **设置页布局 [中]** — 设置分组使用 `CardControl.Content` 后在当前窗口高度下对齐与底部滚动余量不稳定。修复：改为普通分组容器，限制内容宽度，给底部导航预留滚动余量，并固定下拉框宽度避免挤压。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.sln --no-build`：通过，34/34。
+
 ## [2026-05-08] Bug 修复 — COM 双重释放、摄像头残留、VB Runtime 移除、Registry 失败感知
 
 **涉及模块**: CameraService, SettingsPage, SettingsViewModel, TasksPage

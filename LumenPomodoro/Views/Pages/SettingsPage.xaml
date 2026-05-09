@@ -9,16 +9,21 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="SettingsSection" TargetType="Border">
+                <Setter Property="Margin" Value="0,0,0,16" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
-        <StackPanel Margin="24">
+        <StackPanel Margin="24,24,24,96" MaxWidth="560" HorizontalAlignment="Center">
             <TextBlock Text="设置" Style="{StaticResource PageTitle}" Margin="0,0,0,16" />
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <ui:CardControl.Content>
+            <Border Style="{StaticResource SettingsSection}">
                     <StackPanel>
                         <TextBlock Text="计时" Style="{StaticResource SectionTitle}" />
                         <Grid Margin="0,0,0,12">
@@ -42,11 +47,9 @@
                             <ui:NumberBox Grid.Column="1" Value="{Binding LongBreakInterval, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="2" Maximum="10" />
                         </Grid>
                     </StackPanel>
-                </ui:CardControl.Content>
-            </ui:CardControl>
+            </Border>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <ui:CardControl.Content>
+            <Border Style="{StaticResource SettingsSection}">
                     <StackPanel>
                         <TextBlock Text="摄像头" Style="{StaticResource SectionTitle}" />
                         <Grid Margin="0,0,0,12">
@@ -58,7 +61,7 @@
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="提醒模式" Style="{StaticResource SettingLabel}" />
-                                <ComboBox Grid.Column="1" MinWidth="100"
+                                <ComboBox Grid.Column="1" Width="180"
                                           SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
                                     <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" />
                                     <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" />
@@ -83,7 +86,7 @@
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="摄像头选择" Style="{StaticResource SettingLabel}" />
-                                <ComboBox Grid.Column="1" MinWidth="120"
+                                <ComboBox Grid.Column="1" Width="180"
                                           ItemsSource="{Binding AvailableCameras}"
                                           SelectedIndex="{Binding SelectedCameraIndex}" />
                             </Grid>
@@ -92,11 +95,9 @@
                             </ui:Button>
                         </StackPanel>
                     </StackPanel>
-                </ui:CardControl.Content>
-            </ui:CardControl>
+            </Border>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <ui:CardControl.Content>
+            <Border Style="{StaticResource SettingsSection}">
                     <StackPanel>
                         <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" />
                         <Grid Margin="0,0,0,12">
@@ -115,17 +116,15 @@
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SystemNotificationEnabled}" />
                         </Grid>
                     </StackPanel>
-                </ui:CardControl.Content>
-            </ui:CardControl>
+            </Border>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <ui:CardControl.Content>
+            <Border Style="{StaticResource SettingsSection}">
                     <StackPanel>
                         <TextBlock Text="外观" Style="{StaticResource SectionTitle}" />
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="主题" Style="{StaticResource SettingLabel}" />
-                            <ComboBox Grid.Column="1" MinWidth="100"
+                            <ComboBox Grid.Column="1" Width="180"
                                       SelectedValue="{Binding Theme}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="跟随系统" Tag="system" />
                                 <ComboBoxItem Content="浅色" Tag="light" />
@@ -138,11 +137,9 @@
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AnimationEnabled}" />
                         </Grid>
                     </StackPanel>
-                </ui:CardControl.Content>
-            </ui:CardControl>
+            </Border>
 
-            <ui:CardControl Margin="0,0,0,16" Padding="16" HorizontalContentAlignment="Stretch">
-                <ui:CardControl.Content>
+            <Border Style="{StaticResource SettingsSection}">
                     <StackPanel>
                         <TextBlock Text="系统" Style="{StaticResource SectionTitle}" />
                         <Grid Margin="0,0,0,12">
@@ -161,8 +158,7 @@
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoStartEnabled}" />
                         </Grid>
                     </StackPanel>
-                </ui:CardControl.Content>
-            </ui:CardControl>
+            </Border>
 
             <Separator Margin="0,4,0,12" />
 

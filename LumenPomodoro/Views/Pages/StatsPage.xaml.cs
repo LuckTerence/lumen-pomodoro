@@ -13,8 +13,8 @@ public partial class StatsPage : Page
 
     public StatsPage(StatsViewModel viewModel)
     {
-        InitializeComponent();
         _viewModel = viewModel;
+        InitializeComponent();
         DataContext = _viewModel;
     }
 
@@ -35,6 +35,7 @@ public partial class StatsPage : Page
 
     private void PeriodCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (DataContext == null) return;
         if (PeriodCombo.SelectedIndex < 0) return;
         var value = PeriodCombo.SelectedIndex switch
         {
