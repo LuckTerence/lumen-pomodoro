@@ -72,11 +72,6 @@ public partial class MainWindow : FluentWindow
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (IsTitleBarButton(e.OriginalSource as DependencyObject))
-        {
-            return;
-        }
-
         if (e.ClickCount == 2)
         {
             WindowState = WindowState == WindowState.Maximized
@@ -94,19 +89,21 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private static bool IsTitleBarButton(DependencyObject? source)
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
-        while (source != null)
-        {
-            if (source is TitleBarButton)
-            {
-                return true;
-            }
+        WindowState = WindowState.Minimized;
+    }
 
-            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
-        }
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+    }
 
-        return false;
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
     }
 
     protected override void OnClosing(CancelEventArgs e)

@@ -20,19 +20,57 @@
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
-    <ui:NavigationView x:Name="NavView" PaneDisplayMode="Bottom" Transition="SlideBottom">
-        <ui:NavigationView.TitleBar>
-            <ui:TitleBar Title="Lumen Pomodoro"
-                         ShowMinimize="True"
-                         ShowMaximize="True"
-                         ShowClose="True"
-                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" />
-        </ui:NavigationView.TitleBar>
-        <ui:NavigationView.MenuItems>
-            <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
-            <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
-            <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}" />
-            <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}" />
-        </ui:NavigationView.MenuItems>
-    </ui:NavigationView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="{DynamicResource ApplicationBackgroundBrush}"
+              MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Lumen Pomodoro"
+                       Margin="14,0,0,0"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Width="46" Height="36"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="MinimizeButton_Click"
+                        ToolTip="最小化">
+                    <TextBlock Text="-" FontSize="16" VerticalAlignment="Center" />
+                </Button>
+                <Button Width="46" Height="36"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="MaximizeButton_Click"
+                        ToolTip="最大化">
+                    <TextBlock Text="□" FontSize="12" VerticalAlignment="Center" />
+                </Button>
+                <Button Width="46" Height="36"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="CloseButton_Click"
+                        ToolTip="关闭">
+                    <TextBlock Text="×" FontSize="18" VerticalAlignment="Center" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <ui:NavigationView Grid.Row="1" x:Name="NavView" PaneDisplayMode="Bottom" Transition="SlideBottom">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
+                <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
+                <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}" />
+                <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}" />
+            </ui:NavigationView.MenuItems>
+        </ui:NavigationView>
+    </Grid>
 </ui:FluentWindow>
