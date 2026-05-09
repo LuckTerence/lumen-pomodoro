@@ -1,5 +1,19 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 显式挂载 WPF-UI 标题栏
+
+**涉及模块**: MainWindow
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **Debug 目录启动仍无窗口按钮 [高]** — `FluentWindow` 使用 WPF-UI 自定义窗口壳，单纯关闭 `ExtendsContentIntoTitleBar` 不能恢复按钮。修复：在 `NavigationView.TitleBar` 显式挂载 `ui:TitleBar`，开启最小化、最大化和关闭按钮。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
+
 ## [2026-05-09] Bug 修复 — 恢复主窗口系统标题栏按钮
 
 **涉及模块**: MainWindow
