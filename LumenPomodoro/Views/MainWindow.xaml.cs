@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Linq;
 using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
@@ -67,6 +68,45 @@ public partial class MainWindow : FluentWindow
     public void HandleWake()
     {
         _viewModel.RefreshTimerOnWake();
+    }
+
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (IsTitleBarButton(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
+        if (e.ClickCount == 2)
+        {
+            WindowState = WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
+            return;
+        }
+
+        try
+        {
+            DragMove();
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private static bool IsTitleBarButton(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is TitleBarButton)
+            {
+                return true;
+            }
+
+            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     protected override void OnClosing(CancelEventArgs e)

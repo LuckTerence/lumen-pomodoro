@@ -25,7 +25,8 @@
             <ui:TitleBar Title="Lumen Pomodoro"
                          ShowMinimize="True"
                          ShowMaximize="True"
-                         ShowClose="True" />
+                         ShowClose="True"
+                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" />
         </ui:NavigationView.TitleBar>
         <ui:NavigationView.MenuItems>
             <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
