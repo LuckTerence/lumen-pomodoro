@@ -9,10 +9,21 @@ public class InsightEngine
     public List<HeatmapDay> GetHeatmapData(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
-        var startDate = today.AddDays(-364);
 
-        var completedSessions = sessions
-            .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date >= startDate)
+        var completedAll = sessions
+            .Where(s => s.Completed && s.EndTime.HasValue)
+            .ToList();
+
+        var earliestDate = completedAll.Count > 0
+            ? completedAll.Min(s => s.EndTime!.Value.Date)
+            : today;
+
+        var fullRange = (today - earliestDate).Days;
+        var daysToShow = Math.Max(90, Math.Min(365, fullRange + 7));
+        var startDate = today.AddDays(-(daysToShow - 1));
+
+        var completedSessions = completedAll
+            .Where(s => s.EndTime!.Value.Date >= startDate)
             .ToList();
 
         var dailyMinutes = completedSessions

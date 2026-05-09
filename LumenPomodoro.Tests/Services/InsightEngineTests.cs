@@ -8,10 +8,10 @@ public class InsightEngineTests
     private readonly InsightEngine _engine = new();
 
     [Fact]
-    public void GetHeatmapData_WithNoSessions_Returns365EmptyDays()
+    public void GetHeatmapData_WithNoSessions_ReturnsMinDays()
     {
         var result = _engine.GetHeatmapData([]);
-        Assert.Equal(365, result.Count);
+        Assert.Equal(90, result.Count);
         Assert.All(result, day => Assert.Equal(0, day.IntensityLevel));
     }
 
