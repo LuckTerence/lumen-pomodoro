@@ -1,5 +1,23 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 设置页滚轮失效补修
+
+**涉及模块**: SettingsPage
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **设置页无法滑动 [高]** — WPF-UI `NavigationViewContentPresenter` 会给页面套一层动态 ScrollViewer，导致设置页内部 ScrollViewer 的滚动高度和滚轮事件不稳定。修复：在 `SettingsPage` 根节点增加 `ScrollViewer.CanContentScroll="False"`，与 TimerPage 的已验证处理方式保持一致，让页面使用自己的 ScrollViewer。
+
+### 验证结果
+
+- `dotnet run --no-build --project CameraTest\CameraTest.csproj`：摄像头枚举到 `Integrated Camera`，启动和停止成功。
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o .tmp-build\LumenPomodoro`：通过，0 warning / 0 error。
+- `dotnet build CameraTest\CameraTest.csproj -o .tmp-build\CameraTest`：通过，0 warning / 0 error。
+- `dotnet .tmp-build\CameraTest\CameraTest.dll`：摄像头枚举到 `Integrated Camera`，启动和停止成功。
+- 默认 Debug 输出目录仍被正在运行的 `LumenPomodoro.exe` 锁定，需关闭当前进程后才能覆盖主程序 exe/dll。
+
 ## [2026-05-09] Bug 修复 — 统计页空引用弹窗、任务页与设置页布局修复
 
 **涉及模块**: StatsPage, TasksPage, SettingsPage
