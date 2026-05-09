@@ -1,5 +1,19 @@
 # 开发日志
 
+## [2026-05-09] Bug 修复 — 统计页首次加载数据
+
+**涉及模块**: StatsPage
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **统计页首次进入为空/不刷新 [高]** — 为修复初始化期空引用，`PeriodCombo.SelectionChanged` 在 DataContext 未就绪时会跳过，但统计页构造完成后没有主动加载统计数据。修复：`StatsPage` 完成 DataContext 绑定后立即调用 `_viewModel.Refresh()`，保证首次进入统计页就加载热力图、时段分布、任务分布、周趋势和洞察。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro.sln`：通过，0 warning / 0 error。
+
 ## [2026-05-09] Bug 修复 — 自定义窗口顶栏按钮
 
 **涉及模块**: MainWindow

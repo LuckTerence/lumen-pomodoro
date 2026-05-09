@@ -16,6 +16,7 @@ public partial class StatsPage : Page
         _viewModel = viewModel;
         InitializeComponent();
         DataContext = _viewModel;
+        _viewModel.Refresh();
     }
 
     public void Refresh()
