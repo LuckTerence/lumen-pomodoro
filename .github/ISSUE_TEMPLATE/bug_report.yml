@@ -1,0 +1,40 @@
+name: Bug 报告
+description: 报告一个 Bug
+labels: ['bug']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 清晰描述你遇到的问题
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 如何复现这个问题
+      placeholder: |
+        1. 打开计时器
+        2. 点击 '...'
+        3. 看到错误
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统版本
+      placeholder: Windows 11 23H2
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lumen Pomodoro 版本
+      placeholder: v1.0.0
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志（如有）
+      description: 日志位于 `%APPDATA%/LumenPomodoro/logs/`
+      render: shell

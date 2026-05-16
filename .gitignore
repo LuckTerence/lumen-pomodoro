@@ -33,6 +33,12 @@ publish/
 .idea/
 *.sln.iml
 
+## Uploads
+.uploads/
+
+## Inspiration cards (local brainstorm)
+V*_灵感卡.md
+
 ## OS
 .DS_Store
 Thumbs.db
