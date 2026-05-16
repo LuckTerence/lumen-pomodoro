@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
-using LumenPomodoro.Services;
+using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Converters;
 

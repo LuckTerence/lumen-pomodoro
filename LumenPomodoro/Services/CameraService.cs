@@ -7,10 +7,12 @@ using System.Linq;
 using Windows.Devices.Enumeration;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
+using LumenPomodoro.Services.Abstractions;
+using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class CameraService
+public class CameraService : ICameraService
 {
     private volatile bool _isRunning = false;
     private volatile bool _isInitializing = false;
@@ -36,6 +38,7 @@ public class CameraService
         _cameraIndex = cameraIndex;
         _statusCallback = statusCallback;
         _errorCallback = errorCallback;
+        Log.Debug("CameraService 初始化，摄像头索引: {Index}", cameraIndex);
     }
 
     public async Task StartCameraAsync()
@@ -60,6 +63,7 @@ public class CameraService
         try
         {
             _statusCallback?.Invoke("正在初始化摄像头...");
+            Log.Information("正在启动摄像头...");
 
             await InitializeCameraDeviceAsync(_cancellationTokenSource.Token);
 
@@ -69,6 +73,7 @@ public class CameraService
             }
 
             _statusCallback?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
+            Log.Information("摄像头已启动");
 
             _cameraTask = KeepCameraActiveAsync(_cancellationTokenSource.Token);
         }
@@ -85,6 +90,7 @@ public class CameraService
                 _ when ex.Message.Contains("0x80070005") || ex.Message.Contains("E_ACCESSDENIED") => "摄像头权限被拒绝，请前往 Windows 隐私设置开启摄像头权限",
                 _ => $"摄像头打开失败: {ex.Message}"
             };
+            Log.Error(ex, "摄像头启动失败");
             _errorCallback?.Invoke(errorMsg);
         }
         finally
@@ -104,7 +110,7 @@ public class CameraService
         var deviceIndex = Math.Min(_cameraIndex, devices.Count - 1);
         var device = devices[deviceIndex];
 
-        Debug.WriteLine($"[CameraService] 初始化摄像头: {device.Name} (Id={device.Id})");
+        Log.Debug("初始化摄像头: {Name} (Id={Id})", device.Name, device.Id);
 
         var sourceGroups = await MediaFrameSourceGroup.FindAllAsync();
         var sourceGroup = sourceGroups.FirstOrDefault(group =>
@@ -156,7 +162,7 @@ public class CameraService
             _frameReader = frameReader;
         }
 
-        Debug.WriteLine("[CameraService] MediaCapture 视频流启动成功");
+        Log.Debug("MediaCapture 视频流启动成功");
     }
 
     private static async Task TrySetLowCostFormatAsync(MediaFrameSource frameSource)
@@ -172,12 +178,12 @@ public class CameraService
         try
         {
             await frameSource.SetFormatAsync(format);
-            Debug.WriteLine(
-                $"[CameraService] 使用低成本摄像头格式: {format.VideoFormat.Width}x{format.VideoFormat.Height}, {GetFrameRate(format):F1}fps");
+            Log.Debug("使用低成本摄像头格式: {Width}x{Height}, {Fps:F1}fps",
+                format.VideoFormat.Width, format.VideoFormat.Height, GetFrameRate(format));
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CameraService] 设置低成本摄像头格式失败: {ex.Message}");
+            Log.Warning(ex, "设置低成本摄像头格式失败");
         }
     }
 
@@ -232,7 +238,7 @@ public class CameraService
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CameraService] 停止摄像头任务异常: {ex.Message}");
+                Log.Warning(ex, "停止摄像头任务异常");
             }
         }
 
@@ -247,6 +253,7 @@ public class CameraService
         _cancellationTokenSource = null;
 
         _statusCallback?.Invoke("摄像头已关闭");
+        Log.Information("摄像头已关闭");
     }
 
     private void StopCameraDevice()
@@ -258,12 +265,22 @@ public class CameraService
                 try
                 {
                     _frameReader.FrameArrived -= OnFrameArrived;
-                    _frameReader.StopAsync().AsTask().Wait(2000);
-                    _frameReader.Dispose();
+                    // 异步停止，避免 .Wait() 阻塞 UI 线程
+                    var stopTask = _frameReader.StopAsync().AsTask();
+                    if (stopTask.Wait(3000))
+                    {
+                        _frameReader.Dispose();
+                    }
+                    else
+                    {
+                        Log.Warning("FrameReader.StopAsync 超时，强制 Dispose");
+                        try { _frameReader.Dispose(); } catch { }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[CameraService] 停止摄像头读取器异常: {ex.Message}");
+                    Log.Warning(ex, "停止摄像头读取器异常");
+                    try { _frameReader.Dispose(); } catch { }
                 }
                 finally
                 {
@@ -279,7 +296,7 @@ public class CameraService
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[CameraService] 停止摄像头设备异常: {ex.Message}");
+                    Log.Warning(ex, "停止摄像头设备异常");
                 }
                 finally
                 {
@@ -311,7 +328,9 @@ public class CameraService
                         try
                         {
                             _frameReader.FrameArrived -= OnFrameArrived;
-                            _frameReader.StopAsync().AsTask().Wait(2000);
+                            var stopTask = _frameReader.StopAsync().AsTask();
+                            if (!stopTask.Wait(3000))
+                                Log.Warning("KeepCameraActive: FrameReader.StopAsync 超时");
                             _frameReader.Dispose();
                         }
                         catch { }
@@ -323,7 +342,9 @@ public class CameraService
                         _mediaCapture = null;
                     }
                     _isRunning = false;
-                    _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
+                    var msg = $"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放";
+                    Log.Warning(msg);
+                    _errorCallback?.Invoke(msg);
                     return;
                 }
             }
@@ -350,7 +371,7 @@ public class CameraService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CameraService] 获取摄像头列表失败: {ex.Message}");
+            Log.Warning(ex, "获取摄像头列表失败");
             _cachedCameraNames = new List<string> { "默认摄像头" };
             _cachedCameraCount = 1;
             return _cachedCameraNames;
@@ -369,7 +390,7 @@ public class CameraService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CameraService] 获取摄像头数量失败: {ex.Message}");
+            Log.Warning(ex, "获取摄像头数量失败");
             _cachedCameraCount = 1;
             return _cachedCameraCount;
         }
@@ -389,5 +410,20 @@ public class CameraService
         var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
         _cachedDevices = devices.ToList();
         return _cachedDevices;
+    }
+
+    public void Dispose()
+    {
+        if (_isRunning)
+        {
+            try
+            {
+                StopCameraAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Dispose 停止摄像头异常");
+            }
+        }
     }
 }

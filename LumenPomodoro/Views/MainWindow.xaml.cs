@@ -3,9 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Linq;
-using LumenPomodoro.Services;
+using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
 using LumenPomodoro.Views.Pages;
+using Microsoft.Extensions.DependencyInjection;
 using Wpf.Ui.Abstractions;
 using Wpf.Ui.Controls;
 
@@ -14,21 +15,20 @@ namespace LumenPomodoro.Views;
 public partial class MainWindow : FluentWindow
 {
     private readonly MainViewModel _viewModel;
-    private TrayService? _trayService;
+    private ITrayService? _trayService;
     private readonly PageProvider _pageProvider;
 
     public MainWindow()
     {
         InitializeComponent();
 
-        var storageService = ((App)Application.Current).StorageService;
-        _viewModel = new MainViewModel(storageService);
+        _viewModel = App.GetRequiredService<MainViewModel>();
         _pageProvider = new PageProvider(_viewModel);
         DataContext = _viewModel;
 
         if (_viewModel.AppSettings.TrayEnabled)
         {
-            _trayService = new TrayService(_viewModel, _viewModel.CameraService, _viewModel.StorageService);
+            _trayService = App.GetRequiredService<ITrayService>();
             _trayService.AttachToWindow(this);
 
             _viewModel.TrayMenuNeedsUpdate += () =>
@@ -179,7 +179,7 @@ public partial class MainWindow : FluentWindow
 
         private TasksPage CreateTasksPage()
         {
-            var tasksVM = new TasksViewModel(_viewModel.StorageService);
+            var tasksVM = App.GetRequiredService<TasksViewModel>();
             tasksVM.TasksChanged += () => _viewModel.ReloadTasks();
             tasksVM.TaskSelected += (task) =>
             {
@@ -192,12 +192,12 @@ public partial class MainWindow : FluentWindow
 
         private StatsPage CreateStatsPage()
         {
-            return new StatsPage(new StatsViewModel(_viewModel.StorageService));
+            return new StatsPage(App.GetRequiredService<StatsViewModel>());
         }
 
         private SettingsPage CreateSettingsPage()
         {
-            _settingsViewModel = new SettingsViewModel(_viewModel.StorageService, _viewModel.CameraService);
+            _settingsViewModel = App.GetRequiredService<SettingsViewModel>();
             var page = new SettingsPage(_settingsViewModel);
             page.SettingsSaved += () =>
             {

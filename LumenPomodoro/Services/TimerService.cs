@@ -1,11 +1,14 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Windows.Threading;
 using LumenPomodoro.Models;
+using LumenPomodoro.Services.Abstractions;
+using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class TimerService : IDisposable
+public class TimerService : ITimerService
 {
-    private readonly System.Timers.Timer _timer;
+    private readonly DispatcherTimer _timer;
     private readonly object _lock = new object();
     private int _remainingSeconds;
     private int _totalSeconds;
@@ -27,11 +30,10 @@ public class TimerService : IDisposable
 
     public TimerService()
     {
-        _timer = new System.Timers.Timer(1000);
-        _timer.Elapsed += Timer_Elapsed;
-        _timer.AutoReset = true;
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _timer.Tick += Timer_Tick;
         _currentMode = TimerMode.Idle;
-        _lastTickTime = DateTime.Now;
+        _lastTickTime = DateTime.UtcNow;
     }
 
     public void StartFocus(int minutes)
@@ -45,12 +47,13 @@ public class TimerService : IDisposable
             _currentMode = TimerMode.Focus;
             _isRunning = true;
             _isPaused = false;
-            _lastTickTime = DateTime.Now;
+            _lastTickTime = DateTime.UtcNow;
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
         }
 
+        Log.Information("寮€濮嬩笓娉? {Minutes} 鍒嗛挓", minutes);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Focus));
         TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Focus));
     }
@@ -66,12 +69,13 @@ public class TimerService : IDisposable
             _currentMode = TimerMode.Break;
             _isRunning = true;
             _isPaused = false;
-            _lastTickTime = DateTime.Now;
+            _lastTickTime = DateTime.UtcNow;
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
         }
 
+        Log.Information("寮€濮嬩紤鎭? {Minutes} 鍒嗛挓", minutes);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Break));
         TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Break));
     }
@@ -95,6 +99,7 @@ public class TimerService : IDisposable
 
         if (shouldInvoke)
         {
+            Log.Debug("璁℃椂鍣ㄦ殏鍋滐紝涔嬪墠妯″紡: {Mode}", oldMode);
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Paused));
         }
     }
@@ -110,7 +115,7 @@ public class TimerService : IDisposable
                 _isPaused = false;
                 restoredMode = _modeBeforePause;
                 _currentMode = restoredMode;
-                _lastTickTime = DateTime.Now;
+                _lastTickTime = DateTime.UtcNow;
                 _timer.Start();
                 shouldInvoke = true;
             }
@@ -118,6 +123,7 @@ public class TimerService : IDisposable
 
         if (shouldInvoke)
         {
+            Log.Debug("璁℃椂鍣ㄦ仮澶嶏紝妯″紡: {Mode}", restoredMode);
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Paused, restoredMode));
         }
     }
@@ -136,6 +142,7 @@ public class TimerService : IDisposable
             _currentMode = TimerMode.Idle;
         }
 
+        Log.Debug("璁℃椂鍣ㄩ噸缃紝涔嬪墠妯″紡: {Mode}", oldMode);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
         TimerTick?.Invoke(this, new TimerTickEventArgs(0, 0, TimerMode.Idle));
     }
@@ -161,11 +168,11 @@ public class TimerService : IDisposable
         {
             if (!_isRunning || _isPaused) return;
 
-            var elapsed = (DateTime.Now - _lastTickTime).TotalSeconds;
+            var elapsed = (DateTime.UtcNow - _lastTickTime).TotalSeconds;
             if (elapsed < 2) return;
 
             _remainingSeconds = Math.Max(0, _remainingSeconds - (int)elapsed);
-            _lastTickTime = DateTime.Now;
+            _lastTickTime = DateTime.UtcNow;
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;
@@ -184,12 +191,13 @@ public class TimerService : IDisposable
 
         if (shouldComplete)
         {
+            Log.Information("浼戠湢鍞ら啋鍚庤鏃跺櫒瀹屾垚锛屾ā寮? {Mode}", completedMode);
             TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }
     }
 
-    private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void Timer_Tick(object? sender, EventArgs e)
     {
         bool shouldComplete = false;
         TimerMode completedMode = TimerMode.Idle;
@@ -201,7 +209,7 @@ public class TimerService : IDisposable
             if (_isPaused) return;
 
             _remainingSeconds = Math.Max(0, _remainingSeconds - 1);
-            _lastTickTime = DateTime.Now;
+            _lastTickTime = DateTime.UtcNow;
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;
@@ -223,6 +231,7 @@ public class TimerService : IDisposable
 
         if (shouldComplete)
         {
+            Log.Information("璁℃椂鍣ㄨ嚜鐒跺畬鎴愶紝妯″紡: {Mode}", completedMode);
             TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }
@@ -230,20 +239,12 @@ public class TimerService : IDisposable
 
     public void Dispose()
     {
-        _timer.Elapsed -= Timer_Elapsed;
-        _timer.Dispose();
+        _timer.Tick -= Timer_Tick;
+        _timer.Stop();
         TimerTick = null;
         TimerCompleted = null;
         ModeChanged = null;
     }
-}
-
-public enum TimerMode
-{
-    Idle,
-    Focus,
-    Break,
-    Paused
 }
 
 public class TimerTickEventArgs : EventArgs

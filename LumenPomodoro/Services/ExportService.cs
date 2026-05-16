@@ -1,17 +1,12 @@
 using System.IO;
 using System.Text;
 using LumenPomodoro.Models;
+using LumenPomodoro.Services.Abstractions;
 using Newtonsoft.Json;
 
 namespace LumenPomodoro.Services;
 
-public enum ExportFormat
-{
-    Csv,
-    Json
-}
-
-public class ExportService
+public class ExportService : IExportService
 {
     public string ExportToCsv(List<FocusSession> sessions)
     {

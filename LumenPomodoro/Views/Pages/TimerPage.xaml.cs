@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using LumenPomodoro.ViewModels;
 

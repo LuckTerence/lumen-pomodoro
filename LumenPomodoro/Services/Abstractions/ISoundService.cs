@@ -2,14 +2,12 @@ namespace LumenPomodoro.Services.Abstractions;
 
 public interface ISoundService : IDisposable
 {
-    void PlayFocusComplete();
-    void PlayBreakComplete();
-    void PlayTick();
-    
     bool IsMuted { get; set; }
     double Volume { get; set; }
     
-    Task LoadCustomSoundAsync(string soundName, string filePath);
-    bool HasCustomSound(string soundName);
-    void GenerateDefaultWavFiles();
+    void PlaySound(string soundName);
+    void PlaySoundSync(string soundName);
+    void StopSound(string soundName);
+    void StopAllSounds();
+    void LoadCustomSound(string soundName, string filePath);
 }

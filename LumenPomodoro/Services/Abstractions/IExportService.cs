@@ -8,3 +8,9 @@ public interface IExportService
     string ExportToJson(List<FocusSession> sessions);
     void ExportToFile(List<FocusSession> sessions, string filePath, ExportFormat format);
 }
+
+public enum ExportFormat
+{
+    Csv,
+    Json
+}

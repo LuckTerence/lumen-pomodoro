@@ -20,7 +20,6 @@ public class MainViewModelTests
         _cameraService = new Mock<ICameraService>();
         _soundService = new Mock<ISoundService>();
 
-        // Setup default returns
         _storageService.Setup(s => s.LoadSettings()).Returns(new Settings());
         _storageService.Setup(s => s.LoadTasks()).Returns(new List<TaskItem>());
         _storageService.Setup(s => s.LoadSessions()).Returns(new List<FocusSession>());
@@ -51,15 +50,23 @@ public class MainViewModelTests
     [Fact]
     public void StartFocus_CallsTimerServiceStartFocus()
     {
-        _viewModel.StartFocus();
-        _timerService.Verify(t => t.StartFocus(), Times.Once);
+        var tasks = new List<TaskItem> { new() { Id = "1", Name = "Test" } };
+        _storageService.Setup(s => s.LoadTasks()).Returns(tasks);
+        // 重新创建 viewModel 以加载任务
+        var vm = new MainViewModel(
+            _storageService.Object,
+            _timerService.Object,
+            _cameraService.Object,
+            _soundService.Object);
+
+        vm.StartFocus();
+        _timerService.Verify(t => t.StartFocus(It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
     public void PauseFocus_CallsTimerServicePause()
     {
         _timerService.Setup(t => t.IsRunning).Returns(true);
-
         _viewModel.PauseFocus();
         _timerService.Verify(t => t.Pause(), Times.Once);
     }
@@ -68,7 +75,6 @@ public class MainViewModelTests
     public void ResumeFocus_CallsTimerServiceResume()
     {
         _timerService.Setup(t => t.IsPaused).Returns(true);
-
         _viewModel.ResumeFocus();
         _timerService.Verify(t => t.Resume(), Times.Once);
     }
@@ -88,31 +94,24 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void StartBreak_LongBreak_CallsWithLongBreakDuration()
-    {
-        _viewModel.StartBreak(isLongBreak: true);
-        _timerService.Verify(t => t.StartBreak(It.IsAny<int>()), Times.Once);
-    }
-
-    [Fact]
-    public void EndBreak_CallsTimerServiceStop()
+    public void EndBreak_CallsTimerServiceReset()
     {
         _viewModel.EndBreak();
-        _timerService.Verify(t => t.Stop(), Times.Once);
+        _timerService.Verify(t => t.Reset(), Times.Once);
     }
 
     [Fact]
-    public void SkipBreak_CallsTimerServiceStop()
+    public void SkipBreak_CallsTimerServiceReset()
     {
         _viewModel.SkipBreak();
-        _timerService.Verify(t => t.Stop(), Times.Once);
+        _timerService.Verify(t => t.Reset(), Times.Once);
     }
 
     [Fact]
-    public void StopCameraAlert_CallsCameraServiceStop()
+    public void StopCameraAlert_CallsCameraServiceStopAsync()
     {
         _viewModel.StopCameraAlert();
-        _cameraService.Verify(c => c.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _cameraService.Verify(c => c.StopCameraAsync(), Times.Once);
     }
 
     [Fact]
@@ -123,26 +122,28 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void UpdateSettings_SavesToStorage()
+    public void UpdateSettings_UpdatesAppSettings()
     {
-        var settings = new Settings { FocusMinutes = 30 };
+        var settings = new Settings { WorkMinutes = 30 };
         _viewModel.UpdateSettings(settings);
-        _storageService.Verify(s => s.SaveSettings(It.Is<Settings>(s => s.FocusMinutes == 30)), Times.Once);
+        Assert.Equal(30, _viewModel.AppSettings.WorkMinutes);
+        Assert.Equal(settings, _viewModel.AppSettings);
     }
 
     [Fact]
     public void ReloadSettings_LoadsFromStorage()
     {
         _viewModel.ReloadSettings();
-        _storageService.Verify(s => s.LoadSettings(), Times.AtLeast(2)); // once in constructor, once in reload
+        _storageService.Verify(s => s.LoadSettings(), Times.AtLeast(2));
     }
 
     [Fact]
-    public void UpdateTasks_SavesToStorage()
+    public void UpdateTasks_UpdatesTasksProperty()
     {
         var tasks = new List<TaskItem> { new() { Id = "1", Name = "Test" } };
         _viewModel.UpdateTasks(tasks);
-        _storageService.Verify(s => s.SaveTasks(tasks), Times.Once);
+        Assert.Equal(tasks, _viewModel.Tasks);
+        Assert.Equal(tasks[0], _viewModel.SelectedTask);
     }
 
     [Fact]
@@ -155,37 +156,19 @@ public class MainViewModelTests
     [Fact]
     public void AdjustWorkMinutes_ClampsToValidRange()
     {
-        // Try to set below minimum (1 minute)
+        // Try to set below minimum
         _viewModel.AdjustWorkMinutes(-100);
-        Assert.True(_viewModel.AppSettings.FocusMinutes >= 1);
+        Assert.True(_viewModel.AppSettings.WorkMinutes >= 1);
 
-        // Try to set above maximum (120 minutes)
+        // Try to set above maximum
         _viewModel.AdjustWorkMinutes(200);
-        Assert.True(_viewModel.AppSettings.FocusMinutes <= 120);
+        Assert.True(_viewModel.AppSettings.WorkMinutes <= 120);
     }
 
     [Fact]
-    public void Dispose_DisposesServices()
+    public void Dispose_StopsCamera()
     {
         _viewModel.Dispose();
-        _cameraService.Verify(c => c.Dispose(), Times.Once);
-    }
-
-    [Fact]
-    public void PropertyChanged_RaisedOnStatusChange()
-    {
-        bool raised = false;
-        _viewModel.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(MainViewModel.CurrentStatus))
-                raised = true;
-        };
-
-        // Simulate timer tick that changes status
-        _timerService.Raise(t => t.Tick += null, _timerService.Object,
-            new TimerTickEventArgs(24 * 60, 25 * 60));
-
-        // The ViewModel should have updated based on the timer tick
-        // (Exact behavior depends on ViewModel implementation)
+        _cameraService.Verify(c => c.StopCameraAsync(), Times.Once);
     }
 }

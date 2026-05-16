@@ -1,23 +1,51 @@
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using LumenPomodoro.Services;
+using LumenPomodoro.Services.Abstractions;
+using LumenPomodoro.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using Serilog;
 using Wpf.Ui.Appearance;
 
 namespace LumenPomodoro;
 
 public partial class App : Application
 {
-    public StorageService StorageService { get; private set; } = null!;
+    public IServiceProvider Services { get; private set; } = null!;
+
+    public static T GetRequiredService<T>() where T : notnull
+        => ((App)Current).Services.GetRequiredService<T>();
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 1. Bootstrap Serilog before anything else
+        var logDirectory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "LumenPomodoro");
+        Directory.CreateDirectory(logDirectory);
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Debug()
+            .WriteTo.File(
+                Path.Combine(logDirectory, "lumen-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+
+        Log.Information("应用启动");
+
+        // 2. Build DI container
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        Services = services.BuildServiceProvider();
+
+        // 3. Wire global exception handlers (now using Serilog)
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-
-        StorageService = new StorageService();
 
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
 
@@ -27,26 +55,47 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            LogException(ex);
+            Log.Fatal(ex, "启动失败");
             MessageBox.Show($"启动失败：{ex.Message}\n\n{ex.InnerException?.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
             return;
         }
 
+        // Generate default sound files
         SoundService.GenerateDefaultWavFiles();
 
         ApplyThemeOnStartup();
     }
 
+    private static void ConfigureServices(IServiceCollection services)
+    {
+        // Services - interfaces → implementations
+        services.AddSingleton<IStorageService, StorageService>();
+        services.AddSingleton<ITimerService, TimerService>();
+        services.AddSingleton<ICameraService, CameraService>();
+        services.AddSingleton<ISoundService, SoundService>();
+        services.AddSingleton<IInsightEngine, InsightEngine>();
+        services.AddSingleton<IExportService, ExportService>();
+
+        // ViewModels
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<StatsViewModel>();
+        services.AddTransient<TasksViewModel>();
+
+        // TrayService — registered as singleton, resolved manually in MainWindow
+        services.AddSingleton<ITrayService, TrayService>();
+    }
+
     private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        LogException(e.Exception);
+        Log.Error(e.Exception, "未观察到的任务异常");
         e.SetObserved();
     }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        LogException(e.Exception);
+        Log.Error(e.Exception, "Dispatcher 未处理异常");
 
         try
         {
@@ -62,31 +111,13 @@ public partial class App : Application
     {
         if (e.ExceptionObject is Exception ex)
         {
-            LogException(ex);
+            Log.Fatal(ex, "AppDomain 未处理异常");
 
             try
             {
                 MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch { }
-        }
-    }
-
-    private static void LogException(Exception ex)
-    {
-        try
-        {
-            var logDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "LumenPomodoro");
-            Directory.CreateDirectory(logDirectory);
-
-            var logPath = Path.Combine(logDirectory, "error.log");
-            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]\n{ex}\n\n");
-            Debug.WriteLine(ex);
-        }
-        catch
-        {
         }
     }
 
@@ -106,7 +137,8 @@ public partial class App : Application
 
     private void ApplyThemeOnStartup()
     {
-        var settings = StorageService.LoadSettings();
+        var storageService = Services.GetRequiredService<IStorageService>();
+        var settings = storageService.LoadSettings();
         ApplyTheme(settings.Theme);
     }
 
@@ -131,6 +163,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+        Log.Information("应用退出");
+        Log.CloseAndFlush();
         base.OnExit(e);
     }
 }

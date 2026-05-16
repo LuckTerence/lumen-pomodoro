@@ -19,6 +19,10 @@ public partial class HourlyDistributionChart : UserControl
         set => SetValue(HourlyDataProperty, value);
     }
 
+    private List<HourlyDataPoint>? _lastRenderedData;
+    private Size _lastRenderedSize;
+    private int _lastThemeHash;
+
     public HourlyDistributionChart()
     {
         InitializeComponent();
@@ -30,19 +34,38 @@ public partial class HourlyDistributionChart : UserControl
 
     private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
     {
+        _lastThemeHash = 0; // 强制重绘
         Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((HourlyDistributionChart)d).Render();
+        var control = (HourlyDistributionChart)d;
+        control._lastRenderedData = null; // 强制重绘
+        control.Render();
     }
 
     private void Render()
     {
-        ChartCanvas.Children.Clear();
         var data = HourlyData;
-        if (data == null || data.Count == 0 || ActualWidth <= 0) return;
+        if (data == null || data.Count == 0 || ActualWidth <= 0)
+        {
+            ChartCanvas.Children.Clear();
+            _lastRenderedData = null;
+            return;
+        }
+
+        // 数据、尺寸、主题未变时跳过重绘
+        var currentSize = new Size(ActualWidth, ActualHeight);
+        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
+        if (ReferenceEquals(data, _lastRenderedData) && currentSize == _lastRenderedSize && currentThemeHash == _lastThemeHash && ChartCanvas.Children.Count > 0)
+            return;
+
+        _lastRenderedData = data;
+        _lastRenderedSize = currentSize;
+        _lastThemeHash = currentThemeHash;
+
+        ChartCanvas.Children.Clear();
 
         var maxMinutes = data.Max(d => d.TotalMinutes);
         if (maxMinutes == 0) maxMinutes = 1;

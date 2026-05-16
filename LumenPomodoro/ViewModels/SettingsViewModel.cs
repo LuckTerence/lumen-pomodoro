@@ -5,13 +5,14 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
+using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.ViewModels;
 
 public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 {
-    private readonly StorageService _storageService;
-    private readonly CameraService _cameraService;
+    private readonly IStorageService _storageService;
+    private readonly ICameraService _cameraService;
 
     private int _workMinutes;
     private int _shortBreakMinutes;
@@ -154,7 +155,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { if (_animationEnabled != value) { _animationEnabled = value; OnPropertyChanged(); } }
     }
 
-    public SettingsViewModel(StorageService storageService, CameraService cameraService)
+    public SettingsViewModel(IStorageService storageService, ICameraService cameraService)
     {
         _storageService = storageService;
         _cameraService = cameraService;

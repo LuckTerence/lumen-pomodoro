@@ -2,13 +2,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LumenPomodoro.Models;
-using LumenPomodoro.Services;
+using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.ViewModels;
 
 public class TasksViewModel : INotifyPropertyChanged
 {
-    private readonly StorageService _storageService;
+    private readonly IStorageService _storageService;
 
     private ObservableCollection<TaskItem> _tasks = new();
     private string _newTaskName = string.Empty;
@@ -62,7 +62,7 @@ public class TasksViewModel : INotifyPropertyChanged
         set { if (_editingTaskId != value) { _editingTaskId = value; OnPropertyChanged(); } }
     }
 
-    public TasksViewModel(StorageService storageService)
+    public TasksViewModel(IStorageService storageService)
     {
         _storageService = storageService;
     }

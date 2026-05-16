@@ -1,10 +1,22 @@
 using LumenPomodoro.Models;
+using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.Services;
 
-public class InsightEngine
+public class InsightEngine : IInsightEngine
 {
     private static readonly string[] DayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+    // 魔法数字提取为常量
+    private const int MinSessionsForInsight = 3;
+    private const int StreakThreshold = 3;
+    private const double TrendChangeThreshold = 0.15;
+    private const int RecentWeeksForTrend = 4;
+    private const int TaskAttentionDays = 7;
+    private const double TaskAttentionAvgThreshold = 1.0;
+    private const int TaskAttentionMinTotal = 5;
+    private const int MaxInsightCount = 5;
+    private static readonly int[] Milestones = [10, 50, 100, 500, 1000];
 
     public List<HeatmapDay> GetHeatmapData(List<FocusSession> sessions)
     {
@@ -138,7 +150,7 @@ public class InsightEngine
         var insights = new List<Insight>();
         var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
 
-        if (completed.Count < 3)
+        if (completed.Count < MinSessionsForInsight)
         {
             insights.Add(new Insight
             {
@@ -149,13 +161,27 @@ public class InsightEngine
             return insights;
         }
 
-        // 1. 峰值时段
-        var hourGroups = completed.GroupBy(s => s.EndTime!.Value.Hour);
-        var bestHour = hourGroups
+        // === 预计算所有分组，后续子分析复用，避免重复遍历 ===
+        var hourGroups = completed
+            .GroupBy(s => s.EndTime!.Value.Hour)
             .Select(g => new { Hour = g.Key, Avg = g.Average(s => s.FocusMinutes), Count = g.Count() })
-            .Where(x => x.Count >= 3)
-            .OrderByDescending(x => x.Avg)
-            .FirstOrDefault();
+            .Where(x => x.Count >= MinSessionsForInsight)
+            .ToList();
+
+        var dayGroups = completed
+            .GroupBy(s => s.EndTime!.Value.DayOfWeek)
+            .Select(g => new { Day = g.Key, Total = g.Count() })
+            .Where(x => x.Total >= MinSessionsForInsight)
+            .ToList();
+
+        var dateGroups = completed
+            .GroupBy(s => s.EndTime!.Value.Date)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var totalPomodoros = completed.Count;
+
+        // 1. 峰值时段 — 直接用预计算的 hourGroups
+        var bestHour = hourGroups.OrderByDescending(x => x.Avg).FirstOrDefault();
 
         if (bestHour != null)
         {
@@ -167,34 +193,33 @@ public class InsightEngine
             });
         }
 
-        // 2. 最佳日期
-        var dayGroups = completed
-            .GroupBy(s => s.EndTime!.Value.DayOfWeek)
-            .Where(g => g.Count() >= 3)
-            .Select(g => new { Day = g.Key, Total = g.Count() })
-            .OrderByDescending(x => x.Total)
-            .FirstOrDefault();
+        // 2. 最佳日期 — 直接用预计算的 dayGroups
+        var bestDay = dayGroups.OrderByDescending(x => x.Total).FirstOrDefault();
 
-        if (dayGroups != null)
+        if (bestDay != null)
         {
             insights.Add(new Insight
             {
                 Title = "高效日",
-                Description = $"{DayNames[(int)dayGroups.Day]}是你最高效的一天，累计完成 {dayGroups.Total} 个番茄钟。",
+                Description = $"{DayNames[(int)bestDay.Day]}是你最高效的一天，累计完成 {bestDay.Total} 个番茄钟。",
                 Type = InsightType.BestDay
             });
         }
 
-        // 3. 趋势检测
-        var fourWeeksAgo = DateTime.Today.AddDays(-28);
-        var eightWeeksAgo = DateTime.Today.AddDays(-56);
-        var recent4Weeks = completed.Count(s => s.EndTime!.Value.Date >= fourWeeksAgo);
-        var prior4Weeks = completed.Count(s => s.EndTime!.Value.Date >= eightWeeksAgo && s.EndTime.Value.Date < fourWeeksAgo);
+        // 3. 趋势检测 — 用 dateGroups 代替全表扫描
+        var fourWeeksAgo = DateTime.Today.AddDays(-RecentWeeksForTrend * 7);
+        var eightWeeksAgo = DateTime.Today.AddDays(-RecentWeeksForTrend * 2 * 7);
+        var recent4Weeks = dateGroups
+            .Where(kvp => kvp.Key >= fourWeeksAgo)
+            .Sum(kvp => kvp.Value.Count);
+        var prior4Weeks = dateGroups
+            .Where(kvp => kvp.Key >= eightWeeksAgo && kvp.Key < fourWeeksAgo)
+            .Sum(kvp => kvp.Value.Count);
 
         if (prior4Weeks > 0)
         {
             var change = (double)(recent4Weeks - prior4Weeks) / prior4Weeks;
-            if (change > 0.15)
+            if (change > TrendChangeThreshold)
             {
                 insights.Add(new Insight
                 {
@@ -203,7 +228,7 @@ public class InsightEngine
                     Type = InsightType.Trend
                 });
             }
-            else if (change < -0.15)
+            else if (change < -TrendChangeThreshold)
             {
                 insights.Add(new Insight
                 {
@@ -216,7 +241,7 @@ public class InsightEngine
 
         // 4. 连续天数
         var streak = CalculateStreak(completed);
-        if (streak >= 3)
+        if (streak >= StreakThreshold)
         {
             insights.Add(new Insight
             {
@@ -239,21 +264,26 @@ public class InsightEngine
             }
         }
 
-        // 5. 任务提醒
-        var last7Days = completed.Where(s => s.EndTime!.Value.Date >= DateTime.Today.AddDays(-7)).ToList();
+        // 5. 任务提醒 — 用 dateGroups 代替 Where 全表扫描
+        var cutoff = DateTime.Today.AddDays(-TaskAttentionDays);
+        var last7Days = dateGroups
+            .Where(kvp => kvp.Key >= cutoff)
+            .SelectMany(kvp => kvp.Value)
+            .ToList();
         if (last7Days.Count > 0 && tasks.Count > 0)
         {
             var taskAvg = last7Days
                 .GroupBy(s => string.IsNullOrEmpty(s.TaskName) ? "未分类" : s.TaskName)
-                .Select(g => new { Name = g.Key, Avg = (double)g.Count() / 7 })
-                .Where(x => x.Avg < 1.0)
+                .Select(g => new { Name = g.Key, Avg = (double)g.Count() / TaskAttentionDays })
+                .Where(x => x.Avg < TaskAttentionAvgThreshold)
                 .OrderBy(x => x.Avg)
                 .FirstOrDefault();
 
             if (taskAvg != null)
             {
-                var totalForTask = completed.Count(s => (string.IsNullOrEmpty(s.TaskName) ? "未分类" : s.TaskName) == taskAvg.Name);
-                if (totalForTask >= 5)
+                var taskName = taskAvg.Name;
+                var totalForTask = completed.Count(s => (string.IsNullOrEmpty(s.TaskName) ? "未分类" : s.TaskName) == taskName);
+                if (totalForTask >= TaskAttentionMinTotal)
                 {
                     insights.Add(new Insight
                     {
@@ -266,9 +296,7 @@ public class InsightEngine
         }
 
         // 6. 里程碑
-        var milestones = new[] { 10, 50, 100, 500, 1000 };
-        var totalPomodoros = completed.Count;
-        var latestMilestone = milestones.Where(m => totalPomodoros >= m).DefaultIfEmpty(0).Max();
+        var latestMilestone = Milestones.Where(m => totalPomodoros >= m).DefaultIfEmpty(0).Max();
         if (latestMilestone > 0 && insights.Count == 0)
         {
             insights.Add(new Insight
@@ -290,10 +318,10 @@ public class InsightEngine
             });
         }
 
-        return insights.Take(5).ToList();
+        return insights.Take(MaxInsightCount).ToList();
     }
 
-    private static int CalculateStreak(List<FocusSession> completed)
+    public static int CalculateStreak(List<FocusSession> completed)
     {
         if (completed.Count == 0) return 0;
 

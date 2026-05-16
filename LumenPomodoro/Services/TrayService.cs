@@ -3,16 +3,18 @@ using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows;
 using System.Windows.Controls;
 using LumenPomodoro.Models;
+using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
+using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class TrayService
+public class TrayService : ITrayService
 {
     private readonly TaskbarIcon _notifyIcon;
     private readonly MainViewModel _mainViewModel;
-    private readonly CameraService _cameraService;
-    private readonly StorageService _storageService;
+    private readonly ICameraService _cameraService;
+    private readonly IStorageService _storageService;
 
     private Window? _mainWindow;
     private MenuItem _showWindowItem = null!;
@@ -22,7 +24,7 @@ public class TrayService
     private MenuItem _settingsItem = null!;
     private MenuItem _exitItem = null!;
 
-    public TrayService(MainViewModel mainViewModel, CameraService cameraService, StorageService storageService)
+    public TrayService(MainViewModel mainViewModel, ICameraService cameraService, IStorageService storageService)
     {
         _mainViewModel = mainViewModel;
         _cameraService = cameraService;
@@ -180,7 +182,7 @@ public class TrayService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[TrayService] 退出时停止摄像头异常: {ex.Message}");
+            Log.Warning(ex, "退出时停止摄像头异常");
         }
         _notifyIcon.Dispose();
         Application.Current.Shutdown();
@@ -209,7 +211,7 @@ public class TrayService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[TrayService] FireAndForget [{operationName}] 异常: {ex.Message}");
+            Log.Warning(ex, "FireAndForget [{Operation}] 异常", operationName);
         }
     }
 

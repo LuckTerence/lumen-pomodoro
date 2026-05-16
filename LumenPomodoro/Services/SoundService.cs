@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Media;
-using System.Windows;
+using LumenPomodoro.Services.Abstractions;
+using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class SoundService : IDisposable
+public class SoundService : ISoundService
 {
     private readonly Dictionary<string, SoundPlayer> _players;
     private readonly string _soundsDirectory;
@@ -62,7 +62,7 @@ public class SoundService : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[SoundService] 加载音效 {kvp.Key} 失败: {ex.Message}");
+                    Log.Warning(ex, "加载音效 {Name} 失败", kvp.Key);
                 }
             }
         }
@@ -80,7 +80,7 @@ public class SoundService : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SoundService] 播放 {soundName} 失败: {ex.Message}");
+                Log.Warning(ex, "播放 {Name} 失败", soundName);
             }
         }
     }
@@ -97,7 +97,7 @@ public class SoundService : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SoundService] 同步播放 {soundName} 失败: {ex.Message}");
+                Log.Warning(ex, "同步播放 {Name} 失败", soundName);
             }
         }
     }
@@ -112,7 +112,7 @@ public class SoundService : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SoundService] 停止 {soundName} 失败: {ex.Message}");
+                Log.Warning(ex, "停止 {Name} 失败", soundName);
             }
         }
     }
@@ -127,7 +127,7 @@ public class SoundService : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SoundService] 停止音效失败: {ex.Message}");
+                Log.Warning(ex, "停止音效失败");
             }
         }
     }
@@ -149,23 +149,6 @@ public class SoundService : IDisposable
         {
             throw new InvalidOperationException($"Failed to load sound file: {ex.Message}", ex);
         }
-    }
-
-    public void Dispose()
-    {
-        StopAllSounds();
-        foreach (var player in _players.Values)
-        {
-            try
-            {
-                player.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[SoundService] Dispose 音效失败: {ex.Message}");
-            }
-        }
-        _players.Clear();
     }
 
     public static void GenerateDefaultWavFiles()
@@ -247,5 +230,22 @@ public class SoundService : IDisposable
                 }
             }
         }
+    }
+
+    public void Dispose()
+    {
+        StopAllSounds();
+        foreach (var player in _players.Values)
+        {
+            try
+            {
+                player.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Dispose 音效失败");
+            }
+        }
+        _players.Clear();
     }
 }

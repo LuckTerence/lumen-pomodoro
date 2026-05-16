@@ -1,0 +1,19 @@
+<Window x:Class="LumenPomodoro.Views.CameraIndicatorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="CameraIndicator" Width="32" Height="32"
+        WindowStyle="None" AllowsTransparency="True" Topmost="True"
+        ShowInTaskbar="False" ShowActivated="False"
+        Background="Transparent"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <Border CornerRadius="16" Background="#CC1A1A1A">
+        <Ellipse x:Name="IndicatorDot" Width="14" Height="14"
+                 VerticalAlignment="Center" HorizontalAlignment="Center"
+                 Fill="Gray">
+            <Ellipse.Effect>
+                <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.9" Color="Gray"/>
+            </Ellipse.Effect>
+        </Ellipse>
+    </Border>
+</Window>

@@ -66,6 +66,12 @@ public partial class ArcProgress : UserControl
     private DateTime _animStartTime;
     private TimeSpan _animDuration;
 
+    // 缓存上次渲染参数，避免每帧重复创建 Geometry
+    private double _lastRenderedSize;
+    private double _lastRenderedStrokeThickness;
+    private Geometry? _cachedBackgroundGeometry;
+    private Geometry? _cachedFullCircleGeometry;
+
     public ArcProgress()
     {
         InitializeComponent();
@@ -171,11 +177,29 @@ public partial class ArcProgress : UserControl
         var radius = center - StrokeThickness / 2;
         if (radius <= 0) return;
 
-        BackgroundArc.Data = CreateCircleGeometry(center, radius);
+        // 尺寸未变时复用背景 Geometry
+        if (size != _lastRenderedSize || StrokeThickness != _lastRenderedStrokeThickness)
+        {
+            _lastRenderedSize = size;
+            _lastRenderedStrokeThickness = StrokeThickness;
+            _cachedBackgroundGeometry = CreateCircleGeometry(center, radius);
+            _cachedFullCircleGeometry = CreateCircleGeometry(center, radius); // fraction≈1 时的复用
+        }
+
+        BackgroundArc.Data = _cachedBackgroundGeometry!;
         BackgroundArc.Stroke = BackgroundArcBrush ?? new SolidColorBrush(Color.FromArgb(30, 128, 128, 128));
         BackgroundArc.StrokeThickness = StrokeThickness;
 
-        ForegroundArc.Data = CreateArcGeometry(center, radius, fraction);
+        // fraction 接近 1.0 时复用全圆 Geometry
+        if (fraction >= 0.999)
+        {
+            ForegroundArc.Data = _cachedFullCircleGeometry!;
+        }
+        else
+        {
+            ForegroundArc.Data = CreateArcGeometry(center, radius, fraction);
+        }
+
         ForegroundArc.Stroke = ForegroundArcBrush ?? (Brush)Application.Current.FindResource("AccentFillColorDefaultBrush");
         ForegroundArc.StrokeThickness = StrokeThickness;
         ForegroundArc.StrokeStartLineCap = PenLineCap.Round;

@@ -18,6 +18,9 @@ public partial class TaskDonutChart : UserControl
         set => SetValue(TaskSlicesProperty, value);
     }
 
+    private List<TaskSlice>? _lastRenderedData;
+    private int _lastThemeHash;
+
     public TaskDonutChart()
     {
         InitializeComponent();
@@ -27,20 +30,38 @@ public partial class TaskDonutChart : UserControl
 
     private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
     {
+        _lastThemeHash = 0; // 强制重绘
         Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((TaskDonutChart)d).Render();
+        var control = (TaskDonutChart)d;
+        control._lastRenderedData = null; // 强制重绘
+        control.Render();
     }
 
     private void Render()
     {
+        var slices = TaskSlices;
+        if (slices == null || slices.Count == 0)
+        {
+            DonutCanvas.Children.Clear();
+            LegendPanel.Children.Clear();
+            _lastRenderedData = null;
+            return;
+        }
+
+        // 数据和主题都未变时跳过重绘
+        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
+        if (ReferenceEquals(slices, _lastRenderedData) && currentThemeHash == _lastThemeHash && DonutCanvas.Children.Count > 0)
+            return;
+
+        _lastRenderedData = slices;
+        _lastThemeHash = currentThemeHash;
+
         DonutCanvas.Children.Clear();
         LegendPanel.Children.Clear();
-        var slices = TaskSlices;
-        if (slices == null || slices.Count == 0) return;
 
         var total = slices.Sum(s => s.PomodoroCount);
         var center = 60.0;

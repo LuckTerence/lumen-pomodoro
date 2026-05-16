@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LumenPomodoro.Models;
-using LumenPomodoro.Services;
+using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.ViewModels;
 
@@ -14,8 +14,8 @@ public enum StatsPeriod
 
 public class StatsViewModel : INotifyPropertyChanged
 {
-    private readonly StorageService _storageService;
-    private readonly InsightEngine _insightEngine = new();
+    private readonly IStorageService _storageService;
+    private readonly IInsightEngine _insightEngine;
 
     private int _completedPomodoros;
     private int _totalFocusMinutes;
@@ -108,9 +108,10 @@ public class StatsViewModel : INotifyPropertyChanged
         set { if (_insights != value) { _insights = value; OnPropertyChanged(); } }
     }
 
-    public StatsViewModel(StorageService storageService)
+    public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
     {
         _storageService = storageService;
+        _insightEngine = insightEngine;
     }
 
     public void Refresh()
@@ -147,6 +148,7 @@ public class StatsViewModel : INotifyPropertyChanged
 
     private void LoadStatsForCurrentPeriod()
     {
+        // 只加载一次 sessions，分发给所有 InsightEngine 方法，避免重复 JSON 反序列化
         var sessions = _storageService.LoadSessions();
         var tasks = _storageService.LoadTasks();
 
@@ -208,7 +210,7 @@ public class StatsViewModel : INotifyPropertyChanged
         CompletedPomodoros = filteredSessions.Count;
         TotalFocusMinutes = filteredSessions.Sum(s => s.FocusMinutes);
 
-        // 图表数据
+        // 图表数据 — 所有方法复用同一 sessions 引用
         HeatmapDays = _insightEngine.GetHeatmapData(sessions);
         HourlyData = _insightEngine.GetHourlyDistribution(sessions, periodStart, periodEnd);
         TaskBreakdown = _insightEngine.GetTaskBreakdown(sessions, periodStart, periodEnd, tasks);

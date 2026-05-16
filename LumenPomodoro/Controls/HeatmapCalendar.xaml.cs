@@ -21,6 +21,11 @@ public partial class HeatmapCalendar : UserControl
     private static readonly string[] DayLabels = ["周一", "", "周三", "", "周五", "", ""];
     private static readonly string[] MonthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
 
+    // 渲染缓存 — 数据和尺寸未变时跳过重绘
+    private List<HeatmapDay>? _lastRenderedData;
+    private Size _lastRenderedSize;
+    private int _lastThemeHash;
+
     public HeatmapCalendar()
     {
         InitializeComponent();
@@ -32,19 +37,33 @@ public partial class HeatmapCalendar : UserControl
 
     private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
     {
+        _lastThemeHash = 0; // 强制重绘
         Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((HeatmapCalendar)d).Render();
+        var control = (HeatmapCalendar)d;
+        control._lastRenderedData = null; // 数据变化，强制重绘
+        control.Render();
     }
 
     private void Render()
     {
-        HeatmapCanvas.Children.Clear();
         var data = HeatmapDays;
         if (data == null || data.Count == 0 || ActualWidth <= 0) return;
+
+        // 数据和尺寸都未变时跳过重绘
+        var currentSize = new Size(ActualWidth, ActualHeight);
+        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
+        if (ReferenceEquals(data, _lastRenderedData) && currentSize == _lastRenderedSize && currentThemeHash == _lastThemeHash && HeatmapCanvas.Children.Count > 0)
+            return;
+
+        _lastRenderedData = data;
+        _lastRenderedSize = currentSize;
+        _lastThemeHash = currentThemeHash;
+
+        HeatmapCanvas.Children.Clear();
 
         var firstDate = data.Min(d => d.Date.Date);
         var lastDate = data.Max(d => d.Date.Date);

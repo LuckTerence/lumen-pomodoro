@@ -2,10 +2,12 @@ using System.Diagnostics;
 using System.IO;
 using Newtonsoft.Json;
 using LumenPomodoro.Models;
+using LumenPomodoro.Services.Abstractions;
+using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class StorageService
+public class StorageService : IStorageService
 {
     private readonly string _appDataPath;
     private readonly string _settingsFile;
@@ -16,6 +18,15 @@ public class StorageService
     private DateTime _cacheDate;
     private readonly object _fileLock = new object();
 
+    // Sessions 内存缓存 — 避免重复 JSON 反序列化
+    private List<FocusSession>? _sessionsCache;
+    private DateTime _sessionsCacheFileTime;
+
+    // Tasks 内存缓存
+    private List<TaskItem>? _tasksCache;
+    private DateTime _tasksCacheFileTime;
+
+
     public StorageService(string? appDataPath = null)
     {
         _appDataPath = appDataPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LumenPomodoro");
@@ -24,6 +35,8 @@ public class StorageService
         _settingsFile = Path.Combine(_appDataPath, "settings.json");
         _tasksFile = Path.Combine(_appDataPath, "tasks.json");
         _sessionsFile = Path.Combine(_appDataPath, "sessions.json");
+
+        Log.Debug("StorageService 初始化，数据路径: {Path}", _appDataPath);
     }
 
     public Settings LoadSettings()
@@ -55,11 +68,23 @@ public class StorageService
     {
         lock (_fileLock)
         {
+            // 检查 tasks 缓存
+            if (_tasksCache != null && File.Exists(_tasksFile))
+            {
+                var writeTime = File.GetLastWriteTime(_tasksFile);
+                if (writeTime == _tasksCacheFileTime)
+                    return new List<TaskItem>(_tasksCache);
+            }
+
             try
             {
                 var content = File.ReadAllText(_tasksFile);
                 var tasks = JsonConvert.DeserializeObject<List<TaskItem>>(content);
-                if (tasks != null && tasks.Count > 0) return tasks;
+                if (tasks != null && tasks.Count > 0)
+                {
+                    UpdateTasksCache(tasks);
+                    return new List<TaskItem>(tasks);
+                }
             }
             catch
             {
@@ -77,6 +102,7 @@ public class StorageService
         {
             var content = JsonConvert.SerializeObject(tasks, Formatting.Indented);
             File.WriteAllText(_tasksFile, content);
+            UpdateTasksCache(tasks);
         }
     }
 
@@ -104,22 +130,47 @@ public class StorageService
     {
         lock (_fileLock)
         {
-            return LoadSessionsCore();
+            return new List<FocusSession>(GetOrLoadSessions());
         }
     }
 
-    private List<FocusSession> LoadSessionsCore()
+    /// <summary>
+    /// 返回缓存引用（不拷贝），仅供内部在同一锁内使用。
+    /// </summary>
+    private List<FocusSession> GetOrLoadSessions()
     {
+        if (_sessionsCache != null && File.Exists(_sessionsFile))
+        {
+            var writeTime = File.GetLastWriteTime(_sessionsFile);
+            if (writeTime == _sessionsCacheFileTime)
+                return _sessionsCache;
+        }
+
         try
         {
             var content = File.ReadAllText(_sessionsFile);
-            return JsonConvert.DeserializeObject<List<FocusSession>>(content) ?? new List<FocusSession>();
+            var sessions = JsonConvert.DeserializeObject<List<FocusSession>>(content) ?? new List<FocusSession>();
+            UpdateSessionsCache(sessions);
+            return sessions;
         }
         catch
         {
-            return new List<FocusSession>();
+            var empty = new List<FocusSession>();
+            UpdateSessionsCache(empty);
+            return empty;
         }
     }
+
+    private void UpdateSessionsCache(List<FocusSession> sessions)
+    {
+        _sessionsCache = sessions;
+        _sessionsCacheFileTime = File.Exists(_sessionsFile)
+            ? File.GetLastWriteTime(_sessionsFile)
+            : DateTime.MinValue;
+    }
+
+    /// <summary>内部使用，保留兼容</summary>
+    private List<FocusSession> LoadSessionsCore() => GetOrLoadSessions();
 
     public void SaveSessions(List<FocusSession> sessions)
     {
@@ -127,6 +178,7 @@ public class StorageService
         {
             var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
             File.WriteAllText(_sessionsFile, content);
+            UpdateSessionsCache(sessions);
         }
         InvalidateStatsCache();
     }
@@ -135,15 +187,24 @@ public class StorageService
     {
         lock (_fileLock)
         {
-            var sessions = LoadSessionsCore();
+            var sessions = GetOrLoadSessions();
             sessions.Add(session);
             SaveSessionsWithTransaction(sessions);
         }
+        Log.Information("保存专注会话: {TaskName}, {FocusMinutes} 分钟", session.TaskName, session.FocusMinutes);
     }
 
     private void InvalidateStatsCache()
     {
         _cachedTodayStats = null;
+    }
+
+    private void UpdateTasksCache(List<TaskItem> tasks)
+    {
+        _tasksCache = tasks;
+        _tasksCacheFileTime = File.Exists(_tasksFile)
+            ? File.GetLastWriteTime(_tasksFile)
+            : DateTime.MinValue;
     }
 
     private void SaveSessionsWithTransaction(List<FocusSession> sessions)
@@ -172,9 +233,15 @@ public class StorageService
             }
 
             InvalidateStatsCache();
+
+            // 写入成功后更新缓存（避免下次读磁盘）
+            UpdateSessionsCache(sessions);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Error(ex, "保存会话数据失败");
+            // 写入失败，缓存可能过时
+            _sessionsCache = null;
             if (File.Exists(backupFile))
             {
                 File.Copy(backupFile, _sessionsFile, true);
@@ -192,7 +259,7 @@ public class StorageService
                 return _cachedTodayStats;
             }
 
-            var sessions = LoadSessionsCore();
+            var sessions = GetOrLoadSessions();
             var today = DateTime.Today;
             var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
 
@@ -218,35 +285,9 @@ public class StorageService
         }
     }
 
-    private int CalculateStreak(List<FocusSession> sessions)
+    private static int CalculateStreak(List<FocusSession> sessions)
     {
-        var completedSessions = sessions.Where(s => s.Completed && s.EndTime.HasValue)
-                                       .Select(s => s.EndTime!.Value.Date)
-                                       .Distinct()
-                                       .OrderByDescending(d => d)
-                                       .ToList();
-
-        if (completedSessions.Count == 0) return 0;
-
-        var startDate = completedSessions[0];
-        if (startDate != DateTime.Today && startDate != DateTime.Today.AddDays(-1))
-        {
-            return 0;
-        }
-
-        int streak = 1;
-        for (int i = 1; i < completedSessions.Count; i++)
-        {
-            if (completedSessions[i] == completedSessions[i - 1].AddDays(-1))
-            {
-                streak++;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        return streak;
+        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        return InsightEngine.CalculateStreak(completed);
     }
 }

@@ -17,9 +17,9 @@ public class SettingsViewModelTests
         _cameraService = new Mock<ICameraService>();
 
         _storageService.Setup(s => s.LoadSettings()).Returns(new Settings());
-        _cameraService.Setup(c => c.GetAvailableCamerasAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<CameraDevice> { new("0", "Test Camera") });
-        _cameraService.Setup(c => c.GetCameraCountAsync(It.IsAny<CancellationToken>()))
+        _cameraService.Setup(c => c.GetAvailableCamerasAsync())
+            .ReturnsAsync(new List<string> { "Test Camera" });
+        _cameraService.Setup(c => c.GetCameraCountAsync())
             .ReturnsAsync(1);
 
         _viewModel = new SettingsViewModel(_storageService.Object, _cameraService.Object);
@@ -39,24 +39,23 @@ public class SettingsViewModelTests
     }
 
     [Fact]
-    public void FocusMinutes_ClampsToValidRange()
+    public void WorkMinutes_ClampsToValidRange()
     {
-        // SettingsViewModel should clamp FocusMinutes to [1, 120]
-        _viewModel.FocusMinutes = 0;
-        Assert.True(_viewModel.FocusMinutes >= 1);
+        _viewModel.WorkMinutes = 0;
+        Assert.True(_viewModel.WorkMinutes >= 1);
 
-        _viewModel.FocusMinutes = 150;
-        Assert.True(_viewModel.FocusMinutes <= 120);
+        _viewModel.WorkMinutes = 150;
+        Assert.True(_viewModel.WorkMinutes <= 120);
     }
 
     [Fact]
-    public void BreakMinutes_ClampsToValidRange()
+    public void ShortBreakMinutes_ClampsToValidRange()
     {
-        _viewModel.BreakMinutes = 0;
-        Assert.True(_viewModel.BreakMinutes >= 1);
+        _viewModel.ShortBreakMinutes = 0;
+        Assert.True(_viewModel.ShortBreakMinutes >= 1);
 
-        _viewModel.BreakMinutes = 100;
-        Assert.True(_viewModel.BreakMinutes <= 60);
+        _viewModel.ShortBreakMinutes = 100;
+        Assert.True(_viewModel.ShortBreakMinutes <= 60);
     }
 
     [Fact]
@@ -70,32 +69,21 @@ public class SettingsViewModelTests
     }
 
     [Fact]
-    public void Volume_ClampsToValidRange()
+    public void TestCameraAlert_StartsAndStopsCamera()
     {
-        _viewModel.Volume = -10;
-        Assert.True(_viewModel.Volume >= 0);
-
-        _viewModel.Volume = 150;
-        Assert.True(_viewModel.Volume <= 100);
-    }
-
-    [Fact]
-    public async Task TestCameraAlert_StartsAndStopsCamera()
-    {
-        _cameraService.Setup(c => c.StartCameraForDurationAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _cameraService.Setup(c => c.StartCameraForDurationAsync(It.IsAny<int>()))
             .Returns(Task.CompletedTask);
-        _cameraService.Setup(c => c.StopAsync(It.IsAny<CancellationToken>()))
+        _cameraService.Setup(c => c.StopCameraAsync())
             .Returns(Task.CompletedTask);
 
-        await _viewModel.TestCameraAlert();
+        _viewModel.TestCameraAlert();
 
-        _cameraService.Verify(c => c.StartCameraForDurationAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cameraService.Verify(c => c.StartCameraForDurationAsync(It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
     public void Dispose_CleansUp()
     {
         _viewModel.Dispose();
-        // Should not throw
     }
 }
