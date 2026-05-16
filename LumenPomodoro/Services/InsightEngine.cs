@@ -345,4 +345,92 @@ public class InsightEngine : IInsightEngine
 
         return streak;
     }
+
+    public List<GoalProgress> GetGoalProgress(List<FocusSession> sessions, int dailyGoalMinutes, int weeklyGoalMinutes)
+    {
+        var result = new List<GoalProgress>();
+        var today = DateTime.Today;
+        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+
+        if (dailyGoalMinutes > 0)
+        {
+            var todayMinutes = completed
+                .Where(s => s.EndTime!.Value.Date == today)
+                .Sum(s => s.FocusMinutes);
+            result.Add(new GoalProgress
+            {
+                Label = "每日目标",
+                CurrentMinutes = todayMinutes,
+                TargetMinutes = dailyGoalMinutes,
+                ProgressPercent = Math.Min(100, (double)todayMinutes / dailyGoalMinutes * 100),
+                IsCompleted = todayMinutes >= dailyGoalMinutes
+            });
+        }
+
+        if (weeklyGoalMinutes > 0)
+        {
+            var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+            if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
+            var weekMinutes = completed
+                .Where(s => s.EndTime!.Value.Date >= thisMonday.Date && s.EndTime!.Value.Date <= today)
+                .Sum(s => s.FocusMinutes);
+            result.Add(new GoalProgress
+            {
+                Label = "每周目标",
+                CurrentMinutes = weekMinutes,
+                TargetMinutes = weeklyGoalMinutes,
+                ProgressPercent = Math.Min(100, (double)weekMinutes / weeklyGoalMinutes * 100),
+                IsCompleted = weekMinutes >= weeklyGoalMinutes
+            });
+        }
+
+        return result;
+    }
+
+    public List<ComparisonData> GetComparisons(List<FocusSession> sessions)
+    {
+        var result = new List<ComparisonData>();
+        var today = DateTime.Today;
+        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+
+        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
+        var lastMonday = thisMonday.AddDays(-7);
+
+        var thisWeekMinutes = completed
+            .Where(s => s.EndTime!.Value.Date >= thisMonday.Date && s.EndTime!.Value.Date <= today)
+            .Sum(s => s.FocusMinutes);
+        var lastWeekMinutes = completed
+            .Where(s => s.EndTime!.Value.Date >= lastMonday.Date && s.EndTime!.Value.Date < thisMonday.Date)
+            .Sum(s => s.FocusMinutes);
+
+        result.Add(BuildComparison("本周 vs 上周", thisWeekMinutes, lastWeekMinutes));
+
+        var thisMonthStart = new DateTime(today.Year, today.Month, 1);
+        var lastMonthStart = thisMonthStart.AddMonths(-1);
+
+        var thisMonthMinutes = completed
+            .Where(s => s.EndTime!.Value.Date >= thisMonthStart.Date && s.EndTime!.Value.Date <= today)
+            .Sum(s => s.FocusMinutes);
+        var lastMonthMinutes = completed
+            .Where(s => s.EndTime!.Value.Date >= lastMonthStart.Date && s.EndTime!.Value.Date < thisMonthStart.Date)
+            .Sum(s => s.FocusMinutes);
+
+        result.Add(BuildComparison("本月 vs 上月", thisMonthMinutes, lastMonthMinutes));
+
+        return result;
+    }
+
+    private static ComparisonData BuildComparison(string label, int current, int previous)
+    {
+        double changePercent = previous > 0 ? (double)(current - previous) / previous * 100 : 0;
+        return new ComparisonData
+        {
+            Label = label,
+            CurrentValue = current,
+            PreviousValue = previous,
+            ChangePercent = Math.Round(changePercent, 1),
+            IsPositive = changePercent >= 0
+        };
+    }
 }

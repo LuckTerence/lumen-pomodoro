@@ -25,7 +25,10 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private bool _cameraFollowBreakEnabled;
     private int _selectedCameraIndex;
     private bool _cameraAlertCanManualClose;
+    private CameraAlertLevel _cameraAlertLevel = CameraAlertLevel.Medium;
     private bool _hasShownCameraPrivacyNotice;
+    private bool _presenceDetectionEnabled = true;
+    private int _presenceDetectionSeconds = 5;
     private ObservableCollection<string> _availableCameras;
 
     private bool _soundEnabled;
@@ -38,6 +41,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 
     private string _theme = "system";
     private bool _animationEnabled;
+    private int _dailyGoalMinutes = 120;
+    private int _weeklyGoalMinutes = 600;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -93,6 +98,12 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _cameraAlertCanManualClose;
         set { if (_cameraAlertCanManualClose != value) { _cameraAlertCanManualClose = value; OnPropertyChanged(); } }
+    }
+
+    public CameraAlertLevel CameraAlertLevel
+    {
+        get => _cameraAlertLevel;
+        set { if (_cameraAlertLevel != value) { _cameraAlertLevel = value; OnPropertyChanged(); } }
     }
 
     public int SelectedCameraIndex
@@ -155,6 +166,30 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { if (_animationEnabled != value) { _animationEnabled = value; OnPropertyChanged(); } }
     }
 
+    public int DailyGoalMinutes
+    {
+        get => _dailyGoalMinutes;
+        set { var v = Math.Clamp(value, 0, 1440); if (_dailyGoalMinutes != v) { _dailyGoalMinutes = v; OnPropertyChanged(); } }
+    }
+
+    public int WeeklyGoalMinutes
+    {
+        get => _weeklyGoalMinutes;
+        set { var v = Math.Clamp(value, 0, 10080); if (_weeklyGoalMinutes != v) { _weeklyGoalMinutes = v; OnPropertyChanged(); } }
+    }
+
+    public bool PresenceDetectionEnabled
+    {
+        get => _presenceDetectionEnabled;
+        set { if (_presenceDetectionEnabled != value) { _presenceDetectionEnabled = value; OnPropertyChanged(); } }
+    }
+
+    public int PresenceDetectionSeconds
+    {
+        get => _presenceDetectionSeconds;
+        set { var v = Math.Clamp(value, 3, 30); if (_presenceDetectionSeconds != v) { _presenceDetectionSeconds = v; OnPropertyChanged(); } }
+    }
+
     public SettingsViewModel(IStorageService storageService, ICameraService cameraService)
     {
         _storageService = storageService;
@@ -179,6 +214,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         CameraFixedOnSeconds = settings.CameraFixedOnSeconds;
         CameraFollowBreakEnabled = settings.CameraFollowBreakEnabled;
         CameraAlertCanManualClose = settings.CameraAlertCanManualClose;
+        CameraAlertLevel = settings.CameraAlertLevel;
         _hasShownCameraPrivacyNotice = settings.HasShownCameraPrivacyNotice;
         SelectedCameraIndex = settings.CameraIndex;
 
@@ -192,6 +228,10 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 
         Theme = settings.Theme;
         AnimationEnabled = settings.AnimationEnabled;
+        DailyGoalMinutes = settings.DailyGoalMinutes;
+        WeeklyGoalMinutes = settings.WeeklyGoalMinutes;
+        PresenceDetectionEnabled = settings.PresenceDetectionEnabled;
+        PresenceDetectionSeconds = settings.PresenceDetectionSeconds;
     }
 
     private async void LoadAvailableCameras()
@@ -219,6 +259,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             CameraFollowBreakEnabled = CameraFollowBreakEnabled,
             CameraIndex = SelectedCameraIndex,
             CameraAlertCanManualClose = CameraAlertCanManualClose,
+            CameraAlertLevel = CameraAlertLevel,
             HasShownCameraPrivacyNotice = _hasShownCameraPrivacyNotice,
 
             SoundEnabled = SoundEnabled,
@@ -230,7 +271,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             AutoStartEnabled = AutoStartEnabled,
 
             Theme = Theme,
-            AnimationEnabled = AnimationEnabled
+            AnimationEnabled = AnimationEnabled,
+            DailyGoalMinutes = DailyGoalMinutes,
+            WeeklyGoalMinutes = WeeklyGoalMinutes,
+            PresenceDetectionEnabled = PresenceDetectionEnabled,
+            PresenceDetectionSeconds = PresenceDetectionSeconds
         };
 
         _storageService.SaveSettings(settings);

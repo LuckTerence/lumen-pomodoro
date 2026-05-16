@@ -5,7 +5,7 @@ namespace LumenPomodoro.Services.Abstractions;
 public interface ICameraService : IDisposable
 {
     bool IsRunning { get; }
-    void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback);
+    void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback, Action? onPresenceLost = null);
     Task StartCameraAsync();
     Task StartCameraForDurationAsync(int seconds);
     Task StopCameraAsync();

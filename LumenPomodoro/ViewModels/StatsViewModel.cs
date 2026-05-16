@@ -30,6 +30,8 @@ public class StatsViewModel : INotifyPropertyChanged
     private List<TaskSlice> _taskBreakdown = [];
     private List<WeeklyDataPoint> _weeklyTrend = [];
     private List<Insight> _insights = [];
+    private List<GoalProgress> _goalProgress = [];
+    private List<ComparisonData> _comparisons = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -106,6 +108,18 @@ public class StatsViewModel : INotifyPropertyChanged
     {
         get => _insights;
         set { if (_insights != value) { _insights = value; OnPropertyChanged(); } }
+    }
+
+    public List<GoalProgress> GoalProgress
+    {
+        get => _goalProgress;
+        set { if (_goalProgress != value) { _goalProgress = value; OnPropertyChanged(); } }
+    }
+
+    public List<ComparisonData> Comparisons
+    {
+        get => _comparisons;
+        set { if (_comparisons != value) { _comparisons = value; OnPropertyChanged(); } }
     }
 
     public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
@@ -216,6 +230,10 @@ public class StatsViewModel : INotifyPropertyChanged
         TaskBreakdown = _insightEngine.GetTaskBreakdown(sessions, periodStart, periodEnd, tasks);
         WeeklyTrend = _insightEngine.GetWeeklyTrend(sessions);
         Insights = _insightEngine.GetInsights(sessions, tasks);
+
+        var settings = _storageService.LoadSettings();
+        GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
+        Comparisons = _insightEngine.GetComparisons(sessions);
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

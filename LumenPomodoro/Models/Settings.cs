@@ -13,7 +13,13 @@ public class Settings
     public bool CameraFollowBreakEnabled { get; set; } = true;
     public int CameraIndex { get; set; } = 0;
     public bool CameraAlertCanManualClose { get; set; } = true;
+    public CameraAlertLevel CameraAlertLevel { get; set; } = CameraAlertLevel.Medium;
     public bool HasShownCameraPrivacyNotice { get; set; } = false;
+
+    public bool PresenceDetectionEnabled { get; set; } = true;
+    public int PresenceDetectionSeconds { get; set; } = 5;
+    public int DailyGoalMinutes { get; set; } = 120;
+    public int WeeklyGoalMinutes { get; set; } = 600;
     
     public bool SoundEnabled { get; set; } = true;
     public bool PopupEnabled { get; set; } = true;
@@ -32,4 +38,11 @@ public enum CameraAlertMode
     FixedDuration,
     UntilConfirm,
     FollowBreak
+}
+
+public enum CameraAlertLevel
+{
+    Light,
+    Medium,
+    Severe
 }

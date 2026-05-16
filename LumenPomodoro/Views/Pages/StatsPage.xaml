@@ -71,6 +71,31 @@
                 </Grid>
             </Border>
 
+            <!-- 目标进度 -->
+            <Border Style="{StaticResource StatsSection}">
+                <StackPanel>
+                    <TextBlock Text="目标进度" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding GoalProgress}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,12">
+                                    <Grid Margin="0,0,0,6">
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource Caption}" />
+                                        <TextBlock HorizontalAlignment="Right" Style="{StaticResource Caption}">
+                                            <Run Text="{Binding CurrentMinutes, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding TargetMinutes, Mode=OneWay}" /><Run Text=" 分钟" />
+                                        </TextBlock>
+                                    </Grid>
+                                    <ProgressBar Minimum="0" Maximum="100"
+                                                 Value="{Binding ProgressPercent}"
+                                                 Height="8"
+                                                 Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- 年度热力图 -->
             <Border Style="{StaticResource StatsSection}">
                 <StackPanel>
@@ -100,6 +125,48 @@
                 <StackPanel>
                     <TextBlock Text="周趋势" Style="{StaticResource SectionTitle}" />
                     <controls:WeeklyTrendChart WeeklyData="{Binding WeeklyTrend}" />
+                </StackPanel>
+            </Border>
+
+            <!-- 对比自己 -->
+            <Border Style="{StaticResource StatsSection}">
+                <StackPanel>
+                    <TextBlock Text="对比自己" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding Comparisons}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Caption}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <Run Text="{Binding CurrentValue, Mode=OneWay}" /><Run Text=" 分钟" />
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                               FontSize="13" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPositive}" Value="False">
+                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0:+0.0;-0.0;0}%">
+                                                <Binding Path="ChangePercent" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 

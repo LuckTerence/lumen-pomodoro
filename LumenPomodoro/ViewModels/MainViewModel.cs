@@ -115,6 +115,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _disposed;
     private CameraIndicatorWindow? _indicatorWindow;
     private DispatcherTimer? _trayUpdateTimer;
+    private int _consecutivePresenceLostAlerts = 0;
+    private const int MaxPresenceLostAlerts = 3;
 
     public event Action? TrayMenuNeedsUpdate;
     public event Action<string, string>? NotificationRequested;
@@ -131,7 +133,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _timerService.TimerCompleted += TimerService_TimerCompleted;
         _timerService.ModeChanged += TimerService_ModeChanged;
 
-        _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback);
+        _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback, OnPresenceLost);
 
         LoadData();
 
@@ -257,6 +259,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void StartFocus()
     {
+        _consecutivePresenceLostAlerts = 0;
+
         if (SelectedTask == null)
         {
             MessageBox.Show("请先选择一个任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -300,6 +304,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void StartBreak(bool isLongBreak = false)
     {
+        _consecutivePresenceLostAlerts = 0;
+
         if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && IsCameraAlertActive)
         {
             ForceStopCameraAlert();
@@ -369,20 +375,27 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+            bool cameraStarted = false;
             switch (AppSettings.CameraAlertMode)
             {
                 case CameraAlertMode.FixedDuration:
                     FireAndForget(_cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds), "摄像头固定时长提醒",
                         ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
-                    ShowCameraIndicator(Color.FromRgb(0xEF, 0x44, 0x44));
+                    cameraStarted = true;
                     break;
                 case CameraAlertMode.UntilConfirm:
                     FireAndForget(_cameraService.StartCameraAsync(), "摄像头直到确认提醒",
                         ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
-                    ShowCameraIndicator(Color.FromRgb(0xEF, 0x44, 0x44));
+                    cameraStarted = true;
                     break;
                 case CameraAlertMode.FollowBreak:
                     break;
+            }
+
+            if (cameraStarted)
+            {
+                ShowCameraIndicator(Color.FromRgb(0xEF, 0x44, 0x44));
+                ApplyAlertLevel();
             }
         }
         catch (Exception ex)
@@ -403,8 +416,38 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void ForceStopCameraAlert()
     {
+        _consecutivePresenceLostAlerts = 0;
         FireAndForget(_cameraService.StopCameraAsync(), "停止摄像头");
         HideCameraIndicator();
+    }
+
+    private void OnPresenceLost()
+    {
+        if (!AppSettings.PresenceDetectionEnabled) return;
+
+        Application.Current?.Dispatcher?.Invoke(() =>
+        {
+            _consecutivePresenceLostAlerts++;
+            if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
+
+            ShowSystemNotification("走神提醒", "检测到你已离开，请回到专注状态。");
+
+            if (AppSettings.CameraAlertLevel == CameraAlertLevel.Severe)
+            {
+                if (Application.Current.MainWindow is Window mainWindow)
+                {
+                    mainWindow.Activate();
+                    mainWindow.Topmost = true;
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+                    timer.Tick += (s, e) =>
+                    {
+                        mainWindow.Topmost = false;
+                        ((DispatcherTimer)s!).Stop();
+                    };
+                    timer.Start();
+                }
+            }
+        });
     }
 
     private void ShowCameraIndicator(Color color)
@@ -423,6 +466,64 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         Application.Current.Dispatcher.Invoke(() =>
         {
             _indicatorWindow?.HideIndicator();
+        });
+    }
+
+    private void ApplyAlertLevel()
+    {
+        switch (AppSettings.CameraAlertLevel)
+        {
+            case CameraAlertLevel.Light:
+                break;
+            case CameraAlertLevel.Medium:
+                ShowSystemNotification("专注完成", "该休息了！");
+                break;
+            case CameraAlertLevel.Severe:
+                ShowSystemNotification("专注完成", "该休息了！");
+                if (Application.Current?.Dispatcher == null) return;
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (Application.Current.MainWindow is Window mainWindow)
+                    {
+                        mainWindow.Activate();
+                        mainWindow.Topmost = true;
+                        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+                        timer.Tick += (s, e) =>
+                        {
+                            mainWindow.Topmost = false;
+                            ((DispatcherTimer)s!).Stop();
+                        };
+                        timer.Start();
+                    }
+                });
+                break;
+        }
+    }
+
+    private void OnPresenceLost()
+    {
+        Application.Current?.Dispatcher?.Invoke(() =>
+        {
+            _consecutivePresenceLostAlerts++;
+            if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
+
+            ShowSystemNotification("走神提醒", "检测到你已离开，请回到专注状态。");
+
+            if (AppSettings.CameraAlertLevel == CameraAlertLevel.Severe)
+            {
+                if (Application.Current.MainWindow is Window mainWindow)
+                {
+                    mainWindow.Activate();
+                    mainWindow.Topmost = true;
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+                    timer.Tick += (s, e) =>
+                    {
+                        mainWindow.Topmost = false;
+                        ((DispatcherTimer)s!).Stop();
+                    };
+                    timer.Start();
+                }
+            }
         });
     }
 
@@ -522,7 +623,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
 
-        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback);
+        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost);
     }
 
     public void UpdateTasks(List<TaskItem> tasks)

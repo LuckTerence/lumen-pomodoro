@@ -14,7 +14,8 @@ public enum InsightType
     Trend,
     Streak,
     TaskCompletion,
-    Motivation
+    Motivation,
+    Comparison
 }
 
 public class HeatmapDay
@@ -44,4 +45,22 @@ public class TaskSlice
     public string TaskColor { get; set; } = "#3B82F6";
     public int PomodoroCount { get; set; }
     public double Percentage { get; set; }
+}
+
+public class ComparisonData
+{
+    public string Label { get; set; } = string.Empty;
+    public int CurrentValue { get; set; }
+    public int PreviousValue { get; set; }
+    public double ChangePercent { get; set; }
+    public bool IsPositive { get; set; }
+}
+
+public class GoalProgress
+{
+    public string Label { get; set; } = string.Empty;
+    public int CurrentMinutes { get; set; }
+    public int TargetMinutes { get; set; }
+    public double ProgressPercent { get; set; }
+    public bool IsCompleted { get; set; }
 }

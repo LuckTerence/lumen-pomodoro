@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using Windows.Devices.Enumeration;
+using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
+using Windows.Storage.Streams;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
 
@@ -31,13 +34,20 @@ public class CameraService : ICameraService
 
     private static List<DeviceInformation>? _cachedDevices;
 
+    private readonly PresenceDetector _presenceDetector = new();
+    private Action? _presenceLostCallback;
+    private DateTime _lastProcessedTime = DateTime.MinValue;
+    private const int MinProcessIntervalMs = 1000;
+
     public bool IsRunning => _isRunning;
 
-    public void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback)
+    public void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback, Action? onPresenceLost = null)
     {
         _cameraIndex = cameraIndex;
         _statusCallback = statusCallback;
         _errorCallback = errorCallback;
+        _presenceLostCallback = onPresenceLost;
+        _presenceDetector.Reset();
         Log.Debug("CameraService 初始化，摄像头索引: {Index}", cameraIndex);
     }
 
@@ -201,9 +211,35 @@ public class CameraService : ICameraService
                string.Equals(source.DeviceInformation?.Id, deviceId, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void OnFrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
+    private void OnFrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
     {
+        var now = DateTime.UtcNow;
+        if ((now - _lastProcessedTime).TotalMilliseconds < MinProcessIntervalMs) return;
+        _lastProcessedTime = now;
+
         using var frame = sender.TryAcquireLatestFrame();
+        if (frame?.VideoMediaFrame?.SoftwareBitmap == null) return;
+
+        try
+        {
+            var bitmap = frame.VideoMediaFrame.SoftwareBitmap;
+            if (bitmap.BitmapPixelFormat != Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8)
+                return;
+
+            var buffer = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+            bitmap.CopyToBuffer(buffer.AsBuffer());
+
+            bool present = _presenceDetector.ProcessFrame(buffer, bitmap.PixelWidth, bitmap.PixelHeight, bitmap.PixelWidth * 4);
+
+            if (!present)
+            {
+                _presenceLostCallback?.Invoke();
+            }
+        }
+        catch
+        {
+            // 帧处理失败不影响主流程
+        }
     }
 
     public async Task StartCameraForDurationAsync(int seconds)
@@ -303,6 +339,8 @@ public class CameraService : ICameraService
                     _mediaCapture = null;
                 }
             }
+
+            _presenceDetector.Reset();
         }
     }
 
