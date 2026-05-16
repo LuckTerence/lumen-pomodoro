@@ -38,7 +38,7 @@ public partial class TimerPage : Page
     private void UpdateStepLabel()
     {
         if (StepLabel != null)
-            StepLabel.Text = "5 分钟";
+            StepLabel.Text = $"{_viewModel.AppSettings.WorkMinutes} 分钟";
     }
 
     private void Toggle_Executed(object sender, ExecutedRoutedEventArgs e)

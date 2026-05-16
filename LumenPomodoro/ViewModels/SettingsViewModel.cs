@@ -246,6 +246,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 
     public void SaveSettings()
     {
+        var latestSettings = _storageService.LoadSettings();
+
         var settings = new Settings
         {
             WorkMinutes = WorkMinutes,
@@ -259,8 +261,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             CameraFollowBreakEnabled = CameraFollowBreakEnabled,
             CameraIndex = SelectedCameraIndex,
             CameraAlertCanManualClose = CameraAlertCanManualClose,
-            CameraAlertLevel = CameraAlertLevel,
-            HasShownCameraPrivacyNotice = _hasShownCameraPrivacyNotice,
+            HasShownCameraPrivacyNotice = latestSettings.HasShownCameraPrivacyNotice,
 
             SoundEnabled = SoundEnabled,
             PopupEnabled = PopupEnabled,

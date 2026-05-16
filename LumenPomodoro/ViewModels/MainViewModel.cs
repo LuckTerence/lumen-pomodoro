@@ -476,10 +476,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             case CameraAlertLevel.Light:
                 break;
             case CameraAlertLevel.Medium:
-                ShowSystemNotification("专注完成", "该休息了！");
                 break;
             case CameraAlertLevel.Severe:
-                ShowSystemNotification("专注完成", "该休息了！");
                 if (Application.Current?.Dispatcher == null) return;
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -498,33 +496,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 });
                 break;
         }
-    }
-
-    private void OnPresenceLost()
-    {
-        Application.Current?.Dispatcher?.Invoke(() =>
-        {
-            _consecutivePresenceLostAlerts++;
-            if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
-
-            ShowSystemNotification("走神提醒", "检测到你已离开，请回到专注状态。");
-
-            if (AppSettings.CameraAlertLevel == CameraAlertLevel.Severe)
-            {
-                if (Application.Current.MainWindow is Window mainWindow)
-                {
-                    mainWindow.Activate();
-                    mainWindow.Topmost = true;
-                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-                    timer.Tick += (s, e) =>
-                    {
-                        mainWindow.Topmost = false;
-                        ((DispatcherTimer)s!).Stop();
-                    };
-                    timer.Start();
-                }
-            }
-        });
     }
 
     private void PlayNotificationSound(string soundName)
