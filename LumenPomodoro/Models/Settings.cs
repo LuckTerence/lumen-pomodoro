@@ -31,6 +31,10 @@ public class Settings
     
     public string Theme { get; set; } = "system";
     public bool AnimationEnabled { get; set; } = true;
+    public string? LastSelectedTaskId { get; set; }
+    public DateTime? ExamDate { get; set; }
+    public string ExamName { get; set; } = "考研";
+    public DateTime? LastReportShownDate { get; set; }
 }
 
 public enum CameraAlertMode

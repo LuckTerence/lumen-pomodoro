@@ -75,6 +75,7 @@ public partial class TimerPage : Page
                         StopBreathingAnimation();
                         PlayCompletionAnimation();
                         StartBreathingAnimation();
+                        StartBreakButton?.Focus();
                     }
                     else
                     {

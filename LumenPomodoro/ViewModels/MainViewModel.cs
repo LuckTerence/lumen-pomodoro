@@ -107,19 +107,61 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public Settings AppSettings { get; private set; } = new();
 
+    // 考试倒计时
+    public bool ExamCountdown => AppSettings.ExamDate.HasValue && AppSettings.ExamDate.Value > DateTime.Today;
+    public string ExamName => AppSettings.ExamName;
+    public int DaysUntilExam => ExamCountdown ? (AppSettings.ExamDate!.Value - DateTime.Today).Days : 0;
+
     // Expose interfaces for other consumers (TrayService, SettingsViewModel, etc.)
     public ICameraService CameraService => _cameraService;
     public IStorageService StorageService => _storageService;
 
     private FocusSession? _currentSession;
+    private string? _lastCompletedSessionId;
     private bool _disposed;
     private CameraIndicatorWindow? _indicatorWindow;
     private DispatcherTimer? _trayUpdateTimer;
     private int _consecutivePresenceLostAlerts = 0;
     private const int MaxPresenceLostAlerts = 3;
 
+    // 专注笔记
+    private string _currentNotes = string.Empty;
+    public string CurrentNotes
+    {
+        get => _currentNotes;
+        set { if (_currentNotes != value) { _currentNotes = value; OnPropertyChanged(); } }
+    }
+
+    // 质量评分跟踪
+    private bool _sessionPaused = false;
+    private bool _sessionPresenceLost = false;
+
+    // 质量评分显示
+    private string _qualityStars = string.Empty;
+    public string QualityStars
+    {
+        get => _qualityStars;
+        set { if (_qualityStars != value) { _qualityStars = value; OnPropertyChanged(); } }
+    }
+
+    // Streak 显示
+    private int _streakDays;
+    public int StreakDays
+    {
+        get => _streakDays;
+        set { if (_streakDays != value) { _streakDays = value; OnPropertyChanged(); } }
+    }
+
+    private bool _showStreakEncouragement;
+    public bool ShowStreakEncouragement
+    {
+        get => _showStreakEncouragement;
+        set { if (_showStreakEncouragement != value) { _showStreakEncouragement = value; OnPropertyChanged(); } }
+    }
+
     public event Action? TrayMenuNeedsUpdate;
     public event Action<string, string>? NotificationRequested;
+    public event Action<string, string>? InAppNotificationRequested;
 
     public MainViewModel(IStorageService storageService, ITimerService timerService,
         ICameraService cameraService, ISoundService soundService)
@@ -133,9 +175,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _timerService.TimerCompleted += TimerService_TimerCompleted;
         _timerService.ModeChanged += TimerService_ModeChanged;
 
-        _cameraService.Initialize(0, CameraStatusCallback, CameraErrorCallback, OnPresenceLost);
-
         LoadData();
+
+        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost, OnPresenceRegained);
 
         if (AppSettings.TrayEnabled)
         {
@@ -157,7 +199,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (Tasks.Any())
         {
-            SelectedTask = Tasks.First();
+            var lastId = AppSettings.LastSelectedTaskId;
+            SelectedTask = lastId != null
+                ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.First()
+                : Tasks.First();
         }
     }
 
@@ -191,7 +236,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             IsPendingBreak = true;
             StartCameraAlert();
             PlayNotificationSound("FocusComplete");
-            ShowSystemNotification("专注完成！", "该休息了！");
+            ShowInAppNotification("专注完成", "该休息了！");
+            CheckMilestones();
         }
         else if (e.CompletedMode == TimerMode.Break)
         {
@@ -260,6 +306,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void StartFocus()
     {
         _consecutivePresenceLostAlerts = 0;
+        _sessionPaused = false;
+        _sessionPresenceLost = false;
+        CurrentNotes = string.Empty;
+        QualityStars = string.Empty;
+        _lastCompletedSessionId = null;
 
         if (SelectedTask == null)
         {
@@ -274,6 +325,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             StartTime = DateTime.Now,
             FocusMinutes = AppSettings.WorkMinutes
         };
+
+        AppSettings.LastSelectedTaskId = SelectedTask.Id;
+        _storageService.SaveSettings(AppSettings);
 
         IsFocusCompleted = false;
         IsBreakCompleted = false;
@@ -394,7 +448,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
             if (cameraStarted)
             {
-                ShowCameraIndicator(Color.FromRgb(0xEF, 0x44, 0x44));
+                ShowCameraIndicator(Color.FromRgb(0xF5, 0x9E, 0x0B));
                 ApplyAlertLevel();
             }
         }
@@ -450,6 +504,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         });
     }
 
+    private void OnPresenceRegained()
+    {
+        _consecutivePresenceLostAlerts = 0;
+    }
+
     private void ShowCameraIndicator(Color color)
     {
         if (Application.Current?.Dispatcher == null) return;
@@ -476,10 +535,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             case CameraAlertLevel.Light:
                 break;
             case CameraAlertLevel.Medium:
-                ShowSystemNotification("专注完成", "该休息了！");
+                ShowInAppNotification("专注完成", "该休息了！");
                 break;
             case CameraAlertLevel.Severe:
-                ShowSystemNotification("专注完成", "该休息了！");
+                ShowInAppNotification("专注完成", "该休息了！");
                 if (Application.Current?.Dispatcher == null) return;
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -513,6 +572,80 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             Log.Warning(ex, "播放音效 {Name} 失败", soundName);
         }
+    }
+
+    private void ShowInAppNotification(string title, string message)
+    {
+        if (!AppSettings.PopupEnabled) return;
+        InAppNotificationRequested?.Invoke(title, message);
+    }
+
+    private void CheckMilestones()
+    {
+        var todayCount = TodayStats.CompletedPomodoros;
+        var todayMinutes = TodayStats.TotalFocusMinutes;
+
+        if (todayCount == 1)
+            ShowInAppNotification("里程碑", "第一个番茄完成！");
+
+        if (todayMinutes >= AppSettings.DailyGoalMinutes && AppSettings.DailyGoalMinutes > 0)
+            ShowInAppNotification("里程碑", "今日目标达成！");
+    }
+
+    public DailyReport? GetYesterdayReport()
+    {
+        var yesterday = DateTime.Today.AddDays(-1);
+        var sessions = _storageService.LoadSessions()
+            .Where(s => s.Completed && s.StartTime.Date == yesterday)
+            .ToList();
+
+        if (!sessions.Any()) return null;
+
+        var mainTask = sessions.GroupBy(s => s.TaskName)
+            .OrderByDescending(g => g.Sum(s => s.FocusMinutes))
+            .First().Key;
+
+        return new DailyReport
+        {
+            Date = yesterday,
+            CompletedPomodoros = sessions.Count,
+            TotalMinutes = sessions.Sum(s => s.FocusMinutes),
+            MainTask = mainTask,
+            StreakDays = CalculateStreak()
+        };
+    }
+
+    private int CalculateStreak()
+    {
+        var sessions = _storageService.LoadSessions()
+            .Where(s => s.Completed)
+            .ToList();
+
+        if (!sessions.Any()) return 0;
+
+        var dates = sessions
+            .Select(s => s.StartTime.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToList();
+
+        int streak = 0;
+        var checkDate = DateTime.Today;
+
+        foreach (var date in dates)
+        {
+            if (date == checkDate || date == checkDate.AddDays(-1))
+            {
+                streak++;
+                checkDate = date.AddDays(-1);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return streak;
     }
 
     private void ShowSystemNotification(string title, string message)
@@ -596,7 +729,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
 
-        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost);
+        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost, OnPresenceRegained);
     }
 
     public void UpdateTasks(List<TaskItem> tasks)
@@ -638,7 +771,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _disposed = true;
 
         _trayUpdateTimer?.Stop();
-        _indicatorWindow?.Close();
+        try { _indicatorWindow?.ForceClose(); } catch { }
         _indicatorWindow = null;
 
         _timerService.TimerTick -= TimerService_TimerTick;

@@ -1,0 +1,53 @@
+<Window x:Class="LumenPomodoro.Views.DailyReportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="昨日学习报告"
+        Width="360" Height="Auto" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" ShowInTaskbar="False">
+    <Border Background="{DynamicResource ApplicationBackgroundBrush}" CornerRadius="12"
+            Padding="24" Margin="8">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="Black"/>
+        </Border.Effect>
+        <StackPanel>
+            <TextBlock Text="昨日学习报告" FontSize="18" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" Margin="0,0,0,16" />
+            <TextBlock x:Name="DateText" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       HorizontalAlignment="Center" Margin="0,0,0,20" />
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock x:Name="PomodoroCountText" FontSize="32" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AccentFillColorDefaultBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="番茄钟" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock x:Name="MinutesText" FontSize="32" FontWeight="SemiBold"
+                               Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="专注分钟" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <Run Text="主要学习: " />
+                        <Run x:Name="MainTaskText" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock x:Name="StreakText" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+            <ui:Button Appearance="Primary" Click="Close_Click" HorizontalAlignment="Center" Padding="32,10">
+                知道了
+            </ui:Button>
+        </StackPanel>
+    </Border>
+</Window>

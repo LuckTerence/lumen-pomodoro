@@ -17,6 +17,7 @@ public partial class MainWindow : FluentWindow
     private readonly MainViewModel _viewModel;
     private ITrayService? _trayService;
     private readonly PageProvider _pageProvider;
+    private DynamicIslandNotificationWindow? _dynamicIslandWindow;
 
     public MainWindow()
     {
@@ -25,6 +26,9 @@ public partial class MainWindow : FluentWindow
         _viewModel = App.GetRequiredService<MainViewModel>();
         _pageProvider = new PageProvider(_viewModel);
         DataContext = _viewModel;
+
+        _viewModel.InAppNotificationRequested += (title, message) =>
+            Dispatcher.BeginInvoke(() => ShowInAppNotification(title, message));
 
         if (_viewModel.AppSettings.TrayEnabled)
         {
@@ -58,6 +62,25 @@ public partial class MainWindow : FluentWindow
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         NavView.Navigate(typeof(TimerPage));
+        ShowDailyReportIfNeeded();
+    }
+
+    private void ShowDailyReportIfNeeded()
+    {
+        var settings = _viewModel.AppSettings;
+        if (settings.LastReportShownDate == DateTime.Today) return;
+
+        var report = _viewModel.GetYesterdayReport();
+        if (report == null) return;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            var dialog = new DailyReportDialog(report);
+            dialog.ShowDialog();
+
+            settings.LastReportShownDate = DateTime.Today;
+            _viewModel.StorageService.SaveSettings(settings);
+        });
     }
 
     public void NavigateToPage(Type pageType)
@@ -106,6 +129,12 @@ public partial class MainWindow : FluentWindow
         Close();
     }
 
+    private void ShowInAppNotification(string title, string message)
+    {
+        _dynamicIslandWindow ??= new DynamicIslandNotificationWindow();
+        _dynamicIslandWindow.ShowNotification(title, message);
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         var settings = _viewModel.AppSettings;
@@ -121,6 +150,7 @@ public partial class MainWindow : FluentWindow
 
     protected override void OnClosed(EventArgs e)
     {
+        _dynamicIslandWindow?.ForceClose();
         _viewModel.Dispose();
         _trayService?.Dispose();
         _pageProvider.Dispose();

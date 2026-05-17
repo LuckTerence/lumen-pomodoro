@@ -86,8 +86,10 @@
         <!-- 摄像头提醒 -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
                     Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="{DynamicResource AccentFillColorDefaultBrush}" Margin="0,0,8,0" />
-            <TextBlock Text="摄像头提醒中" Style="{StaticResource Caption}" VerticalAlignment="Center" />
+            <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,8,0" />
+            <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center">
+                <Run Text="摄像头已开启，帮助你保持专注" />
+            </TextBlock>
             <ui:Button Appearance="Secondary" Click="StopCameraButton_Click" FontSize="12" Padding="8,4" Margin="8,0,0,0">
                 关闭
             </ui:Button>
@@ -137,7 +139,7 @@
                 <ui:Button Appearance="Primary" Click="EndBreakButton_Click" FontSize="17" Padding="24,12">结束休息</ui:Button>
             </StackPanel>
 
-            <StackPanel x:Name="CompletedPanel" Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel x:Name="CompletedPanel" Orientation="Vertical" HorizontalAlignment="Center">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -152,13 +154,15 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <ui:Button Appearance="Primary" Click="StartShortBreakButton_Click" FontSize="17" Padding="24,12">短休息</ui:Button>
-                <ui:Button Appearance="Secondary" Click="StartLongBreakButton_Click" FontSize="14" Padding="16,8" Margin="12,0,0,0">长休息</ui:Button>
-                <ui:Button Appearance="Transparent" Click="SkipBreakButton_Click" FontSize="12" Padding="10,6" Margin="12,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}">跳过</ui:Button>
+                <ui:Button x:Name="StartBreakButton" Appearance="Primary" Click="StartShortBreakButton_Click" FontSize="17" Padding="32,14">开始休息</ui:Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                    <ui:Button Appearance="Transparent" Click="StartLongBreakButton_Click" FontSize="12" Padding="10,6">长休息</ui:Button>
+                    <ui:Button Appearance="Transparent" Click="SkipBreakButton_Click" FontSize="12" Padding="10,6" Margin="8,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}">跳过</ui:Button>
+                </StackPanel>
             </StackPanel>
         </Grid>
 
-        <!-- 底部统计摘要 + 快捷键提示 -->
+        <!-- 底部统计摘要 + 考试倒计时 + 快捷键提示 -->
         <StackPanel Grid.Row="6" HorizontalAlignment="Center" Margin="0,20,0,0">
             <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
@@ -167,6 +171,14 @@
                 <Run Text=" · 专注 " />
                 <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" 分" />
+            </TextBlock>
+            <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       HorizontalAlignment="Center" Margin="0,8,0,0"
+                       Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Run Text="{Binding ExamName}" />
+                <Run Text=" 倒计时 " />
+                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                <Run Text=" 天" />
             </TextBlock>
             <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        HorizontalAlignment="Center" Margin="0,8,0,0">

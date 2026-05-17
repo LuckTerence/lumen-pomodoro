@@ -32,6 +32,10 @@ public class StatsViewModel : INotifyPropertyChanged
     private List<Insight> _insights = [];
     private List<GoalProgress> _goalProgress = [];
     private List<ComparisonData> _comparisons = [];
+    private List<CategoryStats> _categoryBreakdown = [];
+    private bool _hasZeroCategory;
+    private string _zeroCategoryWarning = string.Empty;
+    private int _maxCategoryMinutes;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -120,6 +124,30 @@ public class StatsViewModel : INotifyPropertyChanged
     {
         get => _comparisons;
         set { if (_comparisons != value) { _comparisons = value; OnPropertyChanged(); } }
+    }
+
+    public List<CategoryStats> CategoryBreakdown
+    {
+        get => _categoryBreakdown;
+        set { if (_categoryBreakdown != value) { _categoryBreakdown = value; OnPropertyChanged(); } }
+    }
+
+    public bool HasZeroCategory
+    {
+        get => _hasZeroCategory;
+        set { if (_hasZeroCategory != value) { _hasZeroCategory = value; OnPropertyChanged(); } }
+    }
+
+    public string ZeroCategoryWarning
+    {
+        get => _zeroCategoryWarning;
+        set { if (_zeroCategoryWarning != value) { _zeroCategoryWarning = value; OnPropertyChanged(); } }
+    }
+
+    public int MaxCategoryMinutes
+    {
+        get => _maxCategoryMinutes;
+        set { if (_maxCategoryMinutes != value) { _maxCategoryMinutes = value; OnPropertyChanged(); } }
     }
 
     public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
@@ -234,6 +262,39 @@ public class StatsViewModel : INotifyPropertyChanged
         var settings = _storageService.LoadSettings();
         GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
         Comparisons = _insightEngine.GetComparisons(sessions);
+
+        // 科目均衡分析
+        var taskDict = tasks.ToDictionary(t => t.Id, t => t);
+        var categoryGroups = filteredSessions
+            .Where(s => taskDict.ContainsKey(s.TaskId))
+            .GroupBy(s => taskDict[s.TaskId].Category)
+            .Select(g => new CategoryStats
+            {
+                Category = string.IsNullOrEmpty(g.Key) ? "未分类" : g.Key,
+                TotalMinutes = g.Sum(s => s.FocusMinutes),
+                PomodoroCount = g.Count(),
+                Color = taskDict[g.First().TaskId].Color
+            })
+            .OrderByDescending(c => c.TotalMinutes)
+            .ToList();
+
+        CategoryBreakdown = categoryGroups;
+        MaxCategoryMinutes = categoryGroups.Any() ? categoryGroups.Max(c => c.TotalMinutes) : 0;
+
+        // 检查是否有科目 0 分钟（仅在周视图下检查）
+        if (_currentPeriod == StatsPeriod.Week && categoryGroups.Any())
+        {
+            var zeroCategories = categoryGroups.Where(c => c.TotalMinutes == 0).ToList();
+            HasZeroCategory = zeroCategories.Any();
+            ZeroCategoryWarning = HasZeroCategory
+                ? $"{string.Join("、", zeroCategories.Select(c => c.Category))} 本周尚未学习"
+                : string.Empty;
+        }
+        else
+        {
+            HasZeroCategory = false;
+            ZeroCategoryWarning = string.Empty;
+        }
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

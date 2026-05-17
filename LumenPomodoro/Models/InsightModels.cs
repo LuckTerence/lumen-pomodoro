@@ -64,3 +64,11 @@ public class GoalProgress
     public double ProgressPercent { get; set; }
     public bool IsCompleted { get; set; }
 }
+
+public class CategoryStats
+{
+    public string Category { get; set; } = string.Empty;
+    public int TotalMinutes { get; set; }
+    public int PomodoroCount { get; set; }
+    public string Color { get; set; } = "#3B82F6";
+}

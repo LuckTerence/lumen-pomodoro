@@ -43,6 +43,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private bool _animationEnabled;
     private int _dailyGoalMinutes = 120;
     private int _weeklyGoalMinutes = 600;
+    private DateTime? _examDate;
+    private string _examName = "考研";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -190,6 +192,18 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { var v = Math.Clamp(value, 3, 30); if (_presenceDetectionSeconds != v) { _presenceDetectionSeconds = v; OnPropertyChanged(); } }
     }
 
+    public DateTime? ExamDate
+    {
+        get => _examDate;
+        set { if (_examDate != value) { _examDate = value; OnPropertyChanged(); } }
+    }
+
+    public string ExamName
+    {
+        get => _examName;
+        set { if (_examName != value) { _examName = value; OnPropertyChanged(); } }
+    }
+
     public SettingsViewModel(IStorageService storageService, ICameraService cameraService)
     {
         _storageService = storageService;
@@ -232,6 +246,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         WeeklyGoalMinutes = settings.WeeklyGoalMinutes;
         PresenceDetectionEnabled = settings.PresenceDetectionEnabled;
         PresenceDetectionSeconds = settings.PresenceDetectionSeconds;
+        ExamDate = settings.ExamDate;
+        ExamName = settings.ExamName;
     }
 
     private async void LoadAvailableCameras()
@@ -277,7 +293,9 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             DailyGoalMinutes = DailyGoalMinutes,
             WeeklyGoalMinutes = WeeklyGoalMinutes,
             PresenceDetectionEnabled = PresenceDetectionEnabled,
-            PresenceDetectionSeconds = PresenceDetectionSeconds
+            PresenceDetectionSeconds = PresenceDetectionSeconds,
+            ExamDate = ExamDate,
+            ExamName = ExamName
         };
 
         _storageService.SaveSettings(settings);
