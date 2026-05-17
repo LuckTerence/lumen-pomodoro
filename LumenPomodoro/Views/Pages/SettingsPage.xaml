@@ -31,7 +31,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="专注时间（分钟）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="单次专注的时长，建议 25 分钟" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="单次专注的时长，建议 25 分钟" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding WorkMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="120" VerticalAlignment="Center" />
                         </Grid>
@@ -39,7 +39,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="短休息（分钟）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="每次专注后的短暂休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="每次专注后的短暂休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding ShortBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="60" VerticalAlignment="Center" />
                         </Grid>
@@ -47,7 +47,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="长休息（分钟）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="完成一轮番茄钟后的长休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="完成一轮番茄钟后的长休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding LongBreakMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="60" VerticalAlignment="Center" />
                         </Grid>
@@ -55,7 +55,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="长休息间隔（次）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="每完成几个番茄钟触发长休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="每完成几个番茄钟触发长休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding LongBreakInterval, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="2" Maximum="10" VerticalAlignment="Center" />
                         </Grid>
@@ -63,7 +63,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="每日目标（分钟）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="每天专注的总分钟数目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="每天专注的总分钟数目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding DailyGoalMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="0" Maximum="1440" VerticalAlignment="Center" />
                         </Grid>
@@ -71,7 +71,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="每周目标（分钟）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="每周专注的总分钟数目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="每周专注的总分钟数目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding WeeklyGoalMinutes, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="0" Maximum="10080" VerticalAlignment="Center" />
                         </Grid>
@@ -79,7 +79,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="每日目标（番茄钟数）" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="每天完成的番茄钟数量目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="每天完成的番茄钟数量目标" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:NumberBox Grid.Column="1" Value="{Binding DailyTargetPomodoros, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="0" Maximum="50" VerticalAlignment="Center" />
                         </Grid>
@@ -93,7 +93,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="考试名称" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="显示在计时器页面的倒计时标题" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="显示在计时器页面的倒计时标题" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <TextBox Grid.Column="1" Text="{Binding ExamName}" MinWidth="120" VerticalAlignment="Center" />
                         </Grid>
@@ -101,7 +101,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="考试日期" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="设置后自动计算剩余天数" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="设置后自动计算剩余天数" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <DatePicker Grid.Column="1" SelectedDate="{Binding ExamDate}" MinWidth="150" VerticalAlignment="Center" />
                         </Grid>
@@ -115,7 +115,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="启用摄像头提醒" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="专注结束后点亮摄像头指示灯提醒休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="专注结束后点亮摄像头指示灯提醒休息" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -183,7 +183,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="声音提醒" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="专注/休息结束时播放提示音" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="专注/休息结束时播放提示音" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SoundEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -191,7 +191,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="弹窗提醒" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="屏幕顶部显示灵动岛通知" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="屏幕顶部显示灵动岛通知" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PopupEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -199,7 +199,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="系统通知" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="使用 Windows 通知中心提醒" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="使用 Windows 通知中心提醒" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding SystemNotificationEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -213,7 +213,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="主题" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="选择浅色、深色或跟随系统" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="选择浅色、深色或跟随系统" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ComboBox Grid.Column="1" Width="180"
                                       SelectedValue="{Binding Theme}" SelectedValuePath="Tag" VerticalAlignment="Center">
@@ -226,7 +226,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="动画效果" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="呼吸、缩放等过渡动画" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="呼吸、缩放等过渡动画" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AnimationEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -240,7 +240,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="托盘运行" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="最小化后在系统托盘继续运行" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="最小化后在系统托盘继续运行" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding TrayEnabled}" VerticalAlignment="Center" />
                         </Grid>
@@ -248,7 +248,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="关闭时最小化到托盘" Style="{StaticResource SettingLabel}" />
-                                <TextBlock Text="点击关闭按钮时隐藏到托盘而非退出" Style="{StaticResource FinePrint}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="点击关闭按钮时隐藏到托盘而非退出" Style="{StaticResource FinePrint}" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CloseToTray}" VerticalAlignment="Center" />
                         </Grid>
