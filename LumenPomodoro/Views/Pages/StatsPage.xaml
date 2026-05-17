@@ -127,7 +127,7 @@
                                     <Grid Grid.Column="1" Margin="8,0">
                                         <ProgressBar Minimum="0" Maximum="{Binding DataContext.MaxCategoryMinutes, RelativeSource={RelativeSource AncestorType=Page}}"
                                                      Value="{Binding TotalMinutes}" Height="8"
-                                                     Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                     Foreground="{DynamicResource SpotifyGreenBrush}" />
                                     </Grid>
                                     <TextBlock Grid.Column="2" Text="{Binding TotalMinutes, StringFormat='{}{0} 分'}" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                 </Grid>

@@ -168,7 +168,7 @@
 
                 <!-- 质量评分 -->
                 <TextBlock FontSize="18" HorizontalAlignment="Center" Margin="0,0,0,8"
-                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                           Foreground="{DynamicResource SpotifyGreenBrush}"
                            Text="{Binding QualityStars}" />
 
                 <!-- 笔记输入 -->
