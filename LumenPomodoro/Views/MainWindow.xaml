@@ -26,7 +26,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Background="{DynamicResource ApplicationBackgroundBrush}"
+        <Grid Grid.Row="0" Background="{DynamicResource SpotifyCanvasBrush}"
               MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -37,7 +37,7 @@
                        Margin="14,0,0,0"
                        VerticalAlignment="Center"
                        FontSize="12"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                       Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Width="46" Height="36"
@@ -45,21 +45,21 @@
                         BorderThickness="0"
                         Click="MinimizeButton_Click"
                         ToolTip="最小化">
-                    <TextBlock Text="-" FontSize="16" VerticalAlignment="Center" />
+                    <TextBlock Text="-" FontSize="16" VerticalAlignment="Center" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                 </Button>
                 <Button Width="46" Height="36"
                         Background="Transparent"
                         BorderThickness="0"
                         Click="MaximizeButton_Click"
                         ToolTip="最大化">
-                    <TextBlock Text="□" FontSize="12" VerticalAlignment="Center" />
+                    <TextBlock Text="□" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                 </Button>
                 <Button Width="46" Height="36"
                         Background="Transparent"
                         BorderThickness="0"
                         Click="CloseButton_Click"
                         ToolTip="关闭">
-                    <TextBlock Text="×" FontSize="18" VerticalAlignment="Center" />
+                    <TextBlock Text="×" FontSize="18" VerticalAlignment="Center" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                 </Button>
             </StackPanel>
         </Grid>

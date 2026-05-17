@@ -31,7 +31,7 @@
 
         <!-- 任务选择 Chip -->
         <Border Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,24"
-                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                Background="{DynamicResource SpotifySurface2Brush}"
                 CornerRadius="12" Padding="12,6" Cursor="Hand"
                 PreviewMouseDown="TaskName_MouseDown"
                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
@@ -41,9 +41,9 @@
                         <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue={StaticResource FallbackTaskColor}}" />
                     </Ellipse.Fill>
                 </Ellipse>
-                <TextBlock FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                <TextBlock FontSize="13" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" VerticalAlignment="Center">
                     <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
-                    <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
                 </TextBlock>
             </StackPanel>
         </Border>
@@ -51,7 +51,8 @@
         <!-- 状态标签 -->
         <TextBlock x:Name="StateLabelBlock" Grid.Row="2"
                    Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
-                   Margin="0,0,0,12">
+                   Margin="0,0,0,12"
+                   Foreground="{DynamicResource SpotifyTextSecondaryBrush}">
             <TextBlock.Style>
                 <Style TargetType="TextBlock" BasedOn="{StaticResource StateLabel}">
                     <Setter Property="Visibility" Value="Visible" />
@@ -91,9 +92,9 @@
             <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center">
                 <Run Text="摄像头已开启，帮助你保持专注" />
             </TextBlock>
-            <ui:Button Appearance="Secondary" Click="StopCameraButton_Click" FontSize="12" Padding="8,4" Margin="8,0,0,0">
+            <Button Style="{StaticResource SpotifyButton}" Click="StopCameraButton_Click" FontSize="12" Padding="8,4" Margin="8,0,0,0">
                 关闭
-            </ui:Button>
+            </Button>
         </StackPanel>
 
         <!-- 操作按钮区 -->
@@ -119,34 +120,34 @@
                           FontSize="13" />
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
-                    <ui:Button Appearance="Secondary" Click="AdjustTimeDown_Click" FontSize="14" Padding="10,4">-</ui:Button>
-                    <TextBlock x:Name="StepLabel" FontSize="15" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    <Button Style="{StaticResource SpotifyButton}" Click="AdjustTimeDown_Click" FontSize="14" Padding="10,4" Width="36" Height="36">-</Button>
+                    <TextBlock x:Name="StepLabel" FontSize="15" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
                                VerticalAlignment="Center" Margin="12,0" />
-                    <ui:Button Appearance="Secondary" Click="AdjustTimeUp_Click" FontSize="14" Padding="10,4">+</ui:Button>
+                    <Button Style="{StaticResource SpotifyButton}" Click="AdjustTimeUp_Click" FontSize="14" Padding="10,4" Width="36" Height="36">+</Button>
                 </StackPanel>
-                <ui:Button Appearance="Primary" Click="StartFocusButton_Click" FontSize="17" Padding="24,12">
-                    开始专注
-                </ui:Button>
+                <Button Style="{StaticResource SpotifyPlayButton}" Click="StartFocusButton_Click">
+                    <TextBlock Text="▶" FontSize="24" Foreground="Black" />
+                </Button>
             </StackPanel>
 
             <StackPanel x:Name="FocusPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
                         Orientation="Horizontal" HorizontalAlignment="Center">
-                <ui:Button Appearance="Secondary" Click="PauseButton_Click" FontSize="14" Padding="16,8">暂停</ui:Button>
-                <ui:Button Appearance="Secondary" Click="ResetButton_Click" FontSize="14" Padding="16,8" Margin="12,0,0,0">重置</ui:Button>
+                <Button Style="{StaticResource SpotifyButton}" Click="PauseButton_Click" Padding="16,8">暂停</Button>
+                <Button Style="{StaticResource SpotifyButton}" Click="ResetButton_Click" Padding="16,8" Margin="12,0,0,0">重置</Button>
             </StackPanel>
 
             <StackPanel x:Name="PausedPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                         Orientation="Horizontal" HorizontalAlignment="Center">
-                <ui:Button Appearance="Primary" Click="ResumeButton_Click" FontSize="17" Padding="24,12">继续</ui:Button>
-                <ui:Button Appearance="Secondary" Click="ResetButton_Click" FontSize="14" Padding="16,8" Margin="12,0,0,0">重置</ui:Button>
+                <Button Style="{StaticResource SpotifyPillButton}" Click="ResumeButton_Click" Padding="24,12">继续</Button>
+                <Button Style="{StaticResource SpotifyButton}" Click="ResetButton_Click" Padding="16,8" Margin="12,0,0,0">重置</Button>
             </StackPanel>
 
             <StackPanel x:Name="BreakPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
                         Orientation="Horizontal" HorizontalAlignment="Center">
-                <ui:Button Appearance="Primary" Click="EndBreakButton_Click" FontSize="17" Padding="24,12">结束休息</ui:Button>
+                <Button Style="{StaticResource SpotifyPillButton}" Click="EndBreakButton_Click" Padding="24,12">结束休息</Button>
             </StackPanel>
 
             <StackPanel x:Name="CompletedPanel" Orientation="Vertical" HorizontalAlignment="Center">
@@ -185,49 +186,49 @@
                           MinWidth="200" Margin="0,0,0,12"
                           FontSize="13" />
 
-                <ui:Button x:Name="StartBreakButton" Appearance="Primary" Click="StartShortBreakButton_Click" FontSize="17" Padding="32,14">开始休息</ui:Button>
+                <Button x:Name="StartBreakButton" Style="{StaticResource SpotifyPillButton}" Click="StartShortBreakButton_Click" Padding="32,14">开始休息</Button>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                    <ui:Button Appearance="Transparent" Click="StartLongBreakButton_Click" FontSize="12" Padding="10,6">长休息</ui:Button>
-                    <ui:Button Appearance="Transparent" Click="SkipBreakButton_Click" FontSize="12" Padding="10,6" Margin="8,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}">跳过</ui:Button>
+                    <Button Style="{StaticResource SpotifyButton}" Click="StartLongBreakButton_Click" Padding="10,6">长休息</Button>
+                    <Button Style="{StaticResource SpotifyButton}" Click="SkipBreakButton_Click" Padding="10,6" Margin="8,0,0,0" Foreground="{DynamicResource SpotifyTextTertiaryBrush}">跳过</Button>
                 </StackPanel>
             </StackPanel>
         </Grid>
 
         <!-- 底部统计摘要 + 考试倒计时 + 快捷键提示 -->
         <StackPanel Grid.Row="6" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
                        HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
                 <Run Text="今日 " />
-                <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text="/" />
-                <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" · 专注 " />
-                <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" 分" />
             </TextBlock>
 
             <!-- Streak 显示 -->
-            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
                        HorizontalAlignment="Center" Margin="0,4,0,0"
                        Visibility="{Binding StreakDays, Converter={StaticResource ZeroToCollapsedConverter}}">
                 <Run Text="已连续专注 " />
-                <Run Text="{Binding StreakDays}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding StreakDays}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" 天" />
             </TextBlock>
-            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
                        HorizontalAlignment="Center" Margin="0,4,0,0"
                        Text="没关系，今天重新开始"
                        Visibility="{Binding ShowStreakEncouragement, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-            <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+            <TextBlock FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
                        HorizontalAlignment="Center" Margin="0,8,0,0"
                        Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Run Text="{Binding ExamName}" />
                 <Run Text=" 倒计时 " />
-                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="{DynamicResource SpotifyGreenBrush}" />
                 <Run Text=" 天" />
             </TextBlock>
-            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
                        HorizontalAlignment="Center" Margin="0,8,0,0">
                 <Run Text="空格 开始/暂停 · Esc 重置 · 1-9 切换任务" />
             </TextBlock>
