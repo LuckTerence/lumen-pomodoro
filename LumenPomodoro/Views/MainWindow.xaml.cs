@@ -1,8 +1,9 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Linq;
+using System.Windows.Interop;
+using System.Windows.Media;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
 using LumenPomodoro.Views.Pages;
@@ -12,12 +13,38 @@ using Wpf.Ui.Controls;
 
 namespace LumenPomodoro.Views;
 
-public partial class MainWindow : FluentWindow
+public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private ITrayService? _trayService;
     private readonly PageProvider _pageProvider;
     private DynamicIslandNotificationWindow? _dynamicIslandWindow;
+
+    #region DWM 原生亚克力
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+    private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    private const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
+    private const int DWMSBT_MAINWINDOW = 2; // Mica
+    private const int DWMSBT_TRANSLUCENTSELECTBACKDROP = 3; // Acrylic
+
+    private void EnableAcrylicBackdrop()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+
+        // 启用深色模式
+        int darkMode = 1;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+
+        // 激活亚克力背景
+        int backdropType = DWMSBT_TRANSLUCENTSELECTBACKDROP;
+        DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
+    }
+
+    #endregion
 
     public MainWindow()
     {
@@ -64,15 +91,22 @@ public partial class MainWindow : FluentWindow
     private void MainWindow_Activated(object? sender, EventArgs e)
     {
         _viewModel.IsWindowActive = true;
+        // 激活时增强亚克力效果
+        GlassBorder.Opacity = 1.0;
     }
 
     private void MainWindow_Deactivated(object? sender, EventArgs e)
     {
         _viewModel.IsWindowActive = false;
+        // 失焦时降低透明度
+        GlassBorder.Opacity = 0.85;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        // 激活 DWM 原生亚克力
+        EnableAcrylicBackdrop();
+
         NavView.Navigate(typeof(TimerPage));
         ShowDailyReportIfNeeded();
     }
@@ -98,7 +132,6 @@ public partial class MainWindow : FluentWindow
     public void NavigateToPage(Type pageType)
     {
         NavView.Navigate(pageType);
-        // 同步 Tab 索引
         var index = Array.IndexOf(_pageTypes, pageType);
         if (index >= 0) _currentTabIndex = index;
     }
@@ -113,19 +146,12 @@ public partial class MainWindow : FluentWindow
 
     private void MainWindow_KeyDown(object sender, KeyEventArgs e)
     {
-        // Tab 切换页面
         if (e.Key == Key.Tab)
         {
             if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
-            {
-                // Shift+Tab: 上一个页面
                 _currentTabIndex = (_currentTabIndex - 1 + _pageTypes.Length) % _pageTypes.Length;
-            }
             else
-            {
-                // Tab: 下一个页面
                 _currentTabIndex = (_currentTabIndex + 1) % _pageTypes.Length;
-            }
 
             NavView.Navigate(_pageTypes[_currentTabIndex]);
             e.Handled = true;
@@ -138,12 +164,8 @@ public partial class MainWindow : FluentWindow
     private void OnTopmostChanged(object? sender, EventArgs e)
     {
         _viewModel.IsWindowTopmost = Topmost;
-
-        // 当窗口变为置顶时，隐藏灵动岛
         if (Topmost)
-        {
             _dynamicIslandWindow?.HideCountdown();
-        }
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -156,19 +178,11 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
-        try
-        {
-            DragMove();
-        }
-        catch (InvalidOperationException)
-        {
-        }
+        try { DragMove(); }
+        catch (InvalidOperationException) { }
     }
 
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-    {
-        WindowState = WindowState.Minimized;
-    }
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void MaximizeButton_Click(object sender, RoutedEventArgs e)
     {
@@ -177,10 +191,7 @@ public partial class MainWindow : FluentWindow
             : WindowState.Maximized;
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-    }
+    private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
     private void ShowInAppNotification(string title, string message)
     {
@@ -235,10 +246,7 @@ public partial class MainWindow : FluentWindow
         private SettingsPage? _settingsPage;
         private SettingsViewModel? _settingsViewModel;
 
-        public PageProvider(MainViewModel viewModel)
-        {
-            _viewModel = viewModel;
-        }
+        public PageProvider(MainViewModel viewModel) => _viewModel = viewModel;
 
         public object? GetPage(Type pageType)
         {
@@ -246,20 +254,12 @@ public partial class MainWindow : FluentWindow
                 return _timerPage ??= CreateTimerPage();
             if (pageType == typeof(TasksPage))
             {
-                if (_tasksPage != null)
-                {
-                    _tasksPage.Refresh();
-                    return _tasksPage;
-                }
+                if (_tasksPage != null) { _tasksPage.Refresh(); return _tasksPage; }
                 return _tasksPage = CreateTasksPage();
             }
             if (pageType == typeof(StatsPage))
             {
-                if (_statsPage != null)
-                {
-                    _statsPage.Refresh();
-                    return _statsPage;
-                }
+                if (_statsPage != null) { _statsPage.Refresh(); return _statsPage; }
                 return _statsPage = CreateStatsPage();
             }
             if (pageType == typeof(SettingsPage))
@@ -289,10 +289,7 @@ public partial class MainWindow : FluentWindow
             return new TasksPage(tasksVM);
         }
 
-        private StatsPage CreateStatsPage()
-        {
-            return new StatsPage(App.GetRequiredService<StatsViewModel>());
-        }
+        private StatsPage CreateStatsPage() => new(App.GetRequiredService<StatsViewModel>());
 
         private SettingsPage CreateSettingsPage()
         {
@@ -306,9 +303,6 @@ public partial class MainWindow : FluentWindow
             return page;
         }
 
-        public void Dispose()
-        {
-            _settingsViewModel?.Dispose();
-        }
+        public void Dispose() => _settingsViewModel?.Dispose();
     }
 }
