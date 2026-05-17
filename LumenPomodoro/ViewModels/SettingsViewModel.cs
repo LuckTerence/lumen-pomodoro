@@ -261,6 +261,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             CameraFollowBreakEnabled = CameraFollowBreakEnabled,
             CameraIndex = SelectedCameraIndex,
             CameraAlertCanManualClose = CameraAlertCanManualClose,
+            CameraAlertLevel = CameraAlertLevel,
             HasShownCameraPrivacyNotice = latestSettings.HasShownCameraPrivacyNotice,
 
             SoundEnabled = SoundEnabled,

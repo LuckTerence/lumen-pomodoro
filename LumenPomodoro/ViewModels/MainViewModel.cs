@@ -476,8 +476,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             case CameraAlertLevel.Light:
                 break;
             case CameraAlertLevel.Medium:
+                ShowSystemNotification("专注完成", "该休息了！");
                 break;
             case CameraAlertLevel.Severe:
+                ShowSystemNotification("专注完成", "该休息了！");
                 if (Application.Current?.Dispatcher == null) return;
                 Application.Current.Dispatcher.Invoke(() =>
                 {
