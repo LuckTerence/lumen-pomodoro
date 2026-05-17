@@ -24,11 +24,6 @@ public partial class SettingsPage : Page, IDisposable
         _viewModel.Cleanup();
     }
 
-    private void TestCamera_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.TestCameraAlert();
-    }
-
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.SaveSettings();

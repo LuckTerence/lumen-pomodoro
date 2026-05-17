@@ -318,50 +318,8 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private bool _cameraStartedByTest;
-
-    public void TestCameraAlert()
-    {
-        if (!CameraAlertEnabled)
-        {
-            MessageBox.Show("摄像头提醒已关闭", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        _cameraStartedByTest = true;
-        Task.Run(async () =>
-        {
-            try
-            {
-                await _cameraService.StartCameraForDurationAsync(5);
-            }
-            catch (Exception ex)
-            {
-                _cameraStartedByTest = false;
-                Application.Current.Dispatcher.Invoke(() =>
-                    MessageBox.Show($"摄像头测试失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
-            }
-        });
-        MessageBox.Show("摄像头测试中，5秒后自动关闭", "测试摄像头", MessageBoxButton.OK, MessageBoxImage.Information);
-    }
-
     public void Cleanup()
     {
-        if (_cameraStartedByTest && _cameraService.IsRunning)
-        {
-            try
-            {
-                _cameraService.StopCameraAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[SettingsViewModel] Cleanup 停止摄像头异常: {ex.Message}");
-            }
-            finally
-            {
-                _cameraStartedByTest = false;
-            }
-        }
     }
 
     private void UpdateAutoStart()

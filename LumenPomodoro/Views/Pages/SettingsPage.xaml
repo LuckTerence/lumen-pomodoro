@@ -142,9 +142,6 @@
                                           ItemsSource="{Binding AvailableCameras}"
                                           SelectedIndex="{Binding SelectedCameraIndex}" />
                             </Grid>
-                            <ui:Button Appearance="Secondary" Click="TestCamera_Click" FontSize="12" Padding="10,6" HorizontalAlignment="Left">
-                                测试摄像头
-                            </ui:Button>
                         </StackPanel>
                     </StackPanel>
             </Border>

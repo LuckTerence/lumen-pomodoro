@@ -69,19 +69,6 @@ public class SettingsViewModelTests
     }
 
     [Fact]
-    public void TestCameraAlert_StartsAndStopsCamera()
-    {
-        _cameraService.Setup(c => c.StartCameraForDurationAsync(It.IsAny<int>()))
-            .Returns(Task.CompletedTask);
-        _cameraService.Setup(c => c.StopCameraAsync())
-            .Returns(Task.CompletedTask);
-
-        _viewModel.TestCameraAlert();
-
-        _cameraService.Verify(c => c.StartCameraForDurationAsync(It.IsAny<int>()), Times.Once);
-    }
-
-    [Fact]
     public void Dispose_CleansUp()
     {
         _viewModel.Dispose();
