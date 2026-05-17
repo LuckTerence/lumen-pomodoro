@@ -19,7 +19,7 @@
         <TextBlock Grid.Row="0"
                    Text="请输入新的任务名称："
                    FontSize="13"
-                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                   Foreground="{DynamicResource SpotifyTextPrimaryBrush}"
                    Margin="0,0,0,10" />
 
         <ui:TextBox Grid.Row="1"
@@ -31,17 +31,17 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">
-            <ui:Button Appearance="Primary"
+            <Button Style="{StaticResource SpotifyPillButton}"
                        Click="OkButton_Click"
                        Padding="20,6"
                        MinWidth="80"
-                       IsDefault="True">确定</ui:Button>
-            <ui:Button Appearance="Secondary"
+                       IsDefault="True">确定</Button>
+            <Button Style="{StaticResource SpotifyButton}"
                        Click="CancelButton_Click"
                        Padding="20,6"
                        MinWidth="80"
                        Margin="8,0,0,0"
-                       IsCancel="True">取消</ui:Button>
+                       IsCancel="True">取消</Button>
         </StackPanel>
     </Grid>
 </ui:FluentWindow>
