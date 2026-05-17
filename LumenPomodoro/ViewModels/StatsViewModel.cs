@@ -265,8 +265,9 @@ public class StatsViewModel : INotifyPropertyChanged
 
         CompletedPomodoros = filteredSessions.Count;
         TotalFocusMinutes = filteredSessions.Sum(s => s.FocusMinutes);
-        AvgQualityScore = filteredSessions.Count > 0
-            ? filteredSessions.Average(s => s.QualityScore)
+        var scoredSessions = filteredSessions.Where(s => s.QualityScore > 0).ToList();
+        AvgQualityScore = scoredSessions.Count > 0
+            ? scoredSessions.Average(s => s.QualityScore)
             : 0;
 
         // 图表数据 — 所有方法复用同一 sessions 引用

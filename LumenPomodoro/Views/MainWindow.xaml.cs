@@ -98,6 +98,9 @@ public partial class MainWindow : FluentWindow
     public void NavigateToPage(Type pageType)
     {
         NavView.Navigate(pageType);
+        // 同步 Tab 索引
+        var index = Array.IndexOf(_pageTypes, pageType);
+        if (index >= 0) _currentTabIndex = index;
     }
 
     public void HandleWake()

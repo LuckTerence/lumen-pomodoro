@@ -387,6 +387,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         ForceStopCameraAlert();
         _timerService.Reset();
+        _currentSession = null;
         IsFocusCompleted = false;
         IsBreakCompleted = false;
         IsPendingBreak = false;
@@ -860,6 +861,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+
+        // 保存进行中的 session
+        if (_currentSession != null && !_currentSession.Completed)
+        {
+            _currentSession.EndTime = DateTime.Now;
+            _currentSession.Completed = false;
+            _storageService.AddSession(_currentSession);
+            _currentSession = null;
+        }
 
         _trayUpdateTimer?.Stop();
         try { _indicatorWindow?.ForceClose(); } catch { }
