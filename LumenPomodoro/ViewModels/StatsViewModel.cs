@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LumenPomodoro.Models;
+using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.ViewModels;
@@ -20,6 +21,7 @@ public class StatsViewModel : INotifyPropertyChanged
     private int _completedPomodoros;
     private int _totalFocusMinutes;
     private double _avgQualityScore;
+    private int _streakDays;
     private DateTime _currentDate = DateTime.Today;
     private StatsPeriod _currentPeriod = StatsPeriod.Day;
     private string _statsDateLabel = "今日统计";
@@ -57,6 +59,12 @@ public class StatsViewModel : INotifyPropertyChanged
     {
         get => _avgQualityScore;
         set { if (_avgQualityScore != value) { _avgQualityScore = value; OnPropertyChanged(); } }
+    }
+
+    public int StreakDays
+    {
+        get => _streakDays;
+        set { if (_streakDays != value) { _streakDays = value; OnPropertyChanged(); } }
     }
 
     public string StatsDateLabel
@@ -269,6 +277,10 @@ public class StatsViewModel : INotifyPropertyChanged
         AvgQualityScore = scoredSessions.Count > 0
             ? scoredSessions.Average(s => s.QualityScore)
             : 0;
+
+        // 计算连续天数
+        var completedSessions = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        StreakDays = InsightEngine.CalculateStreak(completedSessions);
 
         // 图表数据 — 所有方法复用同一 sessions 引用
         HeatmapDays = _insightEngine.GetHeatmapData(sessions);
