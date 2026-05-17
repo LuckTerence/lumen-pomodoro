@@ -30,6 +30,13 @@ public partial class MainWindow : FluentWindow
         _viewModel.InAppNotificationRequested += (title, message) =>
             Dispatcher.BeginInvoke(() => ShowInAppNotification(title, message));
 
+        _viewModel.CountdownStartRequested += (title) =>
+            Dispatcher.BeginInvoke(() => StartCountdown(title));
+        _viewModel.CountdownUpdateRequested += (time) =>
+            Dispatcher.BeginInvoke(() => UpdateCountdown(time));
+        _viewModel.CountdownStopRequested += () =>
+            Dispatcher.BeginInvoke(() => StopCountdown());
+
         if (_viewModel.AppSettings.TrayEnabled)
         {
             _trayService = App.GetRequiredService<ITrayService>();
@@ -48,6 +55,10 @@ public partial class MainWindow : FluentWindow
         Activated += MainWindow_Activated;
         Deactivated += MainWindow_Deactivated;
         KeyDown += MainWindow_KeyDown;
+
+        // 监听 Topmost 属性变化
+        DependencyPropertyDescriptor.FromProperty(TopmostProperty, typeof(Window))
+            .AddValueChanged(this, OnTopmostChanged);
     }
 
     private void MainWindow_Activated(object? sender, EventArgs e)
@@ -121,6 +132,17 @@ public partial class MainWindow : FluentWindow
         base.OnKeyDown(e);
     }
 
+    private void OnTopmostChanged(object? sender, EventArgs e)
+    {
+        _viewModel.IsWindowTopmost = Topmost;
+
+        // 当窗口变为置顶时，隐藏灵动岛
+        if (Topmost)
+        {
+            _dynamicIslandWindow?.HideCountdown();
+        }
+    }
+
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 2)
@@ -161,6 +183,22 @@ public partial class MainWindow : FluentWindow
     {
         _dynamicIslandWindow ??= new DynamicIslandNotificationWindow();
         _dynamicIslandWindow.ShowNotification(title, message);
+    }
+
+    private void StartCountdown(string title)
+    {
+        _dynamicIslandWindow ??= new DynamicIslandNotificationWindow();
+        _dynamicIslandWindow.StartCountdown(title);
+    }
+
+    private void UpdateCountdown(string remainingTime)
+    {
+        _dynamicIslandWindow?.UpdateCountdown(remainingTime);
+    }
+
+    private void StopCountdown()
+    {
+        _dynamicIslandWindow?.HideCountdown();
     }
 
     protected override void OnClosing(CancelEventArgs e)

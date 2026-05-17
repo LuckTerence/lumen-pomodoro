@@ -14,6 +14,10 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock x:Name="TitleBlock" FontSize="14" FontWeight="SemiBold"
                        Foreground="White" VerticalAlignment="Center"/>
+            <TextBlock x:Name="CountdownBlock" FontSize="24" FontWeight="Light"
+                       Foreground="White" VerticalAlignment="Center"
+                       Margin="12,0,0,0" FontFamily="Inter Light"
+                       Visibility="Collapsed"/>
             <TextBlock x:Name="MessageBlock" FontSize="12" Foreground="#CCFFFFFF"
                        Margin="10,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
