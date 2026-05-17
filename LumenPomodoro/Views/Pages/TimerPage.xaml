@@ -4,7 +4,8 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:converters="clr-namespace:LumenPomodoro.Converters"
       xmlns:controls="clr-namespace:LumenPomodoro.Controls"
-      ScrollViewer.CanContentScroll="False">
+      ScrollViewer.CanContentScroll="False"
+      Background="Transparent">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -15,90 +16,93 @@
             <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
             <converters:StatusConverter x:Key="StatusConverter" />
             <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter" />
+
+            <!-- 极光渐变 -->
+            <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#2563EB" Offset="0" />
+                <GradientStop Color="#34D399" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- 播放按钮渐变 -->
+            <LinearGradientBrush x:Key="PlayButtonGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#059669" Offset="0" />
+                <GradientStop Color="#34D399" Offset="1" />
+            </LinearGradientBrush>
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Margin="32,0">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />  <!-- 任务选择 -->
+            <RowDefinition Height="*" />      <!-- 计时器 -->
+            <RowDefinition Height="Auto" />   <!-- 操作按钮 -->
+            <RowDefinition Height="Auto" />   <!-- 统计信息 -->
         </Grid.RowDefinitions>
 
-        <!-- 任务选择 Chip -->
-        <Border Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,24"
-                Background="{DynamicResource SpotifySurface2Brush}"
-                CornerRadius="12" Padding="12,6" Cursor="Hand"
-                PreviewMouseDown="TaskName_MouseDown"
+        <!-- ===== 任务选择（药丸形） ===== -->
+        <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,16,0,0"
+                Background="#3327272A" CornerRadius="20" Padding="16,8"
+                Cursor="Hand" PreviewMouseDown="TaskName_MouseDown"
                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
             <StackPanel Orientation="Horizontal">
-                <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
                     <Ellipse.Fill>
-                        <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue={StaticResource FallbackTaskColor}}" />
+                        <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#34D399}" />
                     </Ellipse.Fill>
                 </Ellipse>
-                <TextBlock FontSize="13" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" VerticalAlignment="Center">
+                <TextBlock FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center">
                     <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='选择任务'}" />
-                    <Run Text="  ▾" FontSize="10" Foreground="{DynamicResource SpotifyTextTertiaryBrush}" />
+                    <Run Text="  ▾" FontSize="10" Foreground="#66FFFFFF" />
                 </TextBlock>
             </StackPanel>
         </Border>
 
-        <!-- 状态标签 -->
-        <TextBlock x:Name="StateLabelBlock" Grid.Row="2"
-                   Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
-                   Margin="0,0,0,12"
-                   Foreground="{DynamicResource SpotifyTextSecondaryBrush}">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock" BasedOn="{StaticResource StateLabel}">
-                    <Setter Property="Visibility" Value="Visible" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
-
-        <!-- 圆环进度 + 计时器数字 -->
-        <Grid Grid.Row="3" HorizontalAlignment="Center" Margin="0,0,0,24" Width="260" Height="260">
-            <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="6">
-                <controls:ArcProgress.ForegroundArcBrush>
-                    <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#0078D4}" />
-                </controls:ArcProgress.ForegroundArcBrush>
-                <controls:ArcProgress.BackgroundArcBrush>
-                    <SolidColorBrush Color="{StaticResource ArcBackgroundColor}" />
-                </controls:ArcProgress.BackgroundArcBrush>
-            </controls:ArcProgress>
-            <TextBlock x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
-                       Style="{StaticResource TimerText}" FontSize="80"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       RenderTransformOrigin="0.5,0.5">
-                <TextBlock.RenderTransform>
-                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                </TextBlock.RenderTransform>
+        <!-- ===== 核心计时区 ===== -->
+        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- 状态标签 -->
+            <TextBlock x:Name="StateLabelBlock"
+                       Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
+                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,20"
+                       FontSize="13" FontWeight="SemiBold" Foreground="#6B7280"
+                       Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
             </TextBlock>
+
+            <!-- 圆环进度 + 计时器数字 -->
+            <Grid Width="240" Height="240">
+                <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="4">
+                    <controls:ArcProgress.ForegroundArcBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#2563EB" Offset="0" />
+                            <GradientStop Color="#34D399" Offset="1" />
+                        </LinearGradientBrush>
+                    </controls:ArcProgress.ForegroundArcBrush>
+                    <controls:ArcProgress.BackgroundArcBrush>
+                        <SolidColorBrush Color="#27272A" />
+                    </controls:ArcProgress.BackgroundArcBrush>
+                </controls:ArcProgress>
+                <TextBlock x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
+                           FontSize="72" FontWeight="Light" FontFamily="Consolas"
+                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                    </TextBlock.RenderTransform>
+                </TextBlock>
+            </Grid>
         </Grid>
 
-        <!-- 摄像头提醒 -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
-                    Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Ellipse x:Name="CameraAlertDot" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,8,0" />
-            <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center">
-                <Run Text="摄像头已开启，帮助你保持专注" />
-            </TextBlock>
-            <Button Style="{StaticResource SpotifyButton}" Click="StopCameraButton_Click" FontSize="12" Padding="8,4" Margin="8,0,0,0">
-                关闭
-            </Button>
-        </StackPanel>
-
-        <!-- 操作按钮区 -->
-        <Grid Grid.Row="5">
+        <!-- ===== 操作按钮区 ===== -->
+        <Grid Grid.Row="2" Margin="0,24,0,0">
+            <!-- 空闲状态：播放按钮 -->
             <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -111,45 +115,119 @@
                     </Style>
                 </StackPanel.Style>
 
-                <!-- 快速任务切换 -->
-                <ComboBox x:Name="QuickTaskCombo"
-                          ItemsSource="{Binding Tasks}"
-                          SelectedItem="{Binding SelectedTask}"
-                          DisplayMemberPath="Name"
-                          MinWidth="200" Margin="0,0,0,16"
-                          FontSize="13" />
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
-                    <Button Style="{StaticResource SpotifyButton}" Click="AdjustTimeDown_Click" FontSize="14" Padding="10,4" Width="36" Height="36">-</Button>
-                    <TextBlock x:Name="StepLabel" FontSize="15" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
-                               VerticalAlignment="Center" Margin="12,0" />
-                    <Button Style="{StaticResource SpotifyButton}" Click="AdjustTimeUp_Click" FontSize="14" Padding="10,4" Width="36" Height="36">+</Button>
-                </StackPanel>
-                <Button Style="{StaticResource SpotifyPlayButton}" Click="StartFocusButton_Click">
-                    <TextBlock Text="▶" FontSize="24" Foreground="Black" />
+                <!-- 播放按钮（极光渐变） -->
+                <Button x:Name="PlayButton" Click="StartFocusButton_Click" Width="64" Height="64"
+                        Cursor="Hand" BorderThickness="0" Background="Transparent">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="PlayButtonGrid">
+                                <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="#34D399"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                <Path Data="M24,16 L44,32 L24,48 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Width="20" Height="24" Stretch="Uniform" Margin="-2,0,0,0" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="PlayButtonGrid" Property="Opacity" Value="0.85" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
                 </Button>
+
+                <!-- 时间调整（轻量级） -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <Button Click="AdjustTimeDown_Click" Width="32" Height="32" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0" Opacity="0.6">
+                        <TextBlock Text="-" FontSize="18" Foreground="#6B7280" />
+                    </Button>
+                    <TextBlock x:Name="StepLabel" FontSize="13" Foreground="#6B7280"
+                               VerticalAlignment="Center" Margin="8,0" />
+                    <Button Click="AdjustTimeUp_Click" Width="32" Height="32" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0" Opacity="0.6">
+                        <TextBlock Text="+" FontSize="18" Foreground="#6B7280" />
+                    </Button>
+                </StackPanel>
             </StackPanel>
 
+            <!-- 专注中：暂停/重置 -->
             <StackPanel x:Name="FocusPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
                         Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Style="{StaticResource SpotifyButton}" Click="PauseButton_Click" Padding="16,8">暂停</Button>
-                <Button Style="{StaticResource SpotifyButton}" Click="ResetButton_Click" Padding="16,8" Margin="12,0,0,0">重置</Button>
+                <Button Click="PauseButton_Click" Padding="24,10" Cursor="Hand"
+                        Background="#3327272A" BorderBrush="#26FFFFFF" BorderThickness="1">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="24" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="暂停" FontSize="14" Foreground="#B3FFFFFF" />
+                </Button>
+                <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
+                        Background="Transparent" BorderThickness="0">
+                    <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
+                </Button>
             </StackPanel>
 
+            <!-- 暂停中：继续/重置 -->
             <StackPanel x:Name="PausedPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                         Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Style="{StaticResource SpotifyPillButton}" Click="ResumeButton_Click" Padding="24,12">继续</Button>
-                <Button Style="{StaticResource SpotifyButton}" Click="ResetButton_Click" Padding="16,8" Margin="12,0,0,0">重置</Button>
+                <Button Click="ResumeButton_Click" Padding="32,12" Cursor="Hand">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#059669" Offset="0" />
+                            <GradientStop Color="#34D399" Offset="1" />
+                        </LinearGradientBrush>
+                    </Button.Background>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="24"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="继续" FontSize="15" FontWeight="SemiBold" Foreground="White" />
+                </Button>
+                <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
+                        Background="Transparent" BorderThickness="0">
+                    <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
+                </Button>
             </StackPanel>
 
+            <!-- 休息中：结束休息 -->
             <StackPanel x:Name="BreakPanel"
                         Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
-                        Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Style="{StaticResource SpotifyPillButton}" Click="EndBreakButton_Click" Padding="24,12">结束休息</Button>
+                        HorizontalAlignment="Center">
+                <Button Click="EndBreakButton_Click" Padding="32,12" Cursor="Hand">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#2563EB" Offset="0" />
+                            <GradientStop Color="#34D399" Offset="1" />
+                        </LinearGradientBrush>
+                    </Button.Background>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="24"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="结束休息" FontSize="15" FontWeight="SemiBold" Foreground="White" />
+                </Button>
             </StackPanel>
 
+            <!-- 专注完成：开始休息 -->
             <StackPanel x:Name="CompletedPanel" Orientation="Vertical" HorizontalAlignment="Center">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -167,69 +245,102 @@
                 </StackPanel.Style>
 
                 <!-- 质量评分 -->
-                <TextBlock FontSize="18" HorizontalAlignment="Center" Margin="0,0,0,8"
-                           Foreground="{DynamicResource SpotifyGreenBrush}"
-                           Text="{Binding QualityStars}" />
+                <TextBlock FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,12"
+                           Foreground="#34D399" Text="{Binding QualityStars}" />
 
                 <!-- 笔记输入 -->
-                <ui:TextBox x:Name="NotesBox"
-                            Text="{Binding CurrentNotes, UpdateSourceTrigger=PropertyChanged}"
-                            PlaceholderText="记录这轮做了什么（可选）"
-                            MaxWidth="280" Margin="0,0,0,12"
-                            FontSize="13" Padding="12,8"
-                            AcceptsReturn="False" MaxLength="200" />
+                <Border Background="#3327272A" CornerRadius="12" Padding="12,8" Margin="0,0,0,16" MaxWidth="280">
+                    <TextBox Text="{Binding CurrentNotes, UpdateSourceTrigger=PropertyChanged}"
+                             Background="Transparent" BorderThickness="0"
+                             FontSize="13" Foreground="#B3FFFFFF"
+                             MaxLength="200" />
+                </Border>
 
-                <!-- 快速任务切换 -->
-                <ComboBox ItemsSource="{Binding Tasks}"
-                          SelectedItem="{Binding SelectedTask}"
-                          DisplayMemberPath="Name"
-                          MinWidth="200" Margin="0,0,0,12"
-                          FontSize="13" />
+                <!-- 开始休息按钮 -->
+                <Button x:Name="StartBreakButton" Click="StartShortBreakButton_Click" Padding="40,14" Cursor="Hand">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#059669" Offset="0" />
+                            <GradientStop Color="#34D399" Offset="1" />
+                        </LinearGradientBrush>
+                    </Button.Background>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="28"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="开始休息" FontSize="16" FontWeight="SemiBold" Foreground="White" />
+                </Button>
 
-                <Button x:Name="StartBreakButton" Style="{StaticResource SpotifyPillButton}" Click="StartShortBreakButton_Click" Padding="32,14">开始休息</Button>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                    <Button Style="{StaticResource SpotifyButton}" Click="StartLongBreakButton_Click" Padding="10,6">长休息</Button>
-                    <Button Style="{StaticResource SpotifyButton}" Click="SkipBreakButton_Click" Padding="10,6" Margin="8,0,0,0" Foreground="{DynamicResource SpotifyTextTertiaryBrush}">跳过</Button>
+                    <Button Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0">
+                        <TextBlock Text="长休息" FontSize="12" Foreground="#6B7280" />
+                    </Button>
+                    <Button Click="SkipBreakButton_Click" Padding="16,8" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0">
+                        <TextBlock Text="跳过" FontSize="12" Foreground="#4B5563" />
+                    </Button>
                 </StackPanel>
             </StackPanel>
         </Grid>
 
-        <!-- 底部统计摘要 + 考试倒计时 + 快捷键提示 -->
-        <StackPanel Grid.Row="6" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+        <!-- ===== 底部统计信息 ===== -->
+        <StackPanel Grid.Row="3" HorizontalAlignment="Center" Margin="0,0,0,24">
+            <!-- 摄像头提醒状态 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
+                        Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
+                    <Run Text="摄像头提醒中" />
+                </TextBlock>
+                <Button Click="StopCameraButton_Click" Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
+                        Background="Transparent" BorderThickness="0">
+                    <TextBlock Text="关闭" FontSize="11" Foreground="#4B5563" />
+                </Button>
+            </StackPanel>
+
+            <!-- 今日统计 -->
+            <TextBlock FontSize="11" Foreground="#4B5563"
                        HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
                 <Run Text="今日 " />
-                <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
                 <Run Text="/" />
-                <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
                 <Run Text=" · 专注 " />
-                <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="#6B7280" FontWeight="SemiBold" />
                 <Run Text=" 分" />
             </TextBlock>
 
             <!-- Streak 显示 -->
-            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="#4B5563"
                        HorizontalAlignment="Center" Margin="0,4,0,0"
                        Visibility="{Binding StreakDays, Converter={StaticResource ZeroToCollapsedConverter}}">
                 <Run Text="已连续专注 " />
-                <Run Text="{Binding StreakDays}" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding StreakDays}" Foreground="#6B7280" FontWeight="SemiBold" />
                 <Run Text=" 天" />
             </TextBlock>
-            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+            <TextBlock FontSize="11" Foreground="#4B5563"
                        HorizontalAlignment="Center" Margin="0,4,0,0"
                        Text="没关系，今天重新开始"
                        Visibility="{Binding ShowStreakEncouragement, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-            <TextBlock FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
+            <!-- 考试倒计时 -->
+            <TextBlock FontSize="12" Foreground="#6B7280"
                        HorizontalAlignment="Center" Margin="0,8,0,0"
                        Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Run Text="{Binding ExamName}" />
                 <Run Text=" 倒计时 " />
-                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="{DynamicResource SpotifyGreenBrush}" />
+                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="#34D399" />
                 <Run Text=" 天" />
             </TextBlock>
-            <TextBlock FontSize="11" Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
-                       HorizontalAlignment="Center" Margin="0,8,0,0">
+
+            <!-- 快捷键提示 -->
+            <TextBlock FontSize="10" Foreground="#3B3B3B"
+                       HorizontalAlignment="Center" Margin="0,12,0,0">
                 <Run Text="空格 开始/暂停 · Esc 重置 · 1-9 切换任务" />
             </TextBlock>
         </StackPanel>
