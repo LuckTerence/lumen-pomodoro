@@ -36,18 +36,20 @@ public class CameraService : ICameraService
 
     private readonly PresenceDetector _presenceDetector = new();
     private Action? _presenceLostCallback;
+    private Action? _presenceRegainedCallback;
     private DateTime _lastProcessedTime = DateTime.MinValue;
     private const int MinProcessIntervalMs = 1000;
     private bool _wasPresent = true;
 
     public bool IsRunning => _isRunning;
 
-    public void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback, Action? onPresenceLost = null)
+    public void Initialize(int cameraIndex, Action<string> statusCallback, Action<string> errorCallback, Action? onPresenceLost = null, Action? onPresenceRegained = null)
     {
         _cameraIndex = cameraIndex;
         _statusCallback = statusCallback;
         _errorCallback = errorCallback;
         _presenceLostCallback = onPresenceLost;
+        _presenceRegainedCallback = onPresenceRegained;
         _presenceDetector.Reset();
         _wasPresent = true;
         Log.Debug("CameraService 初始化，摄像头索引: {Index}", cameraIndex);
@@ -233,10 +235,14 @@ public class CameraService : ICameraService
 
             bool present = _presenceDetector.ProcessFrame(buffer, bitmap.PixelWidth, bitmap.PixelHeight, bitmap.PixelWidth * 4);
 
-            // 只在"从有人变为无人"的瞬间触发回调，避免重复通知
+            // 只在状态转换瞬间触发回调，避免重复通知
             if (!present && _wasPresent)
             {
                 _presenceLostCallback?.Invoke();
+            }
+            else if (present && !_wasPresent)
+            {
+                _presenceRegainedCallback?.Invoke();
             }
             _wasPresent = present;
         }

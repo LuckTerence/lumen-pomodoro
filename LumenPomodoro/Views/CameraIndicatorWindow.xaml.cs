@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -7,10 +8,18 @@ namespace LumenPomodoro.Views;
 
 public partial class CameraIndicatorWindow : Window
 {
+    private bool _forceClose;
+
     public CameraIndicatorWindow()
     {
         InitializeComponent();
         PositionBottomRight();
+    }
+
+    public void ForceClose()
+    {
+        _forceClose = true;
+        Close();
     }
 
     private void PositionBottomRight()
@@ -36,5 +45,14 @@ public partial class CameraIndicatorWindow : Window
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         DragMove();
+    }
+
+    private void Window_Closing(object sender, CancelEventArgs e)
+    {
+        if (!_forceClose)
+        {
+            e.Cancel = true;
+            Hide();
+        }
     }
 }

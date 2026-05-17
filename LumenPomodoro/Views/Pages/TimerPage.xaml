@@ -14,6 +14,7 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
             <converters:StatusConverter x:Key="StatusConverter" />
+            <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -154,6 +155,20 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
+
+                <!-- 质量评分 -->
+                <TextBlock FontSize="18" HorizontalAlignment="Center" Margin="0,0,0,8"
+                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                           Text="{Binding QualityStars}" />
+
+                <!-- 笔记输入 -->
+                <ui:TextBox x:Name="NotesBox"
+                            Text="{Binding CurrentNotes, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="记录这轮做了什么（可选）"
+                            MaxWidth="280" Margin="0,0,0,12"
+                            FontSize="13" Padding="12,8"
+                            AcceptsReturn="False" MaxLength="200" />
+
                 <ui:Button x:Name="StartBreakButton" Appearance="Primary" Click="StartShortBreakButton_Click" FontSize="17" Padding="32,14">开始休息</ui:Button>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
                     <ui:Button Appearance="Transparent" Click="StartLongBreakButton_Click" FontSize="12" Padding="10,6">长休息</ui:Button>
@@ -172,6 +187,20 @@
                 <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
                 <Run Text=" 分" />
             </TextBlock>
+
+            <!-- Streak 显示 -->
+            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"
+                       Visibility="{Binding StreakDays, Converter={StaticResource ZeroToCollapsedConverter}}">
+                <Run Text="已连续专注 " />
+                <Run Text="{Binding StreakDays}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontWeight="SemiBold" />
+                <Run Text=" 天" />
+            </TextBlock>
+            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"
+                       Text="没关系，今天重新开始"
+                       Visibility="{Binding ShowStreakEncouragement, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
             <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        HorizontalAlignment="Center" Margin="0,8,0,0"
                        Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">

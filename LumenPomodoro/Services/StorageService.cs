@@ -194,6 +194,20 @@ public class StorageService : IStorageService
         Log.Information("保存专注会话: {TaskName}, {FocusMinutes} 分钟", session.TaskName, session.FocusMinutes);
     }
 
+    public void UpdateSession(string sessionId, Action<FocusSession> updater)
+    {
+        lock (_fileLock)
+        {
+            var sessions = GetOrLoadSessions();
+            var session = sessions.FirstOrDefault(s => s.Id == sessionId);
+            if (session != null)
+            {
+                updater(session);
+                SaveSessionsWithTransaction(sessions);
+            }
+        }
+    }
+
     private void InvalidateStatsCache()
     {
         _cachedTodayStats = null;

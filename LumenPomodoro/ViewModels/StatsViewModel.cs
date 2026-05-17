@@ -19,6 +19,7 @@ public class StatsViewModel : INotifyPropertyChanged
 
     private int _completedPomodoros;
     private int _totalFocusMinutes;
+    private double _avgQualityScore;
     private DateTime _currentDate = DateTime.Today;
     private StatsPeriod _currentPeriod = StatsPeriod.Day;
     private string _statsDateLabel = "今日统计";
@@ -49,6 +50,12 @@ public class StatsViewModel : INotifyPropertyChanged
     {
         get => _totalFocusMinutes;
         set { if (_totalFocusMinutes != value) { _totalFocusMinutes = value; OnPropertyChanged(); } }
+    }
+
+    public double AvgQualityScore
+    {
+        get => _avgQualityScore;
+        set { if (_avgQualityScore != value) { _avgQualityScore = value; OnPropertyChanged(); } }
     }
 
     public string StatsDateLabel
@@ -251,6 +258,9 @@ public class StatsViewModel : INotifyPropertyChanged
 
         CompletedPomodoros = filteredSessions.Count;
         TotalFocusMinutes = filteredSessions.Sum(s => s.FocusMinutes);
+        AvgQualityScore = filteredSessions.Count > 0
+            ? filteredSessions.Average(s => s.QualityScore)
+            : 0;
 
         // 图表数据 — 所有方法复用同一 sessions 引用
         HeatmapDays = _insightEngine.GetHeatmapData(sessions);

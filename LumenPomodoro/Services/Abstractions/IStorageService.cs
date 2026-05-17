@@ -10,5 +10,6 @@ public interface IStorageService
     void SaveTasks(List<TaskItem> tasks);
     List<FocusSession> LoadSessions();
     void AddSession(FocusSession session);
+    void UpdateSession(string sessionId, Action<FocusSession> updater);
     DailyStats GetTodayStats();
 }

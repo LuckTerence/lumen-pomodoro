@@ -204,6 +204,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.First()
                 : Tasks.First();
         }
+
+        RefreshStreak();
     }
 
     private void TimerService_TimerTick(object? sender, TimerTickEventArgs e)
@@ -226,7 +228,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 _currentSession.EndTime = DateTime.Now;
                 _currentSession.Completed = true;
+
+                // 计算质量评分
+                int score = 1; // 基础分：完整完成
+                if (!_sessionPaused) score++;
+                if (!_sessionPresenceLost) score++;
+                _currentSession.QualityScore = score;
+                QualityStars = new string('★', score) + new string('☆', 3 - score);
+
                 _storageService.AddSession(_currentSession);
+                _lastCompletedSessionId = _currentSession.Id;
                 TodayStats = _storageService.GetTodayStats();
                 _currentSession = null;
             }
@@ -238,6 +249,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             PlayNotificationSound("FocusComplete");
             ShowInAppNotification("专注完成", "该休息了！");
             CheckMilestones();
+            RefreshStreak();
         }
         else if (e.CompletedMode == TimerMode.Break)
         {
@@ -337,6 +349,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void PauseFocus()
     {
+        _sessionPaused = true;
         _timerService.Pause();
     }
 
@@ -359,6 +372,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void StartBreak(bool isLongBreak = false)
     {
         _consecutivePresenceLostAlerts = 0;
+
+        // 保存笔记到已完成的 session
+        SaveNotesToLastSession();
 
         if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && IsCameraAlertActive)
         {
@@ -395,6 +411,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void SkipBreak()
     {
+        // 保存笔记到已完成的 session
+        SaveNotesToLastSession();
+
         ForceStopCameraAlert();
         _timerService.Reset();
         IsBreakCompleted = false;
@@ -478,6 +497,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void OnPresenceLost()
     {
         if (!AppSettings.PresenceDetectionEnabled) return;
+
+        _sessionPresenceLost = true;
 
         Application.Current?.Dispatcher?.Invoke(() =>
         {
@@ -578,6 +599,34 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (!AppSettings.PopupEnabled) return;
         InAppNotificationRequested?.Invoke(title, message);
+    }
+
+    private void SaveNotesToLastSession()
+    {
+        if (_lastCompletedSessionId != null && !string.IsNullOrWhiteSpace(CurrentNotes))
+        {
+            _storageService.UpdateSession(_lastCompletedSessionId, session =>
+            {
+                session.Notes = CurrentNotes.Trim();
+            });
+        }
+        CurrentNotes = string.Empty;
+        _lastCompletedSessionId = null;
+    }
+
+    private void RefreshStreak()
+    {
+        var completed = _storageService.LoadSessions()
+            .Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        StreakDays = InsightEngine.CalculateStreak(completed);
+
+        ShowStreakEncouragement = false;
+        if (StreakDays == 0 && completed.Any())
+        {
+            var lastSession = completed.MaxBy(s => s.EndTime);
+            if (lastSession != null && (DateTime.Today - lastSession.EndTime!.Value.Date).TotalDays >= 1)
+                ShowStreakEncouragement = true;
+        }
     }
 
     private void CheckMilestones()

@@ -6,11 +6,12 @@
         WindowStyle="None" AllowsTransparency="True" Topmost="True"
         ShowInTaskbar="False" ShowActivated="False"
         Background="Transparent"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Closing="Window_Closing">
     <Border CornerRadius="16" Background="#CC1A1A1A">
         <Ellipse x:Name="IndicatorDot" Width="14" Height="14"
                  VerticalAlignment="Center" HorizontalAlignment="Center"
-                 Fill="Gray">
+                 Fill="Gray" ToolTip="摄像头正在检测你的专注状态">
             <Ellipse.Effect>
                 <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.9" Color="Gray"/>
             </Ellipse.Effect>
