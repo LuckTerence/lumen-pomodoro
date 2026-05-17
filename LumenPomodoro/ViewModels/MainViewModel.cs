@@ -162,6 +162,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public event Action? TrayMenuNeedsUpdate;
     public event Action<string, string>? NotificationRequested;
     public event Action<string, string>? InAppNotificationRequested;
+    public event Action<string>? CountdownStartRequested;
+    public event Action<string>? CountdownUpdateRequested;
+    public event Action? CountdownStopRequested;
+
+    private bool _isWindowTopmost;
+    public bool IsWindowTopmost
+    {
+        get => _isWindowTopmost;
+        set { if (_isWindowTopmost != value) { _isWindowTopmost = value; OnPropertyChanged(); } }
+    }
 
     public MainViewModel(IStorageService storageService, ITimerService timerService,
         ICameraService cameraService, ISoundService soundService)
@@ -217,6 +227,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             Progress = (int)((double)e.RemainingSeconds / e.TotalSeconds * 100);
         }
+
+        // 更新灵动岛倒计时
+        if (!IsWindowTopmost)
+        {
+            CountdownUpdateRequested?.Invoke(RemainingTime);
+        }
     }
 
     private void TimerService_TimerCompleted(object? sender, TimerCompletedEventArgs e)
@@ -250,6 +266,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ShowInAppNotification("专注完成", "该休息了！");
             CheckMilestones();
             RefreshStreak();
+            CountdownStopRequested?.Invoke();
         }
         else if (e.CompletedMode == TimerMode.Break)
         {
@@ -257,6 +274,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ForceStopCameraAlert();
             PlayNotificationSound("BreakComplete");
             ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
+            CountdownStopRequested?.Invoke();
         }
     }
 
@@ -345,6 +363,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsBreakCompleted = false;
         IsPendingBreak = false;
         _timerService.StartFocus(AppSettings.WorkMinutes);
+
+        // 启动灵动岛倒计时
+        if (!IsWindowTopmost)
+        {
+            var taskName = SelectedTask.Name;
+            CountdownStartRequested?.Invoke($"专注 · {taskName}");
+        }
     }
 
     public void PauseFocus()
@@ -367,6 +392,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPendingBreak = false;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
+        CountdownStopRequested?.Invoke();
     }
 
     public void StartBreak(bool isLongBreak = false)
@@ -398,6 +424,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPendingBreak = false;
 
         _currentSession = null;
+
+        // 启动灵动岛倒计时
+        if (!IsWindowTopmost)
+        {
+            var breakType = isLongBreak ? "长休息" : "短休息";
+            CountdownStartRequested?.Invoke(breakType);
+        }
     }
 
     public void EndBreak()
@@ -407,6 +440,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsBreakCompleted = true;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
+
+        // 停止灵动岛倒计时
+        CountdownStopRequested?.Invoke();
     }
 
     public void SkipBreak()
@@ -421,6 +457,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPendingBreak = false;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
+
+        // 停止灵动岛倒计时
+        CountdownStopRequested?.Invoke();
     }
 
     private void StartCameraAlert()
