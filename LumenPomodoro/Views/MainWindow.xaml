@@ -64,7 +64,8 @@
             </StackPanel>
         </Grid>
 
-        <ui:NavigationView Grid.Row="1" x:Name="NavView" PaneDisplayMode="Bottom" Transition="SlideBottom">
+        <ui:NavigationView Grid.Row="1" x:Name="NavView" PaneDisplayMode="Bottom" Transition="SlideBottom"
+                           Background="{DynamicResource SpotifyCanvasBrush}">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
                 <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
