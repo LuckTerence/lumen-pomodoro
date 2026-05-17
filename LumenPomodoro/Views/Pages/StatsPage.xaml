@@ -55,6 +55,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{Binding CompletedPomodoros, StringFormat='{}{0}'}"
@@ -67,6 +68,12 @@
                                    FontSize="36" FontWeight="SemiBold"
                                    Foreground="{StaticResource SuccessBrush}" />
                         <TextBlock Text="专注分钟" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{Binding AvgQualityScore, StringFormat='{}{0:F1}'}"
+                                   FontSize="36" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock Text="平均质量" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
                     </StackPanel>
                 </Grid>
             </Border>
