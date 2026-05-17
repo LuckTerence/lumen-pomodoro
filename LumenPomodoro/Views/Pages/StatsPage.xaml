@@ -61,26 +61,26 @@
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{Binding CompletedPomodoros, StringFormat='{}{0}'}"
                                    FontSize="36" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
-                        <TextBlock Text="完成番茄" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                                   Foreground="{DynamicResource SpotifyGreenBrush}" />
+                        <TextBlock Text="完成番茄" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontSize="12" />
                     </StackPanel>
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="{Binding TotalFocusMinutes, StringFormat='{}{0}'}"
                                    FontSize="36" FontWeight="SemiBold"
                                    Foreground="{StaticResource SuccessBrush}" />
-                        <TextBlock Text="专注分钟" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                        <TextBlock Text="专注分钟" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontSize="12" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="{Binding AvgQualityScore, StringFormat='{}{0:F1}'}"
                                    FontSize="36" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                        <TextBlock Text="平均质量" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                                   Foreground="{DynamicResource SpotifyTextPrimaryBrush}" />
+                        <TextBlock Text="平均质量" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontSize="12" />
                     </StackPanel>
                     <StackPanel Grid.Column="3">
                         <TextBlock Text="{Binding StreakDays, StringFormat='{}{0}'}"
                                    FontSize="36" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                        <TextBlock Text="连续天数" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                                   Foreground="{DynamicResource SpotifyTextPrimaryBrush}" />
+                        <TextBlock Text="连续天数" Foreground="{DynamicResource SpotifyTextSecondaryBrush}" FontSize="12" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -102,7 +102,7 @@
                                     <ProgressBar Minimum="0" Maximum="100"
                                                  Value="{Binding ProgressPercent}"
                                                  Height="8"
-                                                 Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                 Foreground="{DynamicResource SpotifyGreenBrush}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -203,7 +203,7 @@
                                                 <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsPositive}" Value="False">
-                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource SpotifyErrorRedBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -229,14 +229,14 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Margin="0,0,0,8" Padding="12"
-                                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                        Background="{DynamicResource SpotifySurface2Brush}"
                                         CornerRadius="6">
                                     <StackPanel>
                                         <TextBlock Text="{Binding Title}" Style="{StaticResource Caption}"
                                                    FontWeight="SemiBold" />
                                         <TextBlock Text="{Binding Description}" Style="{StaticResource FinePrint}"
                                                    Margin="0,4,0,0" TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                   Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
@@ -250,12 +250,12 @@
                 <StackPanel>
                     <TextBlock Text="数据导出" Style="{StaticResource SectionTitle}" />
                     <StackPanel Orientation="Horizontal">
-                        <ui:Button Appearance="Secondary" Click="ExportCsv_Click" Padding="12,8" Margin="0,0,8,0">
+                        <Button Style="{StaticResource SpotifyButton}" Click="ExportCsv_Click" Padding="12,8" Margin="0,0,8,0">
                             导出 CSV
-                        </ui:Button>
-                        <ui:Button Appearance="Secondary" Click="ExportJson_Click" Padding="12,8">
+                        </Button>
+                        <Button Style="{StaticResource SpotifyButton}" Click="ExportJson_Click" Padding="12,8">
                             导出 JSON
-                        </ui:Button>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>

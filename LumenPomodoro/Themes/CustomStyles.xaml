@@ -41,6 +41,7 @@
     <SolidColorBrush x:Key="SpotifyTextTertiaryBrush" Color="{StaticResource SpotifyTextTertiary}" />
     <SolidColorBrush x:Key="SpotifyGreenBrush" Color="{StaticResource SpotifyGreen}" />
     <SolidColorBrush x:Key="SpotifyGreenPressedBrush" Color="{StaticResource SpotifyGreenPressed}" />
+    <SolidColorBrush x:Key="SpotifyErrorRedBrush" Color="{StaticResource SpotifyErrorRed}" />
 
     <Style x:Key="TimerText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="80" />
