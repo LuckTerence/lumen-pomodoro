@@ -164,6 +164,14 @@
                 </StackPanel>
             </Border>
 
+            <!-- 效率趋势 -->
+            <Border Style="{StaticResource StatsSection}">
+                <StackPanel>
+                    <TextBlock Text="效率趋势" Style="{StaticResource SectionTitle}" />
+                    <controls:EfficiencyTrendChart EfficiencyData="{Binding EfficiencyTrend}" />
+                </StackPanel>
+            </Border>
+
             <!-- 对比自己 -->
             <Border Style="{StaticResource StatsSection}">
                 <StackPanel>

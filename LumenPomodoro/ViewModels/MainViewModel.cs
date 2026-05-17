@@ -639,6 +639,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (todayMinutes >= AppSettings.DailyGoalMinutes && AppSettings.DailyGoalMinutes > 0)
             ShowInAppNotification("里程碑", "今日目标达成！");
+
+        if (AppSettings.DailyTargetPomodoros > 0 && todayCount >= AppSettings.DailyTargetPomodoros)
+            ShowInAppNotification("里程碑", "今日番茄目标达成！");
     }
 
     public DailyReport? GetYesterdayReport()

@@ -11,4 +11,5 @@ public interface IInsightEngine
     List<Insight> GetInsights(List<FocusSession> sessions, List<TaskItem> tasks);
     List<GoalProgress> GetGoalProgress(List<FocusSession> sessions, int dailyGoalMinutes, int weeklyGoalMinutes);
     List<ComparisonData> GetComparisons(List<FocusSession> sessions);
+    List<EfficiencyDataPoint> GetEfficiencyTrend(List<FocusSession> sessions);
 }

@@ -72,3 +72,11 @@ public class CategoryStats
     public int PomodoroCount { get; set; }
     public string Color { get; set; } = "#3B82F6";
 }
+
+public class EfficiencyDataPoint
+{
+    public DateTime WeekStart { get; set; }
+    public double CompletionRate { get; set; } // 0-1
+    public double AvgFocusMinutes { get; set; }
+    public double AvgQualityScore { get; set; } // 1-3
+}

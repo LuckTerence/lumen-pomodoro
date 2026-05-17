@@ -193,6 +193,35 @@ public class InsightEngine : IInsightEngine
             });
         }
 
+        // 1.5 最佳学习时段推荐 — 基于质量分
+        var hourQualityGroups = completed
+            .GroupBy(s => s.EndTime!.Value.Hour)
+            .Select(g => new
+            {
+                Hour = g.Key,
+                Count = g.Count(),
+                AvgQuality = g.Average(s => s.QualityScore),
+                AvgMinutes = g.Average(s => s.FocusMinutes)
+            })
+            .Where(x => x.Count >= MinSessionsForInsight)
+            .ToList();
+
+        if (hourQualityGroups.Count > 0 && insights.Count < MaxInsightCount)
+        {
+            var maxMinutes = hourQualityGroups.Max(x => x.AvgMinutes);
+            var bestTimeSlot = hourQualityGroups
+                .OrderByDescending(x => x.AvgQuality * 0.6 + (x.AvgMinutes / maxMinutes) * 0.4)
+                .First();
+
+            var timeRange = $"{bestTimeSlot.Hour}:00-{bestTimeSlot.Hour + 2}:00";
+            insights.Add(new Insight
+            {
+                Title = "最佳学习时段",
+                Description = $"你{timeRange}效率最高，建议安排重要科目。",
+                Type = InsightType.PeakHour
+            });
+        }
+
         // 2. 最佳日期 — 直接用预计算的 dayGroups
         var bestDay = dayGroups.OrderByDescending(x => x.Total).FirstOrDefault();
 
@@ -432,5 +461,34 @@ public class InsightEngine : IInsightEngine
             ChangePercent = Math.Round(changePercent, 1),
             IsPositive = changePercent >= 0
         };
+    }
+
+    public List<EfficiencyDataPoint> GetEfficiencyTrend(List<FocusSession> sessions)
+    {
+        var today = DateTime.Today;
+        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
+
+        var result = new List<EfficiencyDataPoint>(8);
+        for (int i = 7; i >= 0; i--)
+        {
+            var weekStart = thisMonday.AddDays(-7 * i);
+            var weekEnd = weekStart.AddDays(7);
+
+            var weekSessions = sessions
+                .Where(s => s.StartTime.Date >= weekStart.Date && s.StartTime.Date < weekEnd.Date)
+                .ToList();
+
+            var completed = weekSessions.Where(s => s.Completed).ToList();
+
+            result.Add(new EfficiencyDataPoint
+            {
+                WeekStart = weekStart,
+                CompletionRate = weekSessions.Count > 0 ? Math.Round((double)completed.Count / weekSessions.Count, 2) : 0,
+                AvgFocusMinutes = completed.Count > 0 ? Math.Round(completed.Average(s => s.FocusMinutes), 1) : 0,
+                AvgQualityScore = completed.Count > 0 ? Math.Round(completed.Average(s => s.QualityScore), 1) : 0
+            });
+        }
+        return result;
     }
 }

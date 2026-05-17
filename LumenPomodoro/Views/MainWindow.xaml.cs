@@ -47,6 +47,7 @@ public partial class MainWindow : FluentWindow
         Loaded += MainWindow_Loaded;
         Activated += MainWindow_Activated;
         Deactivated += MainWindow_Deactivated;
+        KeyDown += MainWindow_KeyDown;
     }
 
     private void MainWindow_Activated(object? sender, EventArgs e)
@@ -91,6 +92,33 @@ public partial class MainWindow : FluentWindow
     public void HandleWake()
     {
         _viewModel.RefreshTimerOnWake();
+    }
+
+    private int _currentTabIndex = 0;
+    private readonly Type[] _pageTypes = [typeof(TimerPage), typeof(TasksPage), typeof(StatsPage), typeof(SettingsPage)];
+
+    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+    {
+        // Tab 切换页面
+        if (e.Key == Key.Tab)
+        {
+            if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
+            {
+                // Shift+Tab: 上一个页面
+                _currentTabIndex = (_currentTabIndex - 1 + _pageTypes.Length) % _pageTypes.Length;
+            }
+            else
+            {
+                // Tab: 下一个页面
+                _currentTabIndex = (_currentTabIndex + 1) % _pageTypes.Length;
+            }
+
+            NavView.Navigate(_pageTypes[_currentTabIndex]);
+            e.Handled = true;
+            return;
+        }
+
+        base.OnKeyDown(e);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

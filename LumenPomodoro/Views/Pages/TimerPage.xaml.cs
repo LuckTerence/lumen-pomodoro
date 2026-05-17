@@ -284,4 +284,33 @@ public partial class TimerPage : Page
     private void StopCameraButton_Click(object sender, RoutedEventArgs e) => _viewModel.StopCameraAlert();
     private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(5); UpdateStepLabel(); }
     private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(-5); UpdateStepLabel(); }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        // 数字键 1-9 快速选择任务
+        if (e.Key >= Key.D1 && e.Key <= Key.D9)
+        {
+            int index = e.Key - Key.D1;
+            if (index < _viewModel.Tasks.Count)
+            {
+                _viewModel.SelectedTask = _viewModel.Tasks[index];
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // 数字键 1-9（小键盘）
+        if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)
+        {
+            int index = e.Key - Key.NumPad1;
+            if (index < _viewModel.Tasks.Count)
+            {
+                _viewModel.SelectedTask = _viewModel.Tasks[index];
+                e.Handled = true;
+                return;
+            }
+        }
+
+        base.OnKeyDown(e);
+    }
 }

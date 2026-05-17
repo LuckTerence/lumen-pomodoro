@@ -20,6 +20,7 @@ public class Settings
     public int PresenceDetectionSeconds { get; set; } = 5;
     public int DailyGoalMinutes { get; set; } = 120;
     public int WeeklyGoalMinutes { get; set; } = 600;
+    public int DailyTargetPomodoros { get; set; } = 8;
     
     public bool SoundEnabled { get; set; } = true;
     public bool PopupEnabled { get; set; } = true;

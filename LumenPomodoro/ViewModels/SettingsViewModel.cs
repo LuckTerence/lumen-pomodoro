@@ -43,6 +43,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private bool _animationEnabled;
     private int _dailyGoalMinutes = 120;
     private int _weeklyGoalMinutes = 600;
+    private int _dailyTargetPomodoros = 8;
     private DateTime? _examDate;
     private string _examName = "考研";
 
@@ -180,6 +181,12 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { var v = Math.Clamp(value, 0, 10080); if (_weeklyGoalMinutes != v) { _weeklyGoalMinutes = v; OnPropertyChanged(); } }
     }
 
+    public int DailyTargetPomodoros
+    {
+        get => _dailyTargetPomodoros;
+        set { var v = Math.Clamp(value, 0, 50); if (_dailyTargetPomodoros != v) { _dailyTargetPomodoros = v; OnPropertyChanged(); } }
+    }
+
     public bool PresenceDetectionEnabled
     {
         get => _presenceDetectionEnabled;
@@ -244,6 +251,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         AnimationEnabled = settings.AnimationEnabled;
         DailyGoalMinutes = settings.DailyGoalMinutes;
         WeeklyGoalMinutes = settings.WeeklyGoalMinutes;
+        DailyTargetPomodoros = settings.DailyTargetPomodoros;
         PresenceDetectionEnabled = settings.PresenceDetectionEnabled;
         PresenceDetectionSeconds = settings.PresenceDetectionSeconds;
         ExamDate = settings.ExamDate;
@@ -292,6 +300,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             AnimationEnabled = AnimationEnabled,
             DailyGoalMinutes = DailyGoalMinutes,
             WeeklyGoalMinutes = WeeklyGoalMinutes,
+            DailyTargetPomodoros = DailyTargetPomodoros,
             PresenceDetectionEnabled = PresenceDetectionEnabled,
             PresenceDetectionSeconds = PresenceDetectionSeconds,
             ExamDate = ExamDate,

@@ -33,6 +33,7 @@ public class StatsViewModel : INotifyPropertyChanged
     private List<Insight> _insights = [];
     private List<GoalProgress> _goalProgress = [];
     private List<ComparisonData> _comparisons = [];
+    private List<EfficiencyDataPoint> _efficiencyTrend = [];
     private List<CategoryStats> _categoryBreakdown = [];
     private bool _hasZeroCategory;
     private string _zeroCategoryWarning = string.Empty;
@@ -131,6 +132,12 @@ public class StatsViewModel : INotifyPropertyChanged
     {
         get => _comparisons;
         set { if (_comparisons != value) { _comparisons = value; OnPropertyChanged(); } }
+    }
+
+    public List<EfficiencyDataPoint> EfficiencyTrend
+    {
+        get => _efficiencyTrend;
+        set { if (_efficiencyTrend != value) { _efficiencyTrend = value; OnPropertyChanged(); } }
     }
 
     public List<CategoryStats> CategoryBreakdown
@@ -272,6 +279,7 @@ public class StatsViewModel : INotifyPropertyChanged
         var settings = _storageService.LoadSettings();
         GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
         Comparisons = _insightEngine.GetComparisons(sessions);
+        EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions);
 
         // 科目均衡分析
         var taskDict = tasks.ToDictionary(t => t.Id, t => t);
