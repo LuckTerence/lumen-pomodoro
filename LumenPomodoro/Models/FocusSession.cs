@@ -28,4 +28,6 @@ public class DailyReport
     public int TotalMinutes { get; set; }
     public string MainTask { get; set; } = string.Empty;
     public int StreakDays { get; set; }
+    public double AvgQualityScore { get; set; }
+    public int UniqueTasksCount { get; set; }
 }

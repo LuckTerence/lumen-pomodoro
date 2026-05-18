@@ -3,59 +3,182 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="昨日学习报告"
-        Width="360" Height="Auto" SizeToContent="Height"
+        Width="380" Height="Auto" SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" AllowsTransparency="True"
-        Background="Transparent" ShowInTaskbar="False">
+        Background="Transparent" ShowInTaskbar="False"
+        Topmost="True">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- 极光渐变 -->
+            <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#2563EB" Offset="0" />
+                <GradientStop Color="#34D399" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- 成就徽章渐变 -->
+            <LinearGradientBrush x:Key="AchievementGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#F59E0B" Offset="0" />
+                <GradientStop Color="#34D399" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- 数字滚动字体 -->
+            <FontFamily x:Key="NumberFont">Consolas</FontFamily>
         </ResourceDictionary>
     </Window.Resources>
-    <Border Background="{DynamicResource SpotifySurface1Brush}" CornerRadius="12"
-            Padding="24" Margin="8">
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="Black"/>
-        </Border.Effect>
-        <StackPanel>
-            <TextBlock Text="昨日学习报告" FontSize="18" FontWeight="SemiBold"
-                       HorizontalAlignment="Center" Margin="0,0,0,16"
-                       Foreground="{DynamicResource SpotifyTextPrimaryBrush}" />
-            <TextBlock x:Name="DateText" FontSize="13" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
-                       HorizontalAlignment="Center" Margin="0,0,0,20" />
-            <Grid Margin="0,0,0,16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock x:Name="PomodoroCountText" FontSize="32" FontWeight="SemiBold"
-                               Foreground="{DynamicResource SpotifyGreenBrush}" HorizontalAlignment="Center" />
-                    <TextBlock Text="番茄钟" FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
-                               HorizontalAlignment="Center" />
+    <Grid>
+        <Border Background="{DynamicResource SpotifySurface1Brush}" CornerRadius="16"
+                Padding="0" Margin="16" MaxWidth="420">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="0" BlurRadius="24" Opacity="0.4" Color="#000000"/>
+            </Border.Effect>
+            <StackPanel>
+                <!-- 头部装饰条 -->
+                <Border Height="3" Background="{StaticResource AuroraGradient}" CornerRadius="16,16,0,0" />
+
+                <StackPanel Margin="24,20,24,0">
+                    <!-- 标题 -->
+                    <TextBlock Text="📅 昨日学习报告" FontSize="17" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" Margin="0,0,0,4"
+                               Foreground="{DynamicResource SpotifyTextPrimaryBrush}" />
+                    <TextBlock x:Name="DateText" FontSize="13" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,0,0,20" />
+
+                    <!-- 核心数据卡片 -->
+                    <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 分隔线 -->
+                            <Rectangle Grid.Column="1" Fill="{DynamicResource SpotifyDividerBrush}" Width="1"
+                                       VerticalAlignment="Stretch" Margin="0,8" Opacity="0.5" />
+
+                            <!-- 番茄钟 -->
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock x:Name="PomodoroCountText" FontSize="40" FontWeight="SemiBold"
+                                           FontFamily="{StaticResource NumberFont}"
+                                           Foreground="{StaticResource AuroraGradient}" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.3" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock Text="🍅 番茄钟" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0" />
+                            </StackPanel>
+
+                            <!-- 专注时间 -->
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock x:Name="MinutesText" FontSize="40" FontWeight="SemiBold"
+                                           FontFamily="{StaticResource NumberFont}"
+                                           Foreground="{StaticResource AuroraGradient}" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.3" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock Text="⏱️ 专注分钟" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 今日学习内容 -->
+                    <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="📚 主要学习内容" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
+                            <TextBlock x:Name="MainTaskText" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SpotifyTextPrimaryBrush}"
+                                       Margin="0,8,0,0" TextWrapping="Wrap" />
+                            <Border Background="{DynamicResource SpotifySurface3Brush}" CornerRadius="6"
+                                    Padding="10,8" Margin="0,12,0,0">
+                                <TextBlock x:Name="StreakText" FontSize="12"
+                                           Foreground="{DynamicResource SpotifyTextSecondaryBrush}" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 成就徽章区域 -->
+                    <Border x:Name="AchievementBadge" Background="{StaticResource AchievementGradient}"
+                            CornerRadius="12" Padding="16" Margin="0,0,0,16" Visibility="Collapsed">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="12" Opacity="0.3" Color="#F59E0B"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock x:Name="AchievementIcon" FontSize="24" Margin="0,0,8,0" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="AchievementTitle" FontSize="13" FontWeight="Bold"
+                                           Foreground="#FFFFFF" />
+                                <TextBlock x:Name="AchievementDesc" FontSize="11"
+                                           Foreground="#FFF8E1" Opacity="0.9" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 统计摘要 -->
+                    <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="📊 学习统计" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                    <Ellipse Width="8" Height="8" Fill="#34D399" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="FocusSessionsText" FontSize="12"
+                                               Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+                                               Text="完成专注会话: --" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,4">
+                                    <Ellipse Width="8" Height="8" Fill="#60A5FA" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="AvgQualityText" FontSize="12"
+                                               Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+                                               Text="平均质量: --" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Ellipse Width="8" Height="8" Fill="#F472B6" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="TotalTasksText" FontSize="12"
+                                               Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+                                               Text="完成科目: --" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Ellipse Width="8" Height="8" Fill="#A78BFA" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="BestStreakText" FontSize="12"
+                                               Foreground="{DynamicResource SpotifyTextTertiaryBrush}"
+                                               Text="当日连击: --" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 鼓励语 -->
+                    <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,20">
+                        <TextBlock x:Name="EncouragementText" FontSize="13" FontStyle="Italic"
+                                   Foreground="{DynamicResource SpotifyTextSecondaryBrush}" TextWrapping="Wrap"
+                                   HorizontalAlignment="Center" TextAlignment="Center" />
+                    </Border>
+
+                    <!-- 关闭按钮 -->
+                    <Button Style="{StaticResource SpotifyPillButton}" Click="Close_Click"
+                            HorizontalAlignment="Center" Padding="40,12" MinWidth="140"
+                            Background="{StaticResource AuroraGradient}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🚀 继续学习" FontSize="15" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock x:Name="MinutesText" FontSize="32" FontWeight="SemiBold"
-                               Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
-                    <TextBlock Text="专注分钟" FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
-            </Grid>
-            <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="8" Padding="12" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}">
-                        <Run Text="主要学习: " />
-                        <Run x:Name="MainTaskText" FontWeight="SemiBold" />
-                    </TextBlock>
-                    <TextBlock x:Name="StreakText" FontSize="12" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
-                               Margin="0,4,0,0" />
-                </StackPanel>
-            </Border>
-            <Button Style="{StaticResource SpotifyPillButton}" Click="Close_Click" HorizontalAlignment="Center" Padding="32,10">
-                知道了
-            </Button>
-        </StackPanel>
-    </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
 </Window>

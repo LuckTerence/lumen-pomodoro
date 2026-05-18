@@ -695,13 +695,18 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             .OrderByDescending(g => g.Sum(s => s.FocusMinutes))
             .First().Key;
 
+        var uniqueTasks = sessions.Select(s => s.TaskName).Distinct().Count();
+        var avgQuality = sessions.Where(s => s.QualityScore > 0).Average(s => (double)s.QualityScore);
+
         return new DailyReport
         {
             Date = yesterday,
             CompletedPomodoros = sessions.Count,
             TotalMinutes = sessions.Sum(s => s.FocusMinutes),
             MainTask = mainTask,
-            StreakDays = CalculateStreak()
+            StreakDays = CalculateStreak(),
+            AvgQualityScore = Math.Round(avgQuality, 1),
+            UniqueTasksCount = uniqueTasks
         };
     }
 
