@@ -43,15 +43,80 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
+            if (!File.Exists(_settingsFile))
+            {
+                Log.Debug("配置文件不存在，返回默认设置");
+                return new Settings();
+            }
+
             try
             {
                 var content = File.ReadAllText(_settingsFile);
-                return JsonSerializer.Deserialize<Settings>(content) ?? new Settings();
+                var settings = JsonSerializer.Deserialize<Settings>(content);
+                if (settings == null)
+                {
+                    Log.Warning("配置文件反序列化返回null，返回默认设置");
+                    return TryRecoverSettingsFromBackup() ?? new Settings();
+                }
+                return settings;
             }
-            catch
+            catch (JsonException ex)
             {
-                return new Settings();
+                Log.Error(ex, "配置文件JSON格式错误，尝试从备份恢复");
+                return TryRecoverSettingsFromBackup() ?? new Settings();
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error(ex, "配置文件访问被拒绝");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "加载配置文件失败");
+                return TryRecoverSettingsFromBackup() ?? new Settings();
+            }
+        }
+    }
+
+    private Settings? TryRecoverSettingsFromBackup()
+    {
+        var backupFile = _settingsFile + ".bak";
+        if (File.Exists(backupFile))
+        {
+            try
+            {
+                var content = File.ReadAllText(backupFile);
+                var settings = JsonSerializer.Deserialize<Settings>(content);
+                if (settings != null)
+                {
+                    Log.Information("从备份文件恢复配置成功");
+                    // 恢复主配置文件
+                    File.WriteAllText(_settingsFile, content);
+                    return settings;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "从备份恢复配置失败");
+            }
+        }
+        Log.Warning("无可用备份，返回默认设置");
+        return null;
+    }
+
+    private void CreateBackup(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                var backupFile = filePath + ".bak";
+                File.Copy(filePath, backupFile, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "创建备份文件失败");
         }
     }
 
@@ -59,6 +124,7 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
+            CreateBackup(_settingsFile);
             var content = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_settingsFile, content);
         }
@@ -100,6 +166,7 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
+            CreateBackup(_tasksFile);
             var content = JsonSerializer.Serialize(tasks, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_tasksFile, content);
             UpdateTasksCache(tasks);
