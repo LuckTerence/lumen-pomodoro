@@ -110,11 +110,15 @@
 
                         <!-- 播放按钮（极光渐变） -->
                         <Button x:Name="PlayButton" Click="StartFocusButton_Click" Width="64" Height="64"
+                                HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                                VerticalAlignment="Center" VerticalContentAlignment="Center"
                                 Cursor="Hand" BorderThickness="0" Background="Transparent">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Grid x:Name="PlayButtonGrid">
-                                        <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64">
+                                    <Grid x:Name="PlayButtonGrid" Width="64" Height="64"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Ellipse.Effect>
                                                 <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="#34D399"/>
                                             </Ellipse.Effect>

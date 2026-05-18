@@ -1,5 +1,23 @@
 # 开发日志
 
+## [2026-05-18] Bug 修复 — 计时页启动按钮与灵动岛水平居中
+
+**完成时间**: 2026-05-18
+
+**涉及模块**: TimerPage, DynamicIslandNotificationWindow
+
+**修改文件数**: 2 个
+
+### 修复摘要
+
+1. **启动按钮与“待开始”中心线不一致 [中]** — 播放按钮模板未显式约束根布局和内容对齐，可能受按钮默认内容对齐与模板测量影响。修复：为播放按钮和模板根节点补齐水平/垂直居中约束，并固定 64px 视觉盒。
+2. **灵动岛 x 轴偏右 [中]** — `SizeToContent` 窗口只在显示前按工作区宽度定位，内容实际尺寸变化后没有重新居中，且工作区坐标不等同于屏幕物理中心。修复：按主屏幕宽度计算顶部居中，并在窗口尺寸变化时重新计算 x 坐标，保持 y 轴不变。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o C:\tmp\lumen-build -p:UseAppHost=false`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false --logger "console;verbosity=normal"`：通过，60 passed / 2 skipped。
+
 ## [2026-05-18] Bug 修复 — 深色下拉框与统计页窄窗口裁切
 
 **完成时间**: 2026-05-18 09:26:36 +08:00

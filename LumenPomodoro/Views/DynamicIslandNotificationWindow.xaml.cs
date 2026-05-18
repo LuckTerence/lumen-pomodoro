@@ -23,6 +23,7 @@ public partial class DynamicIslandNotificationWindow : Window
     public DynamicIslandNotificationWindow()
     {
         InitializeComponent();
+        SizeChanged += (_, _) => CenterAtScreenTop();
     }
 
     /// <summary>
@@ -343,12 +344,16 @@ public partial class DynamicIslandNotificationWindow : Window
         UpdateLayout();
 
         // 定位：屏幕顶部居中
-        var workArea = SystemParameters.WorkArea;
-        var width = ActualWidth > 0 ? ActualWidth : DesiredSize.Width;
-        Left = workArea.Left + (workArea.Width - width) / 2;
-        Top = workArea.Top + 12;
+        CenterAtScreenTop();
 
         if (!IsVisible) Show();
+    }
+
+    private void CenterAtScreenTop()
+    {
+        var width = ActualWidth > 0 ? ActualWidth : DesiredSize.Width;
+        Left = SystemParameters.VirtualScreenLeft + (SystemParameters.PrimaryScreenWidth - width) / 2;
+        Top = SystemParameters.WorkArea.Top + 12;
     }
 
     private void StopAllAnimations()
