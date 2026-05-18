@@ -34,7 +34,7 @@ public class TrayService : ITrayService
         {
             ToolTipText = "Lumen Pomodoro",
             Visibility = Visibility.Visible,
-            IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/LOGO.png"))
+            IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/app.ico"))
         };
 
         CreateMenu();
