@@ -50,7 +50,6 @@
             Background="#A61A1A1E"
             BorderBrush="#26FFFFFF"
             BorderThickness="1"
-            Margin="8"
             MouseLeftButtonDown="WindowDragArea_MouseLeftButtonDown"
             RenderTransformOrigin="0.5,0.5">
         <Border.Effect>
