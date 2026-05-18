@@ -224,6 +224,7 @@ public class StorageService : IStorageService
     private void SaveSessionsWithTransaction(List<FocusSession> sessions)
     {
         var backupFile = _sessionsFile + ".bak";
+        var tempFile = _sessionsFile + ".tmp";
 
         try
         {
@@ -234,7 +235,6 @@ public class StorageService : IStorageService
                 File.Copy(_sessionsFile, backupFile, true);
             }
 
-            var tempFile = _sessionsFile + ".tmp";
             File.WriteAllText(tempFile, content);
 
             if (File.Exists(_sessionsFile))
@@ -260,6 +260,7 @@ public class StorageService : IStorageService
             {
                 File.Copy(backupFile, _sessionsFile, true);
             }
+            try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
             throw;
         }
     }
@@ -270,7 +271,13 @@ public class StorageService : IStorageService
         {
             if (_cachedTodayStats != null && _cacheDate == DateTime.Today)
             {
-                return _cachedTodayStats;
+                return new DailyStats
+                {
+                    CompletedPomodoros = _cachedTodayStats.CompletedPomodoros,
+                    TotalFocusMinutes = _cachedTodayStats.TotalFocusMinutes,
+                    TaskStats = new Dictionary<string, int>(_cachedTodayStats.TaskStats),
+                    CurrentStreak = _cachedTodayStats.CurrentStreak
+                };
             }
 
             var sessions = GetOrLoadSessions();

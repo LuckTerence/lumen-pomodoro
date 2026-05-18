@@ -540,7 +540,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _sessionPresenceLost = true;
 
-        Application.Current?.Dispatcher?.Invoke(() =>
+        Application.Current?.Dispatcher?.BeginInvoke(() =>
         {
             _consecutivePresenceLostAlerts++;
             if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
@@ -573,7 +573,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void ShowCameraIndicator(Color color)
     {
         if (Application.Current?.Dispatcher == null) return;
-        Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
             _indicatorWindow ??= new CameraIndicatorWindow();
             _indicatorWindow.ShowIndicator(color);
@@ -583,7 +583,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void HideCameraIndicator()
     {
         if (Application.Current?.Dispatcher == null) return;
-        Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.BeginInvoke(() =>
         {
             _indicatorWindow?.HideIndicator();
         });
@@ -596,12 +596,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             case CameraAlertLevel.Light:
                 break;
             case CameraAlertLevel.Medium:
-                ShowInAppNotification("专注完成", "该休息了！");
                 break;
             case CameraAlertLevel.Severe:
-                ShowInAppNotification("专注完成", "该休息了！");
                 if (Application.Current?.Dispatcher == null) return;
-                Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.BeginInvoke(() =>
                 {
                     if (Application.Current.MainWindow is Window mainWindow)
                     {
@@ -688,7 +686,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var yesterday = DateTime.Today.AddDays(-1);
         var sessions = _storageService.LoadSessions()
-            .Where(s => s.Completed && s.StartTime.Date == yesterday)
+            .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == yesterday)
             .ToList();
 
         if (!sessions.Any()) return null;
@@ -709,35 +707,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private int CalculateStreak()
     {
-        var sessions = _storageService.LoadSessions()
-            .Where(s => s.Completed)
+        var completed = _storageService.LoadSessions()
+            .Where(s => s.Completed && s.EndTime.HasValue)
             .ToList();
 
-        if (!sessions.Any()) return 0;
-
-        var dates = sessions
-            .Select(s => s.StartTime.Date)
-            .Distinct()
-            .OrderByDescending(d => d)
-            .ToList();
-
-        int streak = 0;
-        var checkDate = DateTime.Today;
-
-        foreach (var date in dates)
-        {
-            if (date == checkDate || date == checkDate.AddDays(-1))
-            {
-                streak++;
-                checkDate = date.AddDays(-1);
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        return streak;
+        return InsightEngine.CalculateStreak(completed);
     }
 
     private void ShowSystemNotification(string title, string message)
@@ -883,7 +857,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            _cameraService.StopCameraAsync().GetAwaiter().GetResult();
+            FireAndForget(_cameraService.StopCameraAsync(), "Dispose 停止摄像头");
         }
         catch (Exception ex)
         {

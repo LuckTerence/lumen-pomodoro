@@ -4,6 +4,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:converters="clr-namespace:LumenPomodoro.Converters"
       xmlns:controls="clr-namespace:LumenPomodoro.Controls"
+      xmlns:local="clr-namespace:LumenPomodoro.Views.Pages"
       ScrollViewer.CanContentScroll="False"
       Background="Transparent">
 
@@ -30,6 +31,11 @@
             </LinearGradientBrush>
         </ResourceDictionary>
     </Page.Resources>
+
+    <Page.InputBindings>
+        <KeyBinding Key="Space" Command="{x:Static local:TimerPage.ToggleCommand}" />
+        <KeyBinding Key="Escape" Command="{x:Static local:TimerPage.ResetCommand}" />
+    </Page.InputBindings>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -64,17 +70,7 @@
                        Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,20"
                        FontSize="13" FontWeight="SemiBold" Foreground="#6B7280"
-                       Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                       Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
 
             <!-- 圆环进度 + 计时器数字 -->
             <Grid Width="240" Height="240">
@@ -332,9 +328,9 @@
             <TextBlock FontSize="12" Foreground="#6B7280"
                        HorizontalAlignment="Center" Margin="0,8,0,0"
                        Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Run Text="{Binding ExamName}" />
+                <Run Text="{Binding ExamName, Mode=OneWay}" />
                 <Run Text=" 倒计时 " />
-                <Run Text="{Binding DaysUntilExam}" FontWeight="SemiBold" Foreground="#34D399" />
+                <Run Text="{Binding DaysUntilExam, Mode=OneWay}" FontWeight="SemiBold" Foreground="#34D399" />
                 <Run Text=" 天" />
             </TextBlock>
 

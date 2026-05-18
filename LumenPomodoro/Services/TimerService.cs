@@ -53,7 +53,7 @@ public class TimerService : ITimerService
             total = _totalSeconds;
         }
 
-        Log.Information("寮€濮嬩笓娉? {Minutes} 鍒嗛挓", minutes);
+        Log.Information("开始专注 {Minutes} 分钟", minutes);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Focus));
         TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Focus));
     }
@@ -75,7 +75,7 @@ public class TimerService : ITimerService
             total = _totalSeconds;
         }
 
-        Log.Information("寮€濮嬩紤鎭? {Minutes} 鍒嗛挓", minutes);
+        Log.Information("开始休息 {Minutes} 分钟", minutes);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Break));
         TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Break));
     }
@@ -99,7 +99,7 @@ public class TimerService : ITimerService
 
         if (shouldInvoke)
         {
-            Log.Debug("璁℃椂鍣ㄦ殏鍋滐紝涔嬪墠妯″紡: {Mode}", oldMode);
+            Log.Debug("计时器暂停，之前模式: {Mode}", oldMode);
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Paused));
         }
     }
@@ -123,7 +123,7 @@ public class TimerService : ITimerService
 
         if (shouldInvoke)
         {
-            Log.Debug("璁℃椂鍣ㄦ仮澶嶏紝妯″紡: {Mode}", restoredMode);
+            Log.Debug("计时器恢复，模式: {Mode}", restoredMode);
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Paused, restoredMode));
         }
     }
@@ -142,7 +142,7 @@ public class TimerService : ITimerService
             _currentMode = TimerMode.Idle;
         }
 
-        Log.Debug("璁℃椂鍣ㄩ噸缃紝涔嬪墠妯″紡: {Mode}", oldMode);
+        Log.Debug("计时器重置，之前模式: {Mode}", oldMode);
         ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
         TimerTick?.Invoke(this, new TimerTickEventArgs(0, 0, TimerMode.Idle));
     }
@@ -191,7 +191,7 @@ public class TimerService : ITimerService
 
         if (shouldComplete)
         {
-            Log.Information("浼戠湢鍞ら啋鍚庤鏃跺櫒瀹屾垚锛屾ā寮? {Mode}", completedMode);
+            Log.Information("休眠唤醒后计时器完成，模式: {Mode}", completedMode);
             TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }
@@ -231,7 +231,7 @@ public class TimerService : ITimerService
 
         if (shouldComplete)
         {
-            Log.Information("璁℃椂鍣ㄨ嚜鐒跺畬鎴愶紝妯″紡: {Mode}", completedMode);
+            Log.Information("计时器自然完成，模式: {Mode}", completedMode);
             TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
         }

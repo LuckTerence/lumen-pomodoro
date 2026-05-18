@@ -33,7 +33,8 @@
                          Foreground="#B3FFFFFF" Padding="12,8" FontSize="13"
                          Margin="0,0,0,12" />
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox x:Name="ColorComboBox" Width="120" Margin="0,0,8,0" SelectedIndex="0" />
+                    <ComboBox x:Name="ColorComboBox" Width="120" Margin="0,0,8,0" SelectedIndex="0"
+                              Background="#3327272A" Foreground="#B3FFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1" />
                     <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand">
                         <Button.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">

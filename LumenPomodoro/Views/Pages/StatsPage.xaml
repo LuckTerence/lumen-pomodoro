@@ -40,9 +40,9 @@
                               Background="Transparent" BorderThickness="0"
                               Foreground="#B3FFFFFF" FontSize="13"
                               SelectionChanged="PeriodCombo_SelectionChanged">
-                        <ComboBoxItem Content="日" />
-                        <ComboBoxItem Content="周" />
-                        <ComboBoxItem Content="月" />
+                        <ComboBoxItem Content="日" Foreground="#B3FFFFFF" Background="#3327272A" />
+                        <ComboBoxItem Content="周" Foreground="#B3FFFFFF" Background="#3327272A" />
+                        <ComboBoxItem Content="月" Foreground="#B3FFFFFF" Background="#3327272A" />
                     </ComboBox>
                 </Border>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">

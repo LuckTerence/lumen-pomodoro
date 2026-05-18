@@ -107,7 +107,7 @@
 
             <!-- ===== 内容区 ===== -->
             <Border Grid.Row="1" Margin="0,0,0,0">
-                <ui:NavigationView x:Name="NavView" PaneDisplayMode="Top" Transition="SlideTop"
+                <ui:NavigationView x:Name="NavView" PaneDisplayMode="Top" Transition="SlideBottom"
                                    IsBackButtonVisible="Collapsed"
                                    Background="Transparent">
                     <ui:NavigationView.MenuItems>

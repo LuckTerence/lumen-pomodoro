@@ -368,34 +368,47 @@ public class CameraService : ICameraService
                 break;
             }
 
+            MediaFrameReader? readerToStop = null;
+            MediaCapture? captureToDispose = null;
+
             lock (_lockObject)
             {
                 if (_startTime.HasValue && (DateTime.Now - _startTime.Value).TotalMinutes >= MaxRunMinutes)
                 {
                     if (_frameReader != null)
                     {
-                        try
-                        {
-                            _frameReader.FrameArrived -= OnFrameArrived;
-                            var stopTask = _frameReader.StopAsync().AsTask();
-                            if (!stopTask.Wait(3000))
-                                Log.Warning("KeepCameraActive: FrameReader.StopAsync 超时");
-                            _frameReader.Dispose();
-                        }
-                        catch { }
+                        _frameReader.FrameArrived -= OnFrameArrived;
+                        readerToStop = _frameReader;
                         _frameReader = null;
                     }
                     if (_mediaCapture != null)
                     {
-                        try { _mediaCapture.Dispose(); } catch { }
+                        captureToDispose = _mediaCapture;
                         _mediaCapture = null;
                     }
                     _isRunning = false;
-                    var msg = $"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放";
-                    Log.Warning(msg);
-                    _errorCallback?.Invoke(msg);
-                    return;
                 }
+            }
+
+            if (readerToStop != null || captureToDispose != null)
+            {
+                if (readerToStop != null)
+                {
+                    try
+                    {
+                        var stopTask = readerToStop.StopAsync().AsTask();
+                        if (!stopTask.Wait(3000))
+                            Log.Warning("KeepCameraActive: FrameReader.StopAsync 超时");
+                        readerToStop.Dispose();
+                    }
+                    catch { }
+                }
+                captureToDispose?.Dispose();
+
+                var msg = $"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放";
+                Log.Warning(msg);
+                _errorCallback?.Invoke(msg);
+                return;
             }
         }
     }
@@ -467,7 +480,9 @@ public class CameraService : ICameraService
         {
             try
             {
-                StopCameraAsync().GetAwaiter().GetResult();
+                var task = StopCameraAsync();
+                if (!task.Wait(5000))
+                    Log.Warning("Dispose 停止摄像头超时");
             }
             catch (Exception ex)
             {

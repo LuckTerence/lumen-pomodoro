@@ -190,6 +190,24 @@
         </Setter>
     </Style>
 
+    <!-- 深色主题 ComboBox 样式 -->
+    <Style TargetType="ComboBox">
+        <Setter Property="Background" Value="#3327272A" />
+        <Setter Property="Foreground" Value="#B3FFFFFF" />
+        <Setter Property="BorderBrush" Value="#26FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- 深色主题 ComboBoxItem 样式 -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="#3327272A" />
+        <Setter Property="Foreground" Value="#B3FFFFFF" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
     <!-- Spotify 圆形播放按钮 -->
     <Style x:Key="SpotifyPlayButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource SpotifyGreenBrush}" />

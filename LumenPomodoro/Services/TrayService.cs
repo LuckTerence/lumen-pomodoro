@@ -178,7 +178,7 @@ public class TrayService : ITrayService
     {
         try
         {
-            _cameraService.StopCameraAsync().GetAwaiter().GetResult();
+            FireAndForget(_cameraService.StopCameraAsync(), "退出时停止摄像头");
         }
         catch (Exception ex)
         {
