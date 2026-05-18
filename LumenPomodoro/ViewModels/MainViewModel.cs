@@ -415,7 +415,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             AppSettings.CameraAlertEnabled &&
             AppSettings.CameraFollowBreakEnabled)
         {
-            FireAndForget(_cameraService.StartCameraAsync(), "启动摄像头(跟随休息)",
+            FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()), "启动摄像头(跟随休息)",
                 ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
             ShowCameraIndicator(Color.FromRgb(0x10, 0xB9, 0x81));
         }
@@ -492,12 +492,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             switch (AppSettings.CameraAlertMode)
             {
                 case CameraAlertMode.FixedDuration:
-                    FireAndForget(_cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds), "摄像头固定时长提醒",
+                    FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds)), "摄像头固定时长提醒",
                         ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
                     cameraStarted = true;
                     break;
                 case CameraAlertMode.UntilConfirm:
-                    FireAndForget(_cameraService.StartCameraAsync(), "摄像头直到确认提醒",
+                    FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()), "摄像头直到确认提醒",
                         ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
                     cameraStarted = true;
                     break;
@@ -530,7 +530,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void ForceStopCameraAlert()
     {
         _consecutivePresenceLostAlerts = 0;
-        FireAndForget(_cameraService.StopCameraAsync(), "停止摄像头");
+        FireAndForgetAsync(Task.Run(() => _cameraService.StopCameraAsync()), "停止摄像头");
         HideCameraIndicator();
     }
 
@@ -818,17 +818,28 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private static async void FireAndForget(Task task, string operationName, Action<Exception>? onError = null)
+    private static async Task FireAndForgetAsync(Task task, string operationName, Action<Exception>? onError = null)
     {
         try
         {
-            await task;
+            await task.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Debug("[{Operation}] 操作被取消", operationName);
         }
         catch (Exception ex)
         {
             Log.Warning(ex, "FireAndForget [{Operation}] 异常", operationName);
             onError?.Invoke(ex);
         }
+    }
+
+    // 兼容旧调用的包装方法（标记为过时）
+    [Obsolete("请使用 FireAndForgetAsync 替代")]
+    private static async void FireAndForget(Task task, string operationName, Action<Exception>? onError = null)
+    {
+        await FireAndForgetAsync(task, operationName, onError);
     }
 
     public void Dispose()
@@ -857,7 +868,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            FireAndForget(_cameraService.StopCameraAsync(), "Dispose 停止摄像头");
+            var task = Task.Run(() => _cameraService.StopCameraAsync());
+            FireAndForgetAsync(task, "Dispose 停止摄像头");
         }
         catch (Exception ex)
         {
@@ -868,5 +880,21 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+
+    protected bool SetProperty<T>(ref T field, T value, IEqualityComparer<T> comparer, [CallerMemberName] string? propertyName = null)
+    {
+        if (comparer.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }

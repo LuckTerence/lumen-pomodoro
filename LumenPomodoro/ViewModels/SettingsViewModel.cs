@@ -375,16 +375,27 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private static async void FireAndForget(Task task, string operationName)
+    private static async Task FireAndForgetAsync(Task task, string operationName)
     {
         try
         {
-            await task;
+            await task.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.WriteLine($"[SettingsViewModel] FireAndForget [{operationName}] 操作被取消");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[SettingsViewModel] FireAndForget [{operationName}] 异常: {ex.Message}");
         }
+    }
+
+    // 兼容旧调用的包装方法（标记为过时）
+    [Obsolete("请使用 FireAndForgetAsync 替代")]
+    private static async void FireAndForget(Task task, string operationName)
+    {
+        await FireAndForgetAsync(task, operationName);
     }
 
     public void Dispose()
