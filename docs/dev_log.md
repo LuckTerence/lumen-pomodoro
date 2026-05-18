@@ -1,5 +1,24 @@
 # 开发日志
 
+## [2026-05-18] 优化 — 发布版桌面文件体积缩小
+
+**完成时间**: 2026-05-18
+
+**涉及模块**: Publish-LumenPomodoro
+
+**修改文件数**: 1 个
+
+### 修复摘要
+
+1. **桌面单文件 exe 过大 [中]** — 发布脚本使用自包含单文件发布，会把 .NET 运行时和 WPF 运行库打进 `LumenPomodoro.exe`，导致桌面文件约 206MB。修复：改为依赖本机 .NET 的单文件发布，保持单个 exe 入口，同时将桌面文件降到约 40MB。
+2. **发布方案取舍 [低]** — 轻量版需要目标电脑安装 .NET 9 Desktop Runtime；本机已具备运行环境。若要给未安装运行时的电脑分发，可恢复自包含发布或另做独立脚本。
+
+### 验证结果
+
+- `Publish-LumenPomodoro.cmd --no-pause`：通过，生成并复制桌面 `LumenPomodoro.exe`。
+- 桌面 `C:\Users\15989\Desktop\LumenPomodoro.exe`：从 206,372,924 字节降到 40,379,860 字节。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false --logger "console;verbosity=minimal"`：通过，60 passed / 2 skipped。
+
 ## [2026-05-18] Bug 修复 — 主窗口背景拖动与发布刷新
 
 **完成时间**: 2026-05-18

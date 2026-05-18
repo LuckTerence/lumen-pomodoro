@@ -18,9 +18,8 @@ if errorlevel 1 (
 dotnet publish "%PROJECT%" ^
     --configuration Release ^
     --runtime win-x64 ^
-    --self-contained true ^
+    --self-contained false ^
     -p:PublishSingleFile=true ^
-    -p:IncludeNativeLibrariesForSelfExtract=true ^
     -p:DebugType=none ^
     -p:DebugSymbols=false ^
     --output "%PUBLISH_DIR%"
