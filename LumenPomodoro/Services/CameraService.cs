@@ -221,34 +221,38 @@ public class CameraService : ICameraService
         if ((now - _lastProcessedTime).TotalMilliseconds < MinProcessIntervalMs) return;
         _lastProcessedTime = now;
 
-        using var frame = sender.TryAcquireLatestFrame();
-        if (frame?.VideoMediaFrame?.SoftwareBitmap == null) return;
-
-        try
+        using (var frame = sender.TryAcquireLatestFrame())
         {
-            var bitmap = frame.VideoMediaFrame.SoftwareBitmap;
-            if (bitmap.BitmapPixelFormat != Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8)
-                return;
+            if (frame?.VideoMediaFrame?.SoftwareBitmap == null) return;
 
-            var buffer = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
-            bitmap.CopyToBuffer(buffer.AsBuffer());
-
-            bool present = _presenceDetector.ProcessFrame(buffer, bitmap.PixelWidth, bitmap.PixelHeight, bitmap.PixelWidth * 4);
-
-            // 只在状态转换瞬间触发回调，避免重复通知
-            if (!present && _wasPresent)
+            try
             {
-                _presenceLostCallback?.Invoke();
+                using (var bitmap = frame.VideoMediaFrame.SoftwareBitmap)
+                {
+                    if (bitmap.BitmapPixelFormat != Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8)
+                        return;
+
+                    var buffer = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+                    bitmap.CopyToBuffer(buffer.AsBuffer());
+
+                    bool present = _presenceDetector.ProcessFrame(buffer, bitmap.PixelWidth, bitmap.PixelHeight, bitmap.PixelWidth * 4);
+
+                    // 只在状态转换瞬间触发回调，避免重复通知
+                    if (!present && _wasPresent)
+                    {
+                        _presenceLostCallback?.Invoke();
+                    }
+                    else if (present && !_wasPresent)
+                    {
+                        _presenceRegainedCallback?.Invoke();
+                    }
+                    _wasPresent = present;
+                }
             }
-            else if (present && !_wasPresent)
+            catch
             {
-                _presenceRegainedCallback?.Invoke();
+                // 帧处理失败不影响主流程
             }
-            _wasPresent = present;
-        }
-        catch
-        {
-            // 帧处理失败不影响主流程
         }
     }
 
