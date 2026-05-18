@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -170,6 +172,17 @@ public partial class MainWindow : Window
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        DragWindow(e);
+    }
+
+    private void WindowDragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (IsFromInteractiveElement(e.OriginalSource as DependencyObject)) return;
+        DragWindow(e);
+    }
+
+    private void DragWindow(MouseButtonEventArgs e)
+    {
         if (e.ClickCount == 2)
         {
             WindowState = WindowState == WindowState.Maximized
@@ -180,6 +193,25 @@ public partial class MainWindow : Window
 
         try { DragMove(); }
         catch (InvalidOperationException) { }
+    }
+
+    private static bool IsFromInteractiveElement(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is ButtonBase ||
+                source is TextBoxBase ||
+                source is ComboBox ||
+                source is Slider ||
+                source is NavigationViewItem)
+            {
+                return true;
+            }
+
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

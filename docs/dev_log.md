@@ -1,5 +1,24 @@
 # 开发日志
 
+## [2026-05-18] Bug 修复 — 主窗口背景拖动与发布刷新
+
+**完成时间**: 2026-05-18
+
+**涉及模块**: MainWindow, 发布脚本
+
+**修改文件数**: 2 个
+
+### 修复摘要
+
+1. **主窗口可拖动区域过窄 [中]** — 自定义无边框窗口只在顶部标题栏绑定拖动，用户点击导航下方或计时页空白背景无法移动窗口。修复：将外层玻璃背景也作为拖动区域，并跳过按钮、导航项、输入框、下拉框、滑块等交互控件，避免抢正常点击。
+2. **打开新版路径不明确 [低]** — 根目录没有 `Start-LumenPomodoro.cmd`，当前可用入口是发布脚本和发布产物。已运行发布脚本刷新 `publish\LumenPomodoro.exe`，并复制新版到桌面。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o C:\tmp\lumen-build -p:UseAppHost=false`：通过，0 warning / 0 error。
+- `Publish-LumenPomodoro.cmd --no-pause`：通过，生成 `publish\LumenPomodoro.exe`，并复制到桌面。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false --logger "console;verbosity=normal"`：通过，60 passed / 2 skipped。
+
 ## [2026-05-18] Bug 修复 — 计时页启动按钮与灵动岛水平居中
 
 **完成时间**: 2026-05-18
