@@ -14,6 +14,12 @@ public partial class App : Application
 {
     public IServiceProvider Services { get; private set; } = null!;
 
+    public App()
+    {
+        // 确保 pack:// URI 在单文件发布(单文件)模式下正确解析到本地程序集资源
+        ResourceAssembly = typeof(App).Assembly;
+    }
+
     public static T GetRequiredService<T>() where T : notnull
         => ((App)Current).Services.GetRequiredService<T>();
 

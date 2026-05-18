@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Linq;
+using System.Windows.Media.Imaging;
 using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,13 +35,51 @@ public class TrayService : ITrayService
         _notifyIcon = new TaskbarIcon
         {
             ToolTipText = "Lumen Pomodoro",
-            Visibility = Visibility.Visible,
-            IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/app.ico"))
+            Visibility = Visibility.Visible
         };
+
+        LoadTrayIcon();
 
         CreateMenu();
 
         _notifyIcon.TrayLeftMouseDown += NotifyIcon_TrayLeftMouseDown;
+    }
+
+    /// <summary>
+    /// 使用 IconBitmapDecoder 加载托盘图标，正确处理多尺寸 ICO 文件的各个帧。
+    /// 直接从嵌入资源加载并选择合适的尺寸，避免 Hardcodet 库在转换 BitmapImage 到 HICON 时失败。
+    /// </summary>
+    private void LoadTrayIcon()
+    {
+        try
+        {
+            var resourceStream = Application.GetResourceStream(new Uri("pack://application:,,,/app.ico"));
+            if (resourceStream == null)
+            {
+                Log.Warning("托盘图标资源未找到 (pack://application:,,,/app.ico)");
+                return;
+            }
+
+            var decoder = new IconBitmapDecoder(
+                resourceStream.Stream,
+                BitmapCreateOptions.None,
+                BitmapCacheOption.OnLoad);
+
+            // 选择最适合系统托盘的帧：优先 16x16，没有则选最小的 >= 16x16 的帧
+            var frame = decoder.Frames
+                .OrderBy(f => f.PixelWidth)
+                .FirstOrDefault(f => f.PixelWidth >= 16 && f.PixelHeight >= 16)
+                ?? decoder.Frames.LastOrDefault();
+
+            if (frame != null)
+                _notifyIcon.IconSource = frame;
+            else
+                Log.Warning("ICO 文件中没有可用的图标帧");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "托盘图标加载失败");
+        }
     }
 
     public void AttachToWindow(Window window)
