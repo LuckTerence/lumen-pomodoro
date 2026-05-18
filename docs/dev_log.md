@@ -643,3 +643,20 @@
 - `dotnet test LumenPomodoro.sln --no-build`：通过，34/34。
 - `dotnet run --project CameraTest\CameraTest.csproj`：检测到 `Integrated Camera`，视频流启动并保持 8 秒后正常停止。
 - 本机粗略采样：CameraTest 视频流保持期间 8 秒 CPU 时间增长约 0.156 秒。
+
+## [2026-05-18] 修复计时页按钮居中与下拉菜单深色样式
+
+**涉及模块**: TimerPage, CustomStyles
+
+**修改文件数**: 2 个
+
+### 改动摘要
+
+1. **统一计时页中心参照** — 将计时核心区、操作按钮区和底部信息统一约束到 240px 宽度，播放按钮与圆环中心轴对齐。
+2. **强化全局 ComboBox 深色模板** — 补齐下拉项容器样式、弹层背景、前景色绑定、选中/悬停态，避免系统浅色下拉菜单漏出。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o C:\tmp\lumen-build -p:UseAppHost=false`：通过，0 warning / 0 error。
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj`：未完成，正在运行的 `LumenPomodoro (63332)` 锁定默认 Debug 输出。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false`：未完成，同一运行中进程锁定默认输出 DLL。

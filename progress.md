@@ -19,6 +19,16 @@
 | 2026-05-18 | `dotnet build LumenPomodoro.sln` 失败，`LumenPomodoro.exe` 被正在运行的进程 63332 锁定 | 不强关用户应用，改用独立输出目录 `.tmp-build/LumenPomodoro` 验证 |
 | 2026-05-18 | 直接 `dotnet test` 同样被运行中进程锁定默认 Debug 输出 | 使用现有测试输出 `--no-build` 执行测试 |
 | 2026-05-18 | 临时中间目录误放到项目内导致 WPF 生成文件重复编译 | 删除本轮 `.tmp-test-*` 目录，未保留生成产物 |
+| 2026-05-18 | 默认 Debug 输出被正在运行的 `LumenPomodoro (63332)` 锁定 | 不强关用户应用，使用 `-o C:\tmp\lumen-build -p:UseAppHost=false` 完成构建验证 |
+
+### 追加修复：开始按钮居中与下拉菜单突兀
+| 步骤 | 状态 | 说明 |
+|------|------|------|
+| 根因确认 | 完成 | 按钮区没有共享圆环的 240px 中心参照；ComboBox 弹层和 item 前景/背景仍有系统样式漏出 |
+| 修复实施 | 完成 | TimerPage 统一中心宽度；CustomStyles 补齐 ComboBox item 容器、前景色、弹层背景与悬停/选中态 |
+| 编译验证 | 完成 | `dotnet build LumenPomodoro\LumenPomodoro.csproj -o C:\tmp\lumen-build -p:UseAppHost=false` 通过 |
+| 测试验证 | 受阻 | `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false` 被运行中 `LumenPomodoro (63332)` 锁定默认输出 DLL |
+| 文档记录 | 完成 | 已更新 `docs/dev_log.md` |
 
 ### 验证计划
 | 验证 | 命令 |

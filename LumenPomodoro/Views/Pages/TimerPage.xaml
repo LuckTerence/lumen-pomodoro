@@ -62,7 +62,7 @@
         </Border>
 
         <!-- ===== 核心计时区 ===== -->
-        <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Grid.Row="1" Width="240" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <!-- 状态标签 -->
                 <TextBlock x:Name="StateLabelBlock"
                            Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
@@ -94,7 +94,7 @@
                 </Grid>
 
                 <!-- ===== 操作按钮区 ===== -->
-                <Grid Margin="0,24,0,0">
+                <Grid Width="240" Margin="0,24,0,0" HorizontalAlignment="Center">
                     <!-- 空闲状态：播放按钮 -->
                     <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
                         <StackPanel.Style>
@@ -282,7 +282,7 @@
                 </Grid>
 
                 <!-- ===== 底部统计信息 ===== -->
-                <StackPanel Margin="0,24,0,0" HorizontalAlignment="Center">
+                    <StackPanel Width="240" Margin="0,24,0,0" HorizontalAlignment="Center">
                     <!-- 摄像头提醒状态 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
                                 Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">

@@ -199,6 +199,47 @@
         <Setter Property="Padding" Value="8,4" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="#B3FFFFFF" />
+                    <Setter Property="Padding" Value="10,7" />
+                    <Setter Property="MinHeight" Value="32" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="ItemBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#26252529" />
+                                        <Setter Property="Foreground" Value="#FFFFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#2634D399" />
+                                        <Setter Property="Foreground" Value="#FFFFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Foreground" Value="#4B5563" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -229,6 +270,7 @@
                                                               Margin="10,0,4,0"
                                                               VerticalAlignment="Center"
                                                               HorizontalAlignment="Left"
+                                                              TextElement.Foreground="{TemplateBinding Foreground}"
                                                               RecognizesAccessKey="True" />
                                             <Path Grid.Column="1"
                                                   Width="8"
@@ -252,7 +294,8 @@
                             </ToggleButton.Template>
                             <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
                                               ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                         </ToggleButton>
 
                         <Popup x:Name="Popup"
@@ -263,14 +306,20 @@
                                PopupAnimation="Fade">
                             <Grid MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                   MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                <Border Background="#FF1A1A1E"
-                                        BorderBrush="#40FFFFFF"
+                                <Border Background="#FF17171A"
+                                        BorderBrush="#26FFFFFF"
                                         BorderThickness="1"
                                         CornerRadius="8"
-                                        Padding="4">
+                                        Padding="4"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="14" Opacity="0.28" Color="#000000"/>
+                                    </Border.Effect>
                                     <ScrollViewer CanContentScroll="True"
                                                   HorizontalScrollBarVisibility="Disabled"
-                                                  VerticalScrollBarVisibility="Auto">
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  Background="Transparent"
+                                                  Foreground="{TemplateBinding Foreground}">
                                         <ItemsPresenter />
                                     </ScrollViewer>
                                 </Border>
@@ -289,26 +338,31 @@
 
     <!-- 深色主题 ComboBoxItem 样式 -->
     <Style TargetType="ComboBoxItem">
-        <Setter Property="Background" Value="#3327272A" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#B3FFFFFF" />
-        <Setter Property="Padding" Value="10,6" />
-        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
                     <Border x:Name="ItemBorder"
-                            Background="Transparent"
+                            Background="{TemplateBinding Background}"
                             CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="#3327272A" />
+                            <Setter TargetName="ItemBorder" Property="Background" Value="#26252529" />
+                            <Setter Property="Foreground" Value="#FFFFFFFF" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="ItemBorder" Property="Background" Value="#2634D399" />
+                            <Setter Property="Foreground" Value="#FFFFFFFF" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#4B5563" />
