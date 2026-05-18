@@ -2,7 +2,7 @@ using System.IO;
 using System.Text;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace LumenPomodoro.Services;
 
@@ -30,7 +30,7 @@ public class ExportService : IExportService
 
     public string ExportToJson(List<FocusSession> sessions)
     {
-        return JsonConvert.SerializeObject(sessions, Formatting.Indented);
+        return JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
     }
 
     public void ExportToFile(List<FocusSession> sessions, string filePath, ExportFormat format)

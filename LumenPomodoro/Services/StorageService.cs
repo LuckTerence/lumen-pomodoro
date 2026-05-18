@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
@@ -46,7 +46,7 @@ public class StorageService : IStorageService
             try
             {
                 var content = File.ReadAllText(_settingsFile);
-                return JsonConvert.DeserializeObject<Settings>(content) ?? new Settings();
+                return JsonSerializer.Deserialize<Settings>(content) ?? new Settings();
             }
             catch
             {
@@ -59,7 +59,7 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            var content = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            var content = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_settingsFile, content);
         }
     }
@@ -79,7 +79,7 @@ public class StorageService : IStorageService
             try
             {
                 var content = File.ReadAllText(_tasksFile);
-                var tasks = JsonConvert.DeserializeObject<List<TaskItem>>(content);
+                var tasks = JsonSerializer.Deserialize<List<TaskItem>>(content);
                 if (tasks != null && tasks.Count > 0)
                 {
                     UpdateTasksCache(tasks);
@@ -100,7 +100,7 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            var content = JsonConvert.SerializeObject(tasks, Formatting.Indented);
+            var content = JsonSerializer.Serialize(tasks, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_tasksFile, content);
             UpdateTasksCache(tasks);
         }
@@ -149,7 +149,7 @@ public class StorageService : IStorageService
         try
         {
             var content = File.ReadAllText(_sessionsFile);
-            var sessions = JsonConvert.DeserializeObject<List<FocusSession>>(content) ?? new List<FocusSession>();
+            var sessions = JsonSerializer.Deserialize<List<FocusSession>>(content) ?? new List<FocusSession>();
             UpdateSessionsCache(sessions);
             return sessions;
         }
@@ -176,7 +176,7 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
+            var content = JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_sessionsFile, content);
             UpdateSessionsCache(sessions);
         }
@@ -228,7 +228,7 @@ public class StorageService : IStorageService
 
         try
         {
-            var content = JsonConvert.SerializeObject(sessions, Formatting.Indented);
+            var content = JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
 
             if (File.Exists(_sessionsFile))
             {

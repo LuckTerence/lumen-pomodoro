@@ -26,13 +26,12 @@ public partial class App : Application
         Directory.CreateDirectory(logDirectory);
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.Debug()
+            .MinimumLevel.Information()
             .WriteTo.File(
                 Path.Combine(logDirectory, "lumen-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         Log.Information("应用启动");
