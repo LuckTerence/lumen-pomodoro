@@ -14,19 +14,16 @@
                 <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 极光渐变 -->
             <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#2563EB" Offset="0" />
                 <GradientStop Color="#34D399" Offset="1" />
             </LinearGradientBrush>
 
-            <!-- 成就徽章渐变 -->
             <LinearGradientBrush x:Key="AchievementGradient" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#F59E0B" Offset="0" />
                 <GradientStop Color="#34D399" Offset="1" />
             </LinearGradientBrush>
 
-            <!-- 数字滚动字体 -->
             <FontFamily x:Key="NumberFont">Consolas</FontFamily>
         </ResourceDictionary>
     </Window.Resources>
@@ -37,18 +34,15 @@
                 <DropShadowEffect ShadowDepth="0" BlurRadius="24" Opacity="0.4" Color="#000000"/>
             </Border.Effect>
             <StackPanel>
-                <!-- 头部装饰条 -->
                 <Border Height="3" Background="{StaticResource AuroraGradient}" CornerRadius="16,16,0,0" />
 
                 <StackPanel Margin="24,20,24,0">
-                    <!-- 标题 -->
-                    <TextBlock Text="📅 昨日学习报告" FontSize="17" FontWeight="SemiBold"
+                    <TextBlock Text="昨日学习报告" FontSize="17" FontWeight="SemiBold"
                                HorizontalAlignment="Center" Margin="0,0,0,4"
                                Foreground="{DynamicResource SpotifyTextPrimaryBrush}" />
                     <TextBlock x:Name="DateText" FontSize="13" Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
                                HorizontalAlignment="Center" Margin="0,0,0,20" />
 
-                    <!-- 核心数据卡片 -->
                     <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="20" Margin="0,0,0,16">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -57,11 +51,9 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- 分隔线 -->
                             <Rectangle Grid.Column="1" Fill="{DynamicResource SpotifyDividerBrush}" Width="1"
                                        VerticalAlignment="Stretch" Margin="0,8" Opacity="0.5" />
 
-                            <!-- 番茄钟 -->
                             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                                 <TextBlock x:Name="PomodoroCountText" FontSize="40" FontWeight="SemiBold"
                                            FontFamily="{StaticResource NumberFont}"
@@ -70,12 +62,11 @@
                                         <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.3" />
                                     </TextBlock.Effect>
                                 </TextBlock>
-                                <TextBlock Text="🍅 番茄钟" FontSize="12" FontWeight="SemiBold"
+                                <TextBlock Text="番茄钟" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
                                            HorizontalAlignment="Center" Margin="0,6,0,0" />
                             </StackPanel>
 
-                            <!-- 专注时间 -->
                             <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                                 <TextBlock x:Name="MinutesText" FontSize="40" FontWeight="SemiBold"
                                            FontFamily="{StaticResource NumberFont}"
@@ -84,17 +75,16 @@
                                         <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.3" />
                                     </TextBlock.Effect>
                                 </TextBlock>
-                                <TextBlock Text="⏱️ 专注分钟" FontSize="12" FontWeight="SemiBold"
+                                <TextBlock Text="专注分钟" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource SpotifyTextSecondaryBrush}"
                                            HorizontalAlignment="Center" Margin="0,6,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <!-- 今日学习内容 -->
                     <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                         <StackPanel>
-                            <TextBlock Text="📚 主要学习内容" FontSize="12" FontWeight="SemiBold"
+                            <TextBlock Text="主要学习内容" FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                             <TextBlock x:Name="MainTaskText" FontSize="15" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SpotifyTextPrimaryBrush}"
@@ -107,7 +97,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 成就徽章区域 -->
                     <Border x:Name="AchievementBadge" Background="{StaticResource AchievementGradient}"
                             CornerRadius="12" Padding="16" Margin="0,0,0,16" Visibility="Collapsed">
                         <Border.Effect>
@@ -124,10 +113,9 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 统计摘要 -->
                     <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="📊 学习统计" FontSize="12" FontWeight="SemiBold"
+                            <TextBlock Text="学习统计" FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SpotifyTextSecondaryBrush}" />
                             <Grid Margin="0,8,0,0">
                                 <Grid.ColumnDefinitions>
@@ -162,19 +150,17 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 鼓励语 -->
                     <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,20">
                         <TextBlock x:Name="EncouragementText" FontSize="13" FontStyle="Italic"
                                    Foreground="{DynamicResource SpotifyTextSecondaryBrush}" TextWrapping="Wrap"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
                     </Border>
 
-                    <!-- 关闭按钮 -->
                     <Button Style="{StaticResource SpotifyPillButton}" Click="Close_Click"
                             HorizontalAlignment="Center" Padding="40,12" MinWidth="140"
                             Background="{StaticResource AuroraGradient}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🚀 继续学习" FontSize="15" FontWeight="Bold" />
+                            <TextBlock Text="继续学习" FontSize="15" FontWeight="Bold" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
