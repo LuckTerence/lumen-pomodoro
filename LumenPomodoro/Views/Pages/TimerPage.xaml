@@ -40,9 +40,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />  <!-- 任务选择 -->
-            <RowDefinition Height="*" />      <!-- 计时器 -->
-            <RowDefinition Height="Auto" />   <!-- 操作按钮 -->
-            <RowDefinition Height="Auto" />   <!-- 统计信息 -->
+            <RowDefinition Height="*" />      <!-- 核心区域 -->
         </Grid.RowDefinitions>
 
         <!-- ===== 任务选择（药丸形） ===== -->
@@ -64,281 +62,281 @@
         </Border>
 
         <!-- ===== 核心计时区 ===== -->
-        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <!-- 状态标签 -->
-            <TextBlock x:Name="StateLabelBlock"
-                       Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
-                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,20"
-                       FontSize="13" FontWeight="SemiBold" Foreground="#6B7280"
-                       Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
+        <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- 状态标签 -->
+                <TextBlock x:Name="StateLabelBlock"
+                           Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
+                           HorizontalAlignment="Center" Margin="0,0,0,12"
+                           FontSize="13" FontWeight="SemiBold" Foreground="#6B7280"
+                           Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
 
-            <!-- 圆环进度 + 计时器数字 -->
-            <Grid Width="240" Height="240">
-                <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="4">
-                    <controls:ArcProgress.ForegroundArcBrush>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#2563EB" Offset="0" />
-                            <GradientStop Color="#34D399" Offset="1" />
-                        </LinearGradientBrush>
-                    </controls:ArcProgress.ForegroundArcBrush>
-                    <controls:ArcProgress.BackgroundArcBrush>
-                        <SolidColorBrush Color="#27272A" />
-                    </controls:ArcProgress.BackgroundArcBrush>
-                </controls:ArcProgress>
-                <TextBlock x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
-                           FontSize="72" FontWeight="Light" FontFamily="Consolas"
-                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           RenderTransformOrigin="0.5,0.5">
-                    <TextBlock.RenderTransform>
-                        <ScaleTransform ScaleX="1" ScaleY="1" />
-                    </TextBlock.RenderTransform>
-                </TextBlock>
-            </Grid>
-        </Grid>
+                <!-- 圆环进度 + 计时器数字 -->
+                <Grid Width="240" Height="240">
+                    <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="4">
+                        <controls:ArcProgress.ForegroundArcBrush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#2563EB" Offset="0" />
+                                <GradientStop Color="#34D399" Offset="1" />
+                            </LinearGradientBrush>
+                        </controls:ArcProgress.ForegroundArcBrush>
+                        <controls:ArcProgress.BackgroundArcBrush>
+                            <SolidColorBrush Color="#27272A" />
+                        </controls:ArcProgress.BackgroundArcBrush>
+                    </controls:ArcProgress>
+                    <TextBlock x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
+                               FontSize="72" FontWeight="Light" FontFamily="Consolas"
+                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Grid>
 
-        <!-- ===== 操作按钮区 ===== -->
-        <Grid Grid.Row="2" Margin="0,24,0,0">
-            <!-- 空闲状态：播放按钮 -->
-            <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
-                        <Setter Property="Visibility" Value="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsFocusCompleted}" Value="True">
+                <!-- ===== 操作按钮区 ===== -->
+                <Grid Margin="0,24,0,0">
+                    <!-- 空闲状态：播放按钮 -->
+                    <StackPanel x:Name="IdlePanel" Orientation="Vertical" HorizontalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFocusCompleted}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <!-- 播放按钮（极光渐变） -->
+                        <Button x:Name="PlayButton" Click="StartFocusButton_Click" Width="64" Height="64"
+                                Cursor="Hand" BorderThickness="0" Background="Transparent">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="PlayButtonGrid">
+                                        <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64">
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="#34D399"/>
+                                            </Ellipse.Effect>
+                                        </Ellipse>
+                                        <Path Data="M24,16 L44,32 L24,48 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Width="20" Height="24" Stretch="Uniform" Margin="-2,0,0,0" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="PlayButtonGrid" Property="Opacity" Value="0.85" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- 时间调整（轻量级） -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                            <Button Click="AdjustTimeDown_Click" Width="32" Height="32" Cursor="Hand"
+                                    Background="Transparent" BorderThickness="0" Opacity="0.6">
+                                <TextBlock Text="-" FontSize="18" Foreground="#6B7280" />
+                            </Button>
+                            <TextBlock x:Name="StepLabel" FontSize="13" Foreground="#6B7280"
+                                       VerticalAlignment="Center" Margin="8,0" />
+                            <Button Click="AdjustTimeUp_Click" Width="32" Height="32" Cursor="Hand"
+                                    Background="Transparent" BorderThickness="0" Opacity="0.6">
+                                <TextBlock Text="+" FontSize="18" Foreground="#6B7280" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 专注中：暂停/重置 -->
+                    <StackPanel x:Name="FocusPanel"
+                                Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
+                                Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Click="PauseButton_Click" Padding="24,10" Cursor="Hand"
+                                Background="#3327272A" BorderBrush="#26FFFFFF" BorderThickness="1">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="24" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="暂停" FontSize="14" Foreground="#B3FFFFFF" />
+                        </Button>
+                        <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
+                                Background="Transparent" BorderThickness="0">
+                            <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 暂停中：继续/重置 -->
+                    <StackPanel x:Name="PausedPanel"
+                                Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
+                                Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Click="ResumeButton_Click" Padding="32,12" Cursor="Hand">
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#059669" Offset="0" />
+                                    <GradientStop Color="#34D399" Offset="1" />
+                                </LinearGradientBrush>
+                            </Button.Background>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="24"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="继续" FontSize="15" FontWeight="SemiBold" Foreground="White" />
+                        </Button>
+                        <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
+                                Background="Transparent" BorderThickness="0">
+                            <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 休息中：结束休息 -->
+                    <StackPanel x:Name="BreakPanel"
+                                Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
+                                HorizontalAlignment="Center">
+                        <Button Click="EndBreakButton_Click" Padding="32,12" Cursor="Hand">
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#2563EB" Offset="0" />
+                                    <GradientStop Color="#34D399" Offset="1" />
+                                </LinearGradientBrush>
+                            </Button.Background>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="24"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="结束休息" FontSize="15" FontWeight="SemiBold" Foreground="White" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 专注完成：开始休息 -->
+                    <StackPanel x:Name="CompletedPanel" Orientation="Vertical" HorizontalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
                                 <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsFocusCompleted}" Value="True" />
+                                            <Condition Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
 
-                <!-- 播放按钮（极光渐变） -->
-                <Button x:Name="PlayButton" Click="StartFocusButton_Click" Width="64" Height="64"
-                        Cursor="Hand" BorderThickness="0" Background="Transparent">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Grid x:Name="PlayButtonGrid">
-                                <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64">
-                                    <Ellipse.Effect>
-                                        <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="#34D399"/>
-                                    </Ellipse.Effect>
-                                </Ellipse>
-                                <Path Data="M24,16 L44,32 L24,48 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Width="20" Height="24" Stretch="Uniform" Margin="-2,0,0,0" />
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="PlayButtonGrid" Property="Opacity" Value="0.85" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                        <!-- 质量评分 -->
+                        <TextBlock FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,12"
+                                   Foreground="#34D399" Text="{Binding QualityStars}" />
 
-                <!-- 时间调整（轻量级） -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
-                    <Button Click="AdjustTimeDown_Click" Width="32" Height="32" Cursor="Hand"
-                            Background="Transparent" BorderThickness="0" Opacity="0.6">
-                        <TextBlock Text="-" FontSize="18" Foreground="#6B7280" />
-                    </Button>
-                    <TextBlock x:Name="StepLabel" FontSize="13" Foreground="#6B7280"
-                               VerticalAlignment="Center" Margin="8,0" />
-                    <Button Click="AdjustTimeUp_Click" Width="32" Height="32" Cursor="Hand"
-                            Background="Transparent" BorderThickness="0" Opacity="0.6">
-                        <TextBlock Text="+" FontSize="18" Foreground="#6B7280" />
-                    </Button>
+                        <!-- 笔记输入 -->
+                        <Border Background="#3327272A" CornerRadius="12" Padding="12,8" Margin="0,0,0,16" MaxWidth="280">
+                            <TextBox Text="{Binding CurrentNotes, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0"
+                                     FontSize="13" Foreground="#B3FFFFFF"
+                                     MaxLength="200" />
+                        </Border>
+
+                        <!-- 开始休息按钮 -->
+                        <Button x:Name="StartBreakButton" Click="StartShortBreakButton_Click" Padding="40,14" Cursor="Hand">
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#059669" Offset="0" />
+                                    <GradientStop Color="#34D399" Offset="1" />
+                                </LinearGradientBrush>
+                            </Button.Background>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="28"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="开始休息" FontSize="16" FontWeight="SemiBold" Foreground="White" />
+                        </Button>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                            <Button Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
+                                    Background="Transparent" BorderThickness="0">
+                                <TextBlock Text="长休息" FontSize="12" Foreground="#6B7280" />
+                            </Button>
+                            <Button Click="SkipBreakButton_Click" Padding="16,8" Cursor="Hand"
+                                    Background="Transparent" BorderThickness="0">
+                                <TextBlock Text="跳过" FontSize="12" Foreground="#4B5563" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ===== 底部统计信息 ===== -->
+                <StackPanel Margin="0,24,0,0" HorizontalAlignment="Center">
+                    <!-- 摄像头提醒状态 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
+                                Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
+                            <Run Text="摄像头提醒中" />
+                        </TextBlock>
+                        <Button Click="StopCameraButton_Click" Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
+                                Background="Transparent" BorderThickness="0">
+                            <TextBlock Text="关闭" FontSize="11" Foreground="#4B5563" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 今日统计 -->
+                    <TextBlock FontSize="11" Foreground="#4B5563"
+                               HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
+                        <Run Text="今日 " />
+                        <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
+                        <Run Text="/" />
+                        <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
+                        <Run Text=" · 专注 " />
+                        <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="#6B7280" FontWeight="SemiBold" />
+                        <Run Text=" 分" />
+                    </TextBlock>
+
+                    <!-- Streak 显示 -->
+                    <TextBlock FontSize="11" Foreground="#4B5563"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"
+                               Visibility="{Binding StreakDays, Converter={StaticResource ZeroToCollapsedConverter}}">
+                        <Run Text="已连续专注 " />
+                        <Run Text="{Binding StreakDays}" Foreground="#6B7280" FontWeight="SemiBold" />
+                        <Run Text=" 天" />
+                    </TextBlock>
+                    <TextBlock FontSize="11" Foreground="#4B5563"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"
+                               Text="没关系，今天重新开始"
+                               Visibility="{Binding ShowStreakEncouragement, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                    <!-- 考试倒计时 -->
+                    <TextBlock FontSize="12" Foreground="#6B7280"
+                               HorizontalAlignment="Center" Margin="0,8,0,0"
+                               Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{Binding ExamName, Mode=OneWay}" />
+                        <Run Text=" 倒计时 " />
+                        <Run Text="{Binding DaysUntilExam, Mode=OneWay}" FontWeight="SemiBold" Foreground="#34D399" />
+                        <Run Text=" 天" />
+                    </TextBlock>
+
+                    <!-- 快捷键提示 -->
+                    <TextBlock FontSize="10" Foreground="#3B3B3B"
+                               HorizontalAlignment="Center" Margin="0,12,0,0">
+                        <Run Text="空格 开始/暂停 · Esc 重置 · 1-9 切换任务" />
+                    </TextBlock>
                 </StackPanel>
-            </StackPanel>
-
-            <!-- 专注中：暂停/重置 -->
-            <StackPanel x:Name="FocusPanel"
-                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
-                        Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Click="PauseButton_Click" Padding="24,10" Cursor="Hand"
-                        Background="#3327272A" BorderBrush="#26FFFFFF" BorderThickness="1">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="24" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <TextBlock Text="暂停" FontSize="14" Foreground="#B3FFFFFF" />
-                </Button>
-                <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
-                        Background="Transparent" BorderThickness="0">
-                    <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
-                </Button>
-            </StackPanel>
-
-            <!-- 暂停中：继续/重置 -->
-            <StackPanel x:Name="PausedPanel"
-                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
-                        Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Click="ResumeButton_Click" Padding="32,12" Cursor="Hand">
-                    <Button.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#059669" Offset="0" />
-                            <GradientStop Color="#34D399" Offset="1" />
-                        </LinearGradientBrush>
-                    </Button.Background>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="24"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <TextBlock Text="继续" FontSize="15" FontWeight="SemiBold" Foreground="White" />
-                </Button>
-                <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
-                        Background="Transparent" BorderThickness="0">
-                    <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
-                </Button>
-            </StackPanel>
-
-            <!-- 休息中：结束休息 -->
-            <StackPanel x:Name="BreakPanel"
-                        Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
-                        HorizontalAlignment="Center">
-                <Button Click="EndBreakButton_Click" Padding="32,12" Cursor="Hand">
-                    <Button.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#2563EB" Offset="0" />
-                            <GradientStop Color="#34D399" Offset="1" />
-                        </LinearGradientBrush>
-                    </Button.Background>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="24"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <TextBlock Text="结束休息" FontSize="15" FontWeight="SemiBold" Foreground="White" />
-                </Button>
-            </StackPanel>
-
-            <!-- 专注完成：开始休息 -->
-            <StackPanel x:Name="CompletedPanel" Orientation="Vertical" HorizontalAlignment="Center">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsFocusCompleted}" Value="True" />
-                                    <Condition Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Idle}" Value="Visible" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
-
-                <!-- 质量评分 -->
-                <TextBlock FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,12"
-                           Foreground="#34D399" Text="{Binding QualityStars}" />
-
-                <!-- 笔记输入 -->
-                <Border Background="#3327272A" CornerRadius="12" Padding="12,8" Margin="0,0,0,16" MaxWidth="280">
-                    <TextBox Text="{Binding CurrentNotes, UpdateSourceTrigger=PropertyChanged}"
-                             Background="Transparent" BorderThickness="0"
-                             FontSize="13" Foreground="#B3FFFFFF"
-                             MaxLength="200" />
-                </Border>
-
-                <!-- 开始休息按钮 -->
-                <Button x:Name="StartBreakButton" Click="StartShortBreakButton_Click" Padding="40,14" Cursor="Hand">
-                    <Button.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#059669" Offset="0" />
-                            <GradientStop Color="#34D399" Offset="1" />
-                        </LinearGradientBrush>
-                    </Button.Background>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="28"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <TextBlock Text="开始休息" FontSize="16" FontWeight="SemiBold" Foreground="White" />
-                </Button>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                    <Button Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
-                            Background="Transparent" BorderThickness="0">
-                        <TextBlock Text="长休息" FontSize="12" Foreground="#6B7280" />
-                    </Button>
-                    <Button Click="SkipBreakButton_Click" Padding="16,8" Cursor="Hand"
-                            Background="Transparent" BorderThickness="0">
-                        <TextBlock Text="跳过" FontSize="12" Foreground="#4B5563" />
-                    </Button>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
-
-        <!-- ===== 底部统计信息 ===== -->
-        <StackPanel Grid.Row="3" HorizontalAlignment="Center" Margin="0,0,0,24">
-            <!-- 摄像头提醒状态 -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
-                        Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center" />
-                <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
-                    <Run Text="摄像头提醒中" />
-                </TextBlock>
-                <Button Click="StopCameraButton_Click" Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
-                        Background="Transparent" BorderThickness="0">
-                    <TextBlock Text="关闭" FontSize="11" Foreground="#4B5563" />
-                </Button>
-            </StackPanel>
-
-            <!-- 今日统计 -->
-            <TextBlock FontSize="11" Foreground="#4B5563"
-                       HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
-                <Run Text="今日 " />
-                <Run Text="{Binding TodayStats.CompletedPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
-                <Run Text="/" />
-                <Run Text="{Binding AppSettings.DailyTargetPomodoros}" Foreground="#6B7280" FontWeight="SemiBold" />
-                <Run Text=" · 专注 " />
-                <Run Text="{Binding TodayStats.TotalFocusMinutes}" Foreground="#6B7280" FontWeight="SemiBold" />
-                <Run Text=" 分" />
-            </TextBlock>
-
-            <!-- Streak 显示 -->
-            <TextBlock FontSize="11" Foreground="#4B5563"
-                       HorizontalAlignment="Center" Margin="0,4,0,0"
-                       Visibility="{Binding StreakDays, Converter={StaticResource ZeroToCollapsedConverter}}">
-                <Run Text="已连续专注 " />
-                <Run Text="{Binding StreakDays}" Foreground="#6B7280" FontWeight="SemiBold" />
-                <Run Text=" 天" />
-            </TextBlock>
-            <TextBlock FontSize="11" Foreground="#4B5563"
-                       HorizontalAlignment="Center" Margin="0,4,0,0"
-                       Text="没关系，今天重新开始"
-                       Visibility="{Binding ShowStreakEncouragement, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-            <!-- 考试倒计时 -->
-            <TextBlock FontSize="12" Foreground="#6B7280"
-                       HorizontalAlignment="Center" Margin="0,8,0,0"
-                       Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Run Text="{Binding ExamName, Mode=OneWay}" />
-                <Run Text=" 倒计时 " />
-                <Run Text="{Binding DaysUntilExam, Mode=OneWay}" FontWeight="SemiBold" Foreground="#34D399" />
-                <Run Text=" 天" />
-            </TextBlock>
-
-            <!-- 快捷键提示 -->
-            <TextBlock FontSize="10" Foreground="#3B3B3B"
-                       HorizontalAlignment="Center" Margin="0,12,0,0">
-                <Run Text="空格 开始/暂停 · Esc 重置 · 1-9 切换任务" />
-            </TextBlock>
         </StackPanel>
     </Grid>
 </Page>

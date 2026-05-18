@@ -1,5 +1,24 @@
 # 开发日志
 
+## [2026-05-18] Bug 修复 — 深色下拉框与统计页窄窗口裁切
+
+**完成时间**: 2026-05-18 09:26:36 +08:00
+
+**涉及模块**: CustomStyles, StatsPage, HeatmapCalendar
+
+**修改文件数**: 3 个
+
+### 修复摘要
+
+1. **下拉框白底白字 [高]** — 任务页颜色选择、统计页周期选择、设置页摄像头/提醒模式等原生 `ComboBox` 只设置了基础颜色属性，系统浅色模板仍会渲染主控件和下拉弹层，导致深色窗口中可读性很差。修复：在 `CustomStyles.xaml` 补齐全局深色 `ComboBox` / `ComboBoxItem` 模板，统一主控件、箭头、弹层和选中项样式。
+2. **统计页热力图右侧裁切 [中]** — 默认窗口宽度下统计页内容最大宽度过大，热力图最小格子尺寸固定为 5px，年度视图容易超出卡片可用宽度。修复：收紧统计页内容最大宽度，并让热力图在窄宽度下使用更小间距和格子尺寸。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj -o .tmp-build\LumenPomodoro`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj --no-build --logger "console;verbosity=normal"`：通过，60 passed / 2 skipped。
+- 直接 `dotnet build LumenPomodoro.sln` 与直接 `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj` 被当前正在运行的 `LumenPomodoro.exe` 进程 63332 锁定默认 Debug 输出目录，因此使用独立输出目录和已构建测试程序集完成验证。
+
 ## [2026-05-09] Bug 修复 — 热力图日期范围自适应
 
 **涉及模块**: InsightEngine, InsightEngineTests

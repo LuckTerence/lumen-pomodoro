@@ -1,5 +1,16 @@
 # 详细实施方案
 
+## 2026-05-18 截图 UI Bug 排查
+
+### 已确认问题
+1. 任务页颜色选择、统计页周期选择、设置页多个下拉框出现浅色系统模板，和深色窗口冲突，截图中可见白底白字/可读性很差。
+2. 统计页在默认 480px 宽度窗口中内容偏宽，年度热力图右侧被裁切，页面可读性差。
+3. 现有全局 `ComboBox` 样式只设置了 Background/Foreground/BorderBrush，没有覆盖 ToggleButton、ContentPresenter、Popup、ScrollViewer 和 ComboBoxItem 的模板，因此系统主题仍会介入。
+
+### 修复方向
+1. 在 `LumenPomodoro/Themes/CustomStyles.xaml` 中补齐深色 `ComboBox` 与 `ComboBoxItem` 模板，保持所有页面统一。
+2. 在 `StatsPage.xaml` 降低内容最大宽度，并给热力图容器裁剪/宽度约束，避免默认窗口下横向溢出。
+
 ## Feature 4: 专注完成后的笔记
 
 ### 数据模型

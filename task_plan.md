@@ -1,43 +1,39 @@
-# 灵动岛倒计时功能方案
+# 截图 UI Bug 修复计划
 
 ## 目标
-改造灵动岛通知，使其在专注/休息期间持续显示倒计时，而非仅显示一次性通知。
+修复用户截图中可确认的桌面 UI 问题，重点处理深色窗口中下拉框白底白字、统计页小窗口裁切和布局不稳。
 
 ## 当前阶段
 Phase 1
 
 ## 阶段
 
-### Phase 1: 灵动岛倒计时模式
-- [x] DynamicIslandNotificationWindow 支持持续显示模式
-- [x] 新增 UpdateCountdown 方法，实时更新倒计时
-- [x] 新增 Hide 方法，结束时淡出
-- [x] 区分通知模式和倒计时模式
+### Phase 1: 确认根因
+- [x] 读取 README、docs/dev_log、页面 XAML、全局样式和页面 code-behind
+- [x] 对照截图确认主要问题集中在 ComboBox 原生浅色模板与统计页宽度约束
 - **状态:** complete
 
-### Phase 2: MainViewModel 集成
-- [x] 专注开始时启动灵动岛倒计时
-- [x] 休息开始时启动灵动岛倒计时
-- [x] TimerTick 事件更新灵动岛倒计时
-- [x] 专注/休息结束时关闭灵动岛
-- [x] 主窗口置顶时不显示灵动岛
+### Phase 2: 手术式修复
+- [x] 修复全局 ComboBox / ComboBoxItem 深色模板
+- [x] 修复任务页颜色选择器、统计页周期选择器、设置页多个下拉框的显示一致性
+- [x] 收紧统计页内容宽度，避免热力图在 480px 窗口下被右侧裁切
 - **状态:** complete
 
-### Phase 3: MainWindow 集成
-- [x] 订阅灵动岛相关事件
-- [x] 判断主窗口是否置顶
-- [x] 管理灵动岛生命周期
+### Phase 3: 验证与固化
+- [x] dotnet build
+- [x] dotnet test
+- [x] 更新 docs/dev_log.md
+- [x] git add + conventional commit
 - **状态:** complete
 
-## 关键决策
-| 决策 | 理由 |
-|------|------|
-| 灵动岛支持两种模式 | 通知模式（短暂显示）和倒计时模式（持续显示） |
-| 倒计时模式不自动消失 | 需要手动关闭或随状态结束 |
-| 主窗口置顶时隐藏灵动岛 | 避免重复提醒，用户已看到窗口 |
-| 倒计时每秒更新 | 与主计时器同步 |
+## 关键假设
+| 假设 | 验证方式 |
+|------|----------|
+| 下拉框白底白字来自原生 WPF ComboBox 默认模板未适配深色主题 | 检查 CustomStyles.xaml 与各页面 ComboBox 用法 |
+| 统计页裁切来自内容 MaxWidth 过大且热力图控件缺少小窗口约束 | 检查 StatsPage.xaml 和 HeatmapCalendar 控件 |
 
 ## 错误记录
 | 错误 | 尝试 | 解决方案 |
 |------|------|----------|
-|      |      |          |
+| terminal-executor skill 不可用 | 检查当前可用 skill 列表 | 改用 PowerShell 真实执行命令并记录 |
+| 默认 Debug 输出被运行中 LumenPomodoro.exe 锁定 | `dotnet build LumenPomodoro.sln`、直接 `dotnet test` | 使用独立输出目录编译，测试用 `--no-build` 跑已构建测试程序集 |

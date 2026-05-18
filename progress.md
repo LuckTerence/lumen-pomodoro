@@ -1,5 +1,31 @@
 # 进度日志
 
+## Session: 2026-05-18 (截图 UI Bug 修复)
+
+### 当前进展
+| 步骤 | 状态 | 说明 |
+|------|------|------|
+| 读取项目上下文 | 完成 | 已查看 README、docs/dev_log、主要页面 XAML、CustomStyles、页面 code-behind |
+| 根因判断 | 完成 | 下拉框问题来自原生 ComboBox 浅色模板；统计页问题来自小窗口宽度约束不足 |
+| 修复实施 | 完成 | 已修改全局下拉框模板、统计页最大宽度和热力图窄宽度计算 |
+| 编译验证 | 完成 | `dotnet build LumenPomodoro\LumenPomodoro.csproj -o .tmp-build\LumenPomodoro` 通过 |
+| 测试验证 | 完成 | `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj --no-build --logger "console;verbosity=normal"` 通过，60 passed / 2 skipped |
+| 文档记录 | 完成 | 已更新 `docs/dev_log.md` |
+| Git 提交 | 完成 | `fix(ui): 修复深色下拉框和统计页裁切` |
+
+### 错误记录
+| 时间 | 错误 | 处理 |
+|------|------|------|
+| 2026-05-18 | `dotnet build LumenPomodoro.sln` 失败，`LumenPomodoro.exe` 被正在运行的进程 63332 锁定 | 不强关用户应用，改用独立输出目录 `.tmp-build/LumenPomodoro` 验证 |
+| 2026-05-18 | 直接 `dotnet test` 同样被运行中进程锁定默认 Debug 输出 | 使用现有测试输出 `--no-build` 执行测试 |
+| 2026-05-18 | 临时中间目录误放到项目内导致 WPF 生成文件重复编译 | 删除本轮 `.tmp-test-*` 目录，未保留生成产物 |
+
+### 验证计划
+| 验证 | 命令 |
+|------|------|
+| 编译 | dotnet build LumenPomodoro.sln |
+| 测试 | dotnet test LumenPomodoro.sln |
+
 ## Session: 2026-05-18 (专注质量提升 + 体验打磨 + 数据洞察)
 
 ### 已完成功能

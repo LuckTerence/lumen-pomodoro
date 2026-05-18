@@ -74,8 +74,8 @@ public partial class HeatmapCalendar : UserControl
         var marginLeft = 40.0;
         var marginTop = 18.0;
         var availableWidth = Math.Max(0, ActualWidth - marginLeft - 4);
-        var gap = 3.0;
-        var cellSize = Math.Clamp(Math.Floor((availableWidth - (totalColumns - 1) * gap) / totalColumns), 5, 10);
+        var gap = availableWidth < 420 ? 2.0 : 3.0;
+        var cellSize = Math.Clamp(Math.Floor((availableWidth - (totalColumns - 1) * gap) / totalColumns), 3, 10);
         var cellPlusGap = cellSize + gap;
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
