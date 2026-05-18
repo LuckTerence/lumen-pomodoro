@@ -340,10 +340,12 @@ public partial class DynamicIslandNotificationWindow : Window
         // 测量真实尺寸
         Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         Arrange(new Rect(DesiredSize));
+        UpdateLayout();
 
         // 定位：屏幕顶部居中
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Left + (workArea.Width - ActualWidth) / 2;
+        var width = ActualWidth > 0 ? ActualWidth : DesiredSize.Width;
+        Left = workArea.Left + (workArea.Width - width) / 2;
         Top = workArea.Top + 12;
 
         if (!IsVisible) Show();

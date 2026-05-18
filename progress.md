@@ -30,6 +30,14 @@
 | 测试验证 | 受阻 | `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false` 被运行中 `LumenPomodoro (63332)` 锁定默认输出 DLL |
 | 文档记录 | 完成 | 已更新 `docs/dev_log.md` |
 
+### 追加修复：运行旧版本与灵动岛定位
+| 步骤 | 状态 | 说明 |
+|------|------|------|
+| 根因确认 | 完成 | 用户看到无变化是因为旧 Debug 进程锁定输出；灵动岛首次定位使用 `ActualWidth=0` 造成偏移 |
+| 修复实施 | 完成 | DynamicIsland 定位 fallback 到 `DesiredSize.Width`；停止旧进程、默认 Debug 构建并启动新版 |
+| 编译验证 | 完成 | `dotnet build LumenPomodoro\LumenPomodoro.csproj` 通过 |
+| 测试验证 | 完成 | `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj --no-build --logger "console;verbosity=normal"` 通过，60 passed / 2 skipped |
+
 ### 验证计划
 | 验证 | 命令 |
 |------|------|

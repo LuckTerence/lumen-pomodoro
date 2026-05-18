@@ -660,3 +660,19 @@
 - `dotnet build LumenPomodoro\LumenPomodoro.csproj -o C:\tmp\lumen-build -p:UseAppHost=false`：通过，0 warning / 0 error。
 - `dotnet build LumenPomodoro\LumenPomodoro.csproj`：未完成，正在运行的 `LumenPomodoro (63332)` 锁定默认 Debug 输出。
 - `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj -p:UseAppHost=false`：未完成，同一运行中进程锁定默认输出 DLL。
+
+## [2026-05-18] 修复灵动岛定位并刷新运行版本
+
+**涉及模块**: DynamicIslandNotificationWindow
+
+**修改文件数**: 1 个
+
+### 改动摘要
+
+1. **修复灵动岛初次定位偏移** — 定位前执行布局更新，并在 `ActualWidth` 尚未产生时使用 `DesiredSize.Width`，避免窗口首次显示时用 0 宽度计算居中。
+2. **刷新 Debug 运行版本** — 停止锁定旧输出的本地进程，重新构建默认 Debug 输出并启动新版，确保 UI 修改实际加载。
+
+### 验证结果
+
+- `dotnet build LumenPomodoro\LumenPomodoro.csproj`：通过，0 warning / 0 error。
+- `dotnet test LumenPomodoro.Tests\LumenPomodoro.Tests.csproj --no-build --logger "console;verbosity=normal"`：通过，60 passed / 2 skipped。
