@@ -17,6 +17,7 @@ public class TimerService : ITimerService
     private bool _isPaused;
     private bool _isRunning;
     private DateTime _lastTickTime;
+    private DateTime _nextTickTime; // 下一个tick的预期时间，用于精度补偿
 
     public event EventHandler<TimerTickEventArgs>? TimerTick;
     public event EventHandler<TimerCompletedEventArgs>? TimerCompleted;
@@ -30,10 +31,13 @@ public class TimerService : ITimerService
 
     public TimerService()
     {
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        // 使用250ms检查频率，平衡精度和功耗
+        // 实际tick对齐通过_nextTickTime控制，避免UI线程繁忙导致的累积误差
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         _timer.Tick += Timer_Tick;
         _currentMode = TimerMode.Idle;
         _lastTickTime = DateTime.UtcNow;
+        _nextTickTime = DateTime.UtcNow;
     }
 
     public void StartFocus(int minutes)
@@ -48,6 +52,7 @@ public class TimerService : ITimerService
             _isRunning = true;
             _isPaused = false;
             _lastTickTime = DateTime.UtcNow;
+            _nextTickTime = _lastTickTime.AddSeconds(1); // 设置第一个tick时间
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -70,6 +75,7 @@ public class TimerService : ITimerService
             _isRunning = true;
             _isPaused = false;
             _lastTickTime = DateTime.UtcNow;
+            _nextTickTime = _lastTickTime.AddSeconds(1);
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -116,6 +122,7 @@ public class TimerService : ITimerService
                 restoredMode = _modeBeforePause;
                 _currentMode = restoredMode;
                 _lastTickTime = DateTime.UtcNow;
+                _nextTickTime = _lastTickTime.AddSeconds(1);
                 _timer.Start();
                 shouldInvoke = true;
             }
@@ -140,6 +147,7 @@ public class TimerService : ITimerService
             _totalSeconds = 0;
             oldMode = _currentMode;
             _currentMode = TimerMode.Idle;
+            _nextTickTime = DateTime.UtcNow;
         }
 
         Log.Debug("计时器重置，之前模式: {Mode}", oldMode);
@@ -154,6 +162,7 @@ public class TimerService : ITimerService
             _timer.Stop();
             _isRunning = false;
             _isPaused = false;
+            _nextTickTime = DateTime.UtcNow;
         }
     }
 
@@ -169,10 +178,15 @@ public class TimerService : ITimerService
             if (!_isRunning || _isPaused) return;
 
             var elapsed = (DateTime.UtcNow - _lastTickTime).TotalSeconds;
-            if (elapsed < 2) return;
+            // 小于2秒忽略（避免系统延迟误判）
+            // 大于24小时忽略（可能是时钟调整，而非实际睡眠）
+            if (elapsed < 2 || elapsed > 86400) return;
 
+            // 扣除所有错过的秒数（系统休眠期间计时器停止运行）
+            // elapsed可能包含小数部分，转换为int会截断，但误差小于1秒可接受
             _remainingSeconds = Math.Max(0, _remainingSeconds - (int)elapsed);
             _lastTickTime = DateTime.UtcNow;
+            _nextTickTime = _lastTickTime.AddSeconds(1);
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;
@@ -208,8 +222,20 @@ public class TimerService : ITimerService
         {
             if (_isPaused) return;
 
-            _remainingSeconds = Math.Max(0, _remainingSeconds - 1);
-            _lastTickTime = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            // 如果还没到下一个tick时间，直接返回
+            if (now < _nextTickTime) return;
+
+            // 计算需要触发的tick次数（通常为1，补偿延迟时可能>1）
+            int ticksToProcess = 0;
+            while (_nextTickTime <= now && ticksToProcess < 10) // 最多补偿10个tick，防止长时间卡顿一次性扣除过多
+            {
+                ticksToProcess++;
+                _nextTickTime = _nextTickTime.AddSeconds(1);
+            }
+
+            _remainingSeconds = Math.Max(0, _remainingSeconds - ticksToProcess);
+            _lastTickTime = now;
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;
