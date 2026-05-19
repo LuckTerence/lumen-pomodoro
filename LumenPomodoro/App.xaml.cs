@@ -16,8 +16,8 @@ public partial class App : Application
 
     public App()
     {
-        // 确保 pack:// URI 在单文件发布(单文件)模式下正确解析到本地程序集资源
-        ResourceAssembly = typeof(App).Assembly;
+        // 确保 pack:// URI 在单文件发布模式下正确解析到本地程序集资源
+        try { ResourceAssembly = typeof(App).Assembly; } catch { /* 运行时已自动设置 */ }
     }
 
     public static T GetRequiredService<T>() where T : notnull

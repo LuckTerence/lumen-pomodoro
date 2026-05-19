@@ -18,6 +18,8 @@ obj/
 x64/
 x86/
 publish/
+publish-test-fix/
+launcher-publish/
 .tmp-build/
 
 ## Visual Studio
@@ -28,6 +30,10 @@ publish/
 
 ## Local agent settings
 .claude/
+task_plan.md
+findings.md
+progress.md
+docs/dev_log.md
 
 ## Rider
 .idea/
@@ -43,3 +49,4 @@ V*_灵感卡.md
 .DS_Store
 Thumbs.db
 desktop.ini
+*.lnk

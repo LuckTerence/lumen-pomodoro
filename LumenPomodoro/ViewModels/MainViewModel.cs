@@ -724,28 +724,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         if (!AppSettings.SystemNotificationEnabled) return;
         if (IsWindowActive) return;
 
-        if (NotificationRequested != null)
-        {
-            NotificationRequested.Invoke(title, message);
-            return;
-        }
-
-        try
-        {
-            var notifyIcon = new System.Windows.Forms.NotifyIcon
-            {
-                Visible = true,
-                Icon = System.Drawing.SystemIcons.Information,
-                BalloonTipTitle = title,
-                BalloonTipText = message
-            };
-            notifyIcon.ShowBalloonTip(3000);
-            notifyIcon.Dispose();
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "系统通知失败");
-        }
+        NotificationRequested?.Invoke(title, message);
     }
 
     private string FormatTime(int seconds)

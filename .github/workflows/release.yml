@@ -20,25 +20,52 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        run: >
-          dotnet publish LumenPomodoro\LumenPomodoro.csproj
-          --configuration Release
-          --runtime win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:DebugType=none
-          -p:DebugSymbols=false
-          --output publish
+        shell: pwsh
+        run: |
+          dotnet publish LumenPomodoro\LumenPomodoro.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            -p:PublishSingleFile=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            --output publish\app
+
+          dotnet publish Launcher\Launcher.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            -p:PublishAot=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            --output publish
+
+          Compress-Archive -Path publish\LumenPomodoro.exe,publish\app -DestinationPath LumenPomodoro.zip -Force
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/LumenPomodoro.exe
+          files: LumenPomodoro.zip
           generate_release_notes: true
           body: |
             ## Lumen Pomodoro ${{ github.ref_name }}
 
-            - Windows x64 自包含单文件，无需安装 .NET 运行时
-            - 下载 `LumenPomodoro.exe` 双击即可使用
-            - 摄像头数据仅在本地调用，不上传
+            这一版采用小体积 zip 发布包，保留摄像头硬件指示灯提醒。
+
+            ### 下载方式
+
+            下载 `LumenPomodoro.zip`，解压后双击根目录的 `LumenPomodoro.exe`。
+
+            ### 运行环境
+
+            - Windows x64
+            - 发布包约 16MB
+            - 首次运行会检测 .NET 9 Desktop Runtime
+            - 如果本机没有安装运行时，启动器会提示并自动下载安装
+
+            ### 主要说明
+
+            - 根目录 `LumenPomodoro.exe` 是原生启动器
+            - `app/LumenPomodoro.exe` 是 WPF 主程序
+            - 摄像头仅在本地调用
+            - 不保存照片，不录制视频，不上传摄像头数据
