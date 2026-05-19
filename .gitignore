@@ -20,6 +20,7 @@ x86/
 publish/
 publish-test-fix/
 launcher-publish/
+local-run/
 .tmp-build/
 
 ## Visual Studio

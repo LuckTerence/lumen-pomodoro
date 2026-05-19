@@ -3,9 +3,11 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
 using LumenPomodoro.Views.Pages;
@@ -208,10 +210,24 @@ public partial class MainWindow : Window
                 return true;
             }
 
-            source = VisualTreeHelper.GetParent(source);
+            source = GetParentObject(source);
         }
 
         return false;
+    }
+
+    private static DependencyObject? GetParentObject(DependencyObject source)
+    {
+        if (source is Visual or Visual3D)
+            return VisualTreeHelper.GetParent(source);
+
+        if (source is FrameworkContentElement frameworkContentElement)
+            return frameworkContentElement.Parent;
+
+        if (source is ContentElement contentElement)
+            return ContentOperations.GetParent(contentElement);
+
+        return null;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -227,14 +243,20 @@ public partial class MainWindow : Window
 
     private void ShowInAppNotification(string title, string message)
     {
-        _dynamicIslandWindow ??= new DynamicIslandNotificationWindow();
-        _dynamicIslandWindow.ShowNotification(title, message);
+        GetDynamicIslandWindow().ShowNotification(title, message);
     }
 
     private void StartCountdown(string title)
     {
-        _dynamicIslandWindow ??= new DynamicIslandNotificationWindow();
-        _dynamicIslandWindow.StartCountdown(title);
+        GetDynamicIslandWindow().StartCountdown(title);
+    }
+
+    private DynamicIslandNotificationWindow GetDynamicIslandWindow()
+    {
+        if (_dynamicIslandWindow != null) return _dynamicIslandWindow;
+
+        _dynamicIslandWindow = new DynamicIslandNotificationWindow { Owner = this };
+        return _dynamicIslandWindow;
     }
 
     private void UpdateCountdown(string remainingTime)

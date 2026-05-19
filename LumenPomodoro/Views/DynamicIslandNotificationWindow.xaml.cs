@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -8,6 +10,10 @@ namespace LumenPomodoro.Views;
 
 public partial class DynamicIslandNotificationWindow : Window
 {
+    private const int GWL_EXSTYLE = -20;
+    private const int WS_EX_TOOLWINDOW = 0x00000080;
+    private const int WS_EX_APPWINDOW = 0x00040000;
+
     private bool _forceClose;
     private DispatcherTimer? _autoHideTimer;
     private Storyboard? _activeStoryboard;
@@ -23,7 +29,46 @@ public partial class DynamicIslandNotificationWindow : Window
     public DynamicIslandNotificationWindow()
     {
         InitializeComponent();
+        SourceInitialized += (_, _) => HideFromWindowSwitcher();
         SizeChanged += (_, _) => CenterAtScreenTop();
+    }
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+    private static extern int GetWindowLong32(IntPtr hwnd, int index);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+    private static extern int SetWindowLong32(IntPtr hwnd, int index, int value);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+    private static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+    private static extern IntPtr SetWindowLongPtr64(IntPtr hwnd, int index, IntPtr value);
+
+    private static IntPtr GetWindowLongPtr(IntPtr hwnd, int index)
+    {
+        return IntPtr.Size == 8
+            ? GetWindowLongPtr64(hwnd, index)
+            : new IntPtr(GetWindowLong32(hwnd, index));
+    }
+
+    private static void SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value)
+    {
+        if (IntPtr.Size == 8)
+            SetWindowLongPtr64(hwnd, index, value);
+        else
+            SetWindowLong32(hwnd, index, value.ToInt32());
+    }
+
+    private void HideFromWindowSwitcher()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+
+        var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64();
+        exStyle |= WS_EX_TOOLWINDOW;
+        exStyle &= ~WS_EX_APPWINDOW;
+        SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
     }
 
     /// <summary>

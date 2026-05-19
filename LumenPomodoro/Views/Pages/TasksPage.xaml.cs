@@ -48,6 +48,7 @@ public partial class TasksPage : Page
 
     private void TasksPage_Loaded(object sender, RoutedEventArgs e)
     {
+        _viewModel.LoadTasks();
         if (ColorComboBox.SelectedIndex < 0)
             ColorComboBox.SelectedIndex = 0;
     }
