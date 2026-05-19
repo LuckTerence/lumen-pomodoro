@@ -298,13 +298,13 @@ public class StatsViewModel : INotifyPropertyChanged
         var taskDict = tasks.ToDictionary(t => t.Id, t => t);
         var categoryGroups = filteredSessions
             .Where(s => taskDict.ContainsKey(s.TaskId))
-            .GroupBy(s => taskDict[s.TaskId].Category)
+            .GroupBy(s => taskDict[s.TaskId])
             .Select(g => new CategoryStats
             {
-                Category = string.IsNullOrEmpty(g.Key) ? "未分类" : g.Key,
+                Category = string.IsNullOrEmpty(g.Key.Category) ? g.Key.Name : g.Key.Category,
                 TotalMinutes = g.Sum(s => s.FocusMinutes),
                 PomodoroCount = g.Count(),
-                Color = taskDict[g.First().TaskId].Color
+                Color = g.Key.Color
             })
             .OrderByDescending(c => c.TotalMinutes)
             .ToList();
