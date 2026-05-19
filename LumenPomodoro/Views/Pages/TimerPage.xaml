@@ -241,9 +241,25 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <!-- 质量评分 -->
-                        <TextBlock FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,12"
-                                   Foreground="#34D399" Text="{Binding QualityStars}" />
+                        <!-- 手动评分 1-5 星 -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <TextBlock Text="评分 " FontSize="14" Foreground="#99FFFFFF" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <Button x:Name="Star1" Tag="1" Click="Star_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Content="☆" FontSize="24" Foreground="#FBBF24" Padding="2,0" />
+                            <Button x:Name="Star2" Tag="2" Click="Star_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Content="☆" FontSize="24" Foreground="#FBBF24" Padding="2,0" />
+                            <Button x:Name="Star3" Tag="3" Click="Star_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Content="☆" FontSize="24" Foreground="#FBBF24" Padding="2,0" />
+                            <Button x:Name="Star4" Tag="4" Click="Star_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Content="☆" FontSize="24" Foreground="#FBBF24" Padding="2,0" />
+                            <Button x:Name="Star5" Tag="5" Click="Star_Click"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Content="☆" FontSize="24" Foreground="#FBBF24" Padding="2,0" />
+                        </StackPanel>
 
                         <!-- 笔记输入 -->
                         <Border Background="#3327272A" CornerRadius="12" Padding="12,8" Margin="0,0,0,16" MaxWidth="280">

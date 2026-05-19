@@ -132,17 +132,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         set { if (_currentNotes != value) { _currentNotes = value; OnPropertyChanged(); } }
     }
 
-    // 质量评分跟踪
-    private bool _sessionPaused = false;
-    private bool _sessionPresenceLost = false;
-
-    // 质量评分显示
-    private string _qualityStars = string.Empty;
-    public string QualityStars
+    // 手动评分 (1-5 星)
+    private int _userRating;
+    public int UserRating
     {
-        get => _qualityStars;
-        set { if (_qualityStars != value) { _qualityStars = value; OnPropertyChanged(); } }
+        get => _userRating;
+        set { if (_userRating != value) { _userRating = value; OnPropertyChanged(); OnPropertyChanged(nameof(RatingStars)); } }
     }
+    public string RatingStars => UserRating > 0 ? string.Concat(Enumerable.Repeat("★", UserRating)) + string.Concat(Enumerable.Repeat("☆", 5 - UserRating)) : string.Empty;
 
     // Streak 显示
     private int _streakDays;
@@ -245,13 +242,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 _currentSession.EndTime = DateTime.Now;
                 _currentSession.Completed = true;
 
-                // 计算质量评分
-                int score = 1; // 基础分：完整完成
-                if (!_sessionPaused) score++;
-                if (!_sessionPresenceLost) score++;
-                _currentSession.QualityScore = score;
-                QualityStars = new string('★', score) + new string('☆', 3 - score);
-
+                UserRating = 0; // 等待用户手动评分
                 _storageService.AddSession(_currentSession);
                 _lastCompletedSessionId = _currentSession.Id;
                 TodayStats = _storageService.GetTodayStats();
@@ -336,10 +327,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void StartFocus()
     {
         _consecutivePresenceLostAlerts = 0;
-        _sessionPaused = false;
-        _sessionPresenceLost = false;
         CurrentNotes = string.Empty;
-        QualityStars = string.Empty;
+        UserRating = 0;
         _lastCompletedSessionId = null;
 
         if (SelectedTask == null)
@@ -374,7 +363,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void PauseFocus()
     {
-        _sessionPaused = true;
         _timerService.Pause();
     }
 
@@ -538,8 +526,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         if (!AppSettings.PresenceDetectionEnabled) return;
 
-        _sessionPresenceLost = true;
-
         Application.Current?.Dispatcher?.BeginInvoke(() =>
         {
             _consecutivePresenceLostAlerts++;
@@ -650,6 +636,18 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
         CurrentNotes = string.Empty;
         _lastCompletedSessionId = null;
+    }
+
+    public void SetRating(int stars)
+    {
+        UserRating = stars;
+        if (_lastCompletedSessionId != null)
+        {
+            _storageService.UpdateSession(_lastCompletedSessionId, session =>
+            {
+                session.QualityScore = stars;
+            });
+        }
     }
 
     private void RefreshStreak()

@@ -10,7 +10,7 @@ public class FocusSession
     public int FocusMinutes { get; set; } = 25;
     public bool Completed { get; set; } = false;
     public string? Notes { get; set; }
-    public int QualityScore { get; set; } = 0; // 1-3 星
+    public int QualityScore { get; set; } = 0; // 1-5 星, 0=未评价
 }
 
 public class DailyStats

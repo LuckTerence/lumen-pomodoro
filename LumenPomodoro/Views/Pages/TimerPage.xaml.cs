@@ -93,6 +93,9 @@ public partial class TimerPage : Page
                         StopCameraBreathingAnimation();
                 });
                 break;
+            case nameof(MainViewModel.UserRating):
+                Dispatcher.BeginInvoke(() => UpdateStarsUi());
+                break;
             case nameof(MainViewModel.CurrentStatus):
                 Dispatcher.BeginInvoke(() =>
                 {
@@ -239,6 +242,17 @@ public partial class TimerPage : Page
         _pausedPulseStoryboard = null;
     }
 
+    private void UpdateStarsUi()
+    {
+        var rating = _viewModel.UserRating;
+        foreach (var star in new[] { Star1, Star2, Star3, Star4, Star5 })
+        {
+            if (star == null) continue;
+            int n = int.Parse(star.Tag.ToString()!);
+            star.Content = n <= rating ? "★" : "☆";
+        }
+    }
+
     private void FadeInActivePanel()
     {
         var panels = new[] { IdlePanel, FocusPanel, PausedPanel, BreakPanel, CompletedPanel };
@@ -271,6 +285,12 @@ public partial class TimerPage : Page
     private void StatsSummary_MouseDown(object sender, MouseButtonEventArgs e)
     {
         RequestStatsPage?.Invoke();
+    }
+
+    private void Star_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && int.TryParse(btn.Tag.ToString(), out var stars))
+            _viewModel.SetRating(stars);
     }
 
     private void StartFocusButton_Click(object sender, RoutedEventArgs e) => _viewModel.StartFocus();
