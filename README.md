@@ -1,172 +1,98 @@
-# Lumen Pomodoro — 给你的专注一点光
+# Lumen Pomodoro
 
-> 一个为考研人、备考党、深夜赶due的你而写的番茄钟工具。
+Lumen Pomodoro 是一个 Windows 番茄钟工具。它在专注结束时调用笔记本摄像头，让硬件指示灯亮起，用一个更醒目、更难忽略的物理信号提醒你该休息了。
 
-## 为什么需要 Lumen？
+适合考研复习、备考、自习、写作和其他需要长时间专注的场景。
 
-在 Windows 笔记本上进行考研复习时，你需要长时间专注学习——数学的推导、英语的阅读、政治的背诵、专业课的知识点。传统番茄钟通常依赖声音、弹窗或系统通知，但这些提醒方式太容易被忽略：
+## 为什么是摄像头指示灯
 
-- **声音** 可能被静音，或被讲解视频的背景音掩盖
-- **弹窗** 可能被层层叠叠的窗口遮挡，等你发现时已过去一小时  
-- **系统通知** 可能被勿扰模式拦截，或一闪而过来不及看清
-- **手机提醒** 更容易让人顺手点开，最后「休息五分钟」变成「刷手机一小时」
+传统番茄钟通常依赖声音、弹窗或系统通知，但这些提醒很容易失效：
 
-人类的自控力，通常比浏览器通知权限还脆弱。
+- 声音可能被静音，或被视频、音乐盖住
+- 弹窗可能被其他窗口遮挡
+- 系统通知可能被勿扰模式拦截
+- 手机提醒容易把短休息变成刷手机
 
-当真正沉浸在一道数学难题或一篇英语长难句里时，任何需要「主动注意」的提醒都可能被大脑过滤掉。你需要的不是又一个通知，而是一个**无法被忽略的信号**。
+摄像头指示灯不同。多数 Windows 笔记本在摄像头被调用时会自动点亮硬件指示灯。Lumen Pomodoro 只借用这个硬件信号：专注结束后点亮摄像头灯，让你更容易意识到该停下来休息。
 
-## ⚡ 核心创意：让硬件为你说话
+## 隐私承诺
 
-Lumen Pomodoro 利用笔记本摄像头指示灯的硬件特性——**摄像头被调用时指示灯会自动亮起**，这是笔记本设计的物理机制，无法被软件屏蔽或静音。
+Lumen Pomodoro 不把摄像头当作采集设备使用，只把它当作本地硬件提醒信号。
 
-当专注时间结束，Lumen 调用摄像头，指示灯亮起：
+- 不保存照片
+- 不录制视频
+- 不上传摄像头数据
+- 不展示摄像头画面
+- 仅在本机调用摄像头硬件
+- 用户确认后释放摄像头，或流程结束后自动释放
+- 摄像头连续运行超过 30 分钟会自动保护释放
 
-- 🔴 **灯亮起的瞬间** = 专注结束，该起来走走了  
-- 💡 **硬件级提醒** = 无法被屏蔽、不依赖音量、不怕窗口遮挡  
-- 🛡️ **绝不拍照录像** = 只借用指示灯的开关机制，隐私完全可控  
-- 🧘 **温和的强制** = 不是催促，而是给你一个「不得不停下」的理由
+首次启用摄像头提醒时，应用会显示隐私说明，并需要用户明确确认。
 
-灯亮着的时候，你无法假装没看见。休息，成了唯一合理的选择。
+## 功能
 
-## 产品承诺
+- 番茄钟：支持专注、短休、长休，自定义时长
+- 摄像头灯提醒：专注结束后点亮笔记本摄像头指示灯
+- 多重提醒：摄像头灯、弹窗、声音、系统通知
+- 任务管理：按科目或任务记录番茄钟
+- 数据统计：今日完成数、专注时长、任务分布、连续学习天数
+- 本地存储：配置和记录保存在 `%APPDATA%/LumenPomodoro/`
+- 桌面体验：WPF 界面、系统托盘、桌面倒计时提示
 
-- **不保存** 任何摄像头画面
-- **不录制** 任何视频或照片  
-- **不上传** 任何数据到云端
-- **仅在本地调用** 摄像头硬件
-- **用户确认后释放** 或 **流程结束后自动释放**
+## 下载与运行
 
-摄像头运行超过 30 分钟会自动保护释放，防止忘记关灯。
+1. 打开 [Releases](https://github.com/LuckTerence/lumen-pomodoro/releases)
+2. 下载 `LumenPomodoro.zip`
+3. 解压后双击根目录的 `LumenPomodoro.exe`
+4. 开始专注
 
-首次启用摄像头提醒时，会展示隐私说明，需你明确同意后才启用。
+当前发布包采用“小启动器 + 主程序”的结构：
 
-## 这不仅仅是番茄钟
+- 根目录 `LumenPomodoro.exe`：原生启动器，负责检测运行环境
+- `app/LumenPomodoro.exe`：WPF 主程序
 
-除了核心的「硬件灯提醒」，Lumen 还是一个完整的考研学习助手：
+如果电脑没有安装 .NET 9 Desktop Runtime，启动器会提示并自动下载安装。这样可以把发布包控制在约 16MB，避免把完整运行时打进安装包。
 
-### 番茄钟核心
-- 25分钟专注 × 5分钟短休 × 15分钟长休（完全可自定义）
-- 随时暂停、继续、重置——你的节奏你掌控
-- 四重提醒兜底：摄像头灯 + 弹窗 + 声音 + 系统通知
-- **绝不自动循环**——每轮专注和休息都由你亲手确认，因为我们需要的是「有意识的休息」，不是机械的流水线
+## 开发
 
-### 考研向任务管理  
-- 预置数学、英语、政治、专业课等分类
-- 记录每个任务的番茄钟数，看见进步轨迹
-- 今日统计：本日完成数、专注时长、任务分布、学习 streak
-- 连续学习天数提醒——别让努力断了线
+需要 .NET 9 SDK。
 
-### 隐私与安全
-- 摄像头数据仅在本地调用，不保存、不展示、不上传
-- 所有配置存在本地 `%APPDATA%/LumenPomodoro/`，不联网
-- 运行超时自动保护释放
+```bash
+git clone https://github.com/LuckTerence/lumen-pomodoro.git
+cd lumen-pomodoro
 
-### 视觉与体验
-- 玻璃拟态界面：Mica + Acrylic 半透明材质，深浅色随系统
-- 系统托盘运行：最小化不打断，托盘菜单快速操作
-- 开机自启可选：让专注成为每天的第一个习惯
-- 灵动岛倒计时：即使切到其他应用也能瞥见时间
-
-## 🌟 为什么选择自包含发布（195MB）
-
-LumenPomodoro.exe 包含完整的 .NET 9 运行时，这意味着：
-
-**你不需要：**
-- 预先安装 .NET 运行时
-- 拥有管理员权限
-- 配置任何环境变量
-- 担心版本兼容问题
-
-**你只需要：**
-- 下载
-- 双击
-- 开始专注
-
-195MB 换来的是一次点击就能开始的体验。对于备考的你来说，简单直接比小体积更重要。
-
-## 界面预览
-
-| 专注时刻 | 任务管理 | 数据统计 | 个性化设置 |
-|---------|---------|---------|----------|
-| 大号倒计时居中显示，状态驱动按钮切换 | 按分类管理考研任务，预置默认任务 | 今日完成数、专注时长、任务分布 | 专注/休息时长、摄像头提醒、通知开关 |
-
-四个主要页面：计时器、任务、统计、设置，通过底部导航栏一键切换。
+dotnet run --project LumenPomodoro
+dotnet test LumenPomodoro.Tests
+./Publish-LumenPomodoro.cmd
+```
 
 ## 技术栈
 
 | 类别 | 技术 |
 |------|------|
-| 框架 | .NET 9 + WPF (Windows Presentation Foundation) |
-| UI 库 | WPF-UI (Fluent Design System) |
-| 摄像头 | Windows Media Foundation (原生硬件访问) |
-| 数据存储 | JSON 文件 + 内存缓存 (Newtonsoft.Json) |
-| 系统托盘 | Hardcodet.NotifyIcon.Wpf |
-| 字体 | Inter (Light / Regular / SemiBold) |
-| 测试 | xUnit (60+ 单元测试) |
+| 框架 | .NET 9 + WPF |
+| UI | WPF-UI |
+| 摄像头 | Windows Media Foundation |
+| 存储 | System.Text.Json + 本地 JSON 文件 |
+| 托盘 | Hardcodet.NotifyIcon.Wpf |
+| 日志 | Serilog |
+| 测试 | xUnit |
 
-## 🚀 快速开始
+## 配置文件
 
-### 给普通用户
+应用数据保存在 `%APPDATA%/LumenPomodoro/`：
 
-1. 下载 `LumenPomodoro.exe`
-2. 双击运行——**无需安装 .NET 运行时**，自包含单文件
-3. 开始你的第一个 25 分钟专注
+- `settings.json`：专注时长、提醒开关、主题等设置
+- `tasks.json`：任务列表
+- `sessions.json`：专注记录
 
-### 给开发者
+## 许可证
 
-```bash
-# 克隆项目
-git clone https://github.com/LuckTerence/lumen-pomodoro.git
-cd lumen-pomodoro
+[Apache License 2.0](LICENSE)
 
-# 直接运行（需要 .NET 9 SDK）
-dotnet run --project LumenPomodoro
-
-# 运行测试
-dotnet test LumenPomodoro.Tests
-
-# 生成发布包（Windows x64 自包含）
-./Publish-LumenPomodoro.cmd
-```
-
-## ⚙️ 配置说明
-
-所有配置自动保存在 `%APPDATA%/LumenPomodoro/`：
-
-- `settings.json` - 专注时长、摄像头模式、提醒开关
-- `tasks.json` - 你的考研任务列表
-- `sessions.json` - 历史专注记录
-
-**可配置项**：专注时长(1-120min) | 短/长休息 | 摄像头提醒模式 | 三种提醒开关 | 托盘 | 主题 | 等等
-
-## 🔒 隐私承诺
-
-1. **绝不采集**：摄像头画面不保存、不展示、不上传
-2. **本地存储**：所有数据留在你的电脑，不联网
-3. **透明可控**：每次启用摄像头都有明确提示，可随时关闭
-4. **自动保护**：运行超时自动释放，防止忘记关灯
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 PR！无论是 Bug 报告、功能建议、代码修复还是文档改进。
-
-查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
-
-## 📄 开源协议
-
-[Apache License 2.0](LICENSE) — 自由使用，保留署名
+欢迎提交 Issue 和 Pull Request。贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
-**最后的话**：
-
-> "重要的不是专注的时间有多长，  
-> 而是每一次专注后，都记得好好对待自己。"  
-
-累了就歇会儿，Lumen 会用一盏小灯等你回来 💛
-
----
-
-[![GitHub release](https://img.shields.io/github/v/release/LuckTerence/lumen-pomodoro?style=for-the-badge)](https://github.com/LuckTerence/lumen-pomodoro/releases)  
-[![GitHub stars](https://img.shields.io/github/stars/LuckTerence/lumen-pomodoro?style=for-the-badge)](https://github.com/LuckTerence/lumen-pomodoro/stargazers)  
+[![GitHub release](https://img.shields.io/github/v/release/LuckTerence/lumen-pomodoro?style=for-the-badge)](https://github.com/LuckTerence/lumen-pomodoro/releases)
 [![License](https://img.shields.io/github/license/LuckTerence/lumen-pomodoro?style=for-the-badge)](LICENSE)
