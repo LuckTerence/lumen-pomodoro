@@ -63,6 +63,26 @@
 
         <!-- ===== 核心计时区 ===== -->
         <StackPanel Grid.Row="1" Width="240" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- 专注中任务名 -->
+                <TextBlock FontSize="12" Foreground="#789B9B9B"
+                           HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}" Value="Visible">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}" Value="Visible">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                    <Run Text="正在专注 · " />
+                    <Run Text="{Binding SelectedTask.Name, Mode=OneWay, FallbackValue='未知任务'}" />
+                </TextBlock>
+
                 <!-- 状态标签 -->
                 <TextBlock x:Name="StateLabelBlock"
                            Text="{Binding CurrentStatus, Converter={StaticResource StatusConverter}}"
@@ -241,6 +261,12 @@
                             </Style>
                         </StackPanel.Style>
 
+                        <!-- 完成摘要 -->
+                        <TextBlock Text="{Binding LastCompletedSummary}"
+                                   FontSize="14" Foreground="#B3FFFFFF"
+                                   HorizontalAlignment="Center" Margin="0,0,0,16"
+                                   TextTrimming="CharacterEllipsis" />
+
                         <!-- 手动评分 1-5 星 -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
                             <TextBlock Text="评分 " FontSize="14" Foreground="#99FFFFFF" VerticalAlignment="Center" Margin="0,0,4,0" />
@@ -289,9 +315,42 @@
                         </Button>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                            <Button Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
+                            <Button x:Name="LongBreakButton" Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
                                     Background="Transparent" BorderThickness="0">
-                                <TextBlock Text="长休息" FontSize="12" Foreground="#6B7280" />
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SuggestLongBreak}" Value="True">
+                                                <Setter Property="Background" Value="#1AF59E0B" />
+                                                <Setter Property="BorderThickness" Value="1" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                    <TextBlock FontSize="12" Foreground="#F59E0B" FontWeight="SemiBold"
+                                               Visibility="{Binding SuggestLongBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Run Text="建议长休息（已完成 " />
+                                        <Run Text="{Binding TodayCompletedCount}" />
+                                        <Run Text=" 个番茄）" />
+                                    </TextBlock>
+                                    <TextBlock x:Name="LongBreakLabel" FontSize="12" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="长休息" />
+                                                <Setter Property="Foreground" Value="#6B7280" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SuggestLongBreak}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F59E0B" />
+                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
                             </Button>
                             <Button Click="SkipBreakButton_Click" Padding="16,8" Cursor="Hand"
                                     Background="Transparent" BorderThickness="0">
@@ -317,6 +376,20 @@
                     </StackPanel>
 
                     <!-- 今日统计 -->
+                    <!-- 目标进度条 -->
+                    <Grid Width="240" Margin="0,0,0,8">
+                        <Border Background="#1A27272A" CornerRadius="2" Height="3">
+                            <Border Width="{Binding TodayPomodoroBarWidth}"
+                                    HorizontalAlignment="Left" CornerRadius="2">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#059669" Offset="0" />
+                                        <GradientStop Color="#34D399" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Border>
+                    </Grid>
                     <TextBlock FontSize="11" Foreground="#4B5563"
                                HorizontalAlignment="Center" Cursor="Hand" PreviewMouseDown="StatsSummary_MouseDown">
                         <Run Text="今日 " />

@@ -72,7 +72,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public DailyStats TodayStats
     {
         get => _todayStats;
-        set { if (!ReferenceEquals(_todayStats, value)) { _todayStats = value; OnPropertyChanged(); } }
+        set { if (!ReferenceEquals(_todayStats, value)) { _todayStats = value; OnPropertyChanged(); OnPropertyChanged(nameof(TodayPomodoroProgress)); OnPropertyChanged(nameof(TodayPomodoroBarWidth)); } }
     }
 
     public string CameraStatus
@@ -108,9 +108,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public Settings AppSettings { get; private set; } = new();
 
     // 考试倒计时
-    public bool ExamCountdown => AppSettings.ExamDate.HasValue && AppSettings.ExamDate.Value > DateTime.Today;
+    public bool ExamCountdown => AppSettings.ExamCountdownEnabled && AppSettings.ExamDate.HasValue && AppSettings.ExamDate.Value > DateTime.Today;
     public string ExamName => AppSettings.ExamName;
     public int DaysUntilExam => ExamCountdown ? (AppSettings.ExamDate!.Value - DateTime.Today).Days : 0;
+
+    public int LongBreakInterval => AppSettings.LongBreakInterval;
+    public bool IsInsightsEnabled => AppSettings.InsightsEnabled;
+    public bool IsDailyReportEnabled => AppSettings.DailyReportEnabled;
+    public bool IsDynamicIslandEnabled => AppSettings.DynamicIslandEnabled;
 
     // Expose interfaces for other consumers (TrayService, SettingsViewModel, etc.)
     public ICameraService CameraService => _cameraService;
@@ -141,6 +146,38 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     }
     public string RatingStars => UserRating > 0 ? string.Concat(Enumerable.Repeat("★", UserRating)) + string.Concat(Enumerable.Repeat("☆", 5 - UserRating)) : string.Empty;
 
+    // 最近完成的专注摘要
+    private string _lastCompletedTaskName = string.Empty;
+    public string LastCompletedTaskName
+    {
+        get => _lastCompletedTaskName;
+        set { if (_lastCompletedTaskName != value) { _lastCompletedTaskName = value; OnPropertyChanged(); } }
+    }
+
+    private int _lastCompletedFocusMinutes;
+    public int LastCompletedFocusMinutes
+    {
+        get => _lastCompletedFocusMinutes;
+        set { if (_lastCompletedFocusMinutes != value) { _lastCompletedFocusMinutes = value; OnPropertyChanged(); } }
+    }
+
+    public string LastCompletedSummary =>
+        string.IsNullOrEmpty(LastCompletedTaskName)
+            ? string.Empty
+            : $"刚刚完成：{LastCompletedTaskName} · {LastCompletedFocusMinutes} 分钟";
+
+    // 今日目标进度（百分比）
+    public double TodayPomodoroProgress =>
+        AppSettings.DailyTargetPomodoros > 0
+            ? Math.Min(100.0, (double)TodayStats.CompletedPomodoros / AppSettings.DailyTargetPomodoros * 100)
+            : 0;
+
+    // 今日目标进度条宽度（像素，父容器240px）
+    public double TodayPomodoroBarWidth =>
+        AppSettings.DailyTargetPomodoros > 0
+            ? Math.Min(240.0, 240.0 * TodayStats.CompletedPomodoros / AppSettings.DailyTargetPomodoros)
+            : 0;
+
     // Streak 显示
     private int _streakDays;
     public int StreakDays
@@ -154,6 +191,20 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _showStreakEncouragement;
         set { if (_showStreakEncouragement != value) { _showStreakEncouragement = value; OnPropertyChanged(); } }
+    }
+
+    private bool _suggestLongBreak;
+    public bool SuggestLongBreak
+    {
+        get => _suggestLongBreak;
+        set { if (_suggestLongBreak != value) { _suggestLongBreak = value; OnPropertyChanged(); } }
+    }
+
+    private int _todayCompletedCount;
+    public int TodayCompletedCount
+    {
+        get => _todayCompletedCount;
+        set { if (_todayCompletedCount != value) { _todayCompletedCount = value; OnPropertyChanged(); } }
     }
 
     public event Action? TrayMenuNeedsUpdate;
@@ -208,8 +259,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             var lastId = AppSettings.LastSelectedTaskId;
             SelectedTask = lastId != null
-                ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.First()
-                : Tasks.First();
+                ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.FirstOrDefault()
+                : Tasks.FirstOrDefault();
         }
 
         RefreshStreak();
@@ -226,7 +277,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
 
         // 更新灵动岛倒计时
-        if (!IsWindowTopmost)
+        if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
             CountdownUpdateRequested?.Invoke(RemainingTime);
         }
@@ -243,6 +294,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 _currentSession.Completed = true;
 
                 UserRating = 0; // 等待用户手动评分
+                LastCompletedTaskName = _currentSession.TaskName;
+                LastCompletedFocusMinutes = _currentSession.FocusMinutes;
                 _storageService.AddSession(_currentSession);
                 _lastCompletedSessionId = _currentSession.Id;
                 TodayStats = _storageService.GetTodayStats();
@@ -252,6 +305,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             Progress = 0;
             IsFocusCompleted = true;
             IsPendingBreak = true;
+
+            // 检查是否需要建议长休息
+            var todayCount = TodayStats.CompletedPomodoros;
+            TodayCompletedCount = todayCount;
+            SuggestLongBreak = todayCount > 0 && AppSettings.LongBreakInterval > 0
+                && todayCount % AppSettings.LongBreakInterval == 0;
+
             StartCameraAlert();
             PlayNotificationSound("FocusComplete");
             ShowInAppNotification("专注完成", "该休息了！");
@@ -330,6 +390,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         CurrentNotes = string.Empty;
         UserRating = 0;
         _lastCompletedSessionId = null;
+        SuggestLongBreak = false;
 
         if (SelectedTask == null)
         {
@@ -354,7 +415,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _timerService.StartFocus(AppSettings.WorkMinutes);
 
         // 启动灵动岛倒计时
-        if (!IsWindowTopmost)
+        if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
             var taskName = SelectedTask.Name;
             CountdownStartRequested?.Invoke($"专注 · {taskName}");
@@ -379,6 +440,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsFocusCompleted = false;
         IsBreakCompleted = false;
         IsPendingBreak = false;
+        SuggestLongBreak = false;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
         CountdownStopRequested?.Invoke();
@@ -415,7 +477,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _currentSession = null;
 
         // 启动灵动岛倒计时
-        if (!IsWindowTopmost)
+        if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
             var breakType = isLongBreak ? "长休息" : "短休息";
             CountdownStartRequested?.Invoke(breakType);
@@ -691,10 +753,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         var mainTask = sessions.GroupBy(s => s.TaskName)
             .OrderByDescending(g => g.Sum(s => s.FocusMinutes))
-            .First().Key;
+            .FirstOrDefault()?.Key ?? "未分类";
 
         var uniqueTasks = sessions.Select(s => s.TaskName).Distinct().Count();
-        var avgQuality = sessions.Where(s => s.QualityScore > 0).Average(s => (double)s.QualityScore);
+        var avgQuality = sessions
+            .Where(s => s.QualityScore > 0)
+            .Select(s => (double)s.QualityScore)
+            .DefaultIfEmpty(0)
+            .Average();
 
         return new DailyReport
         {
@@ -766,6 +832,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
+
+        OnPropertyChanged(nameof(TodayPomodoroProgress));
+        OnPropertyChanged(nameof(TodayPomodoroBarWidth));
+        OnPropertyChanged(nameof(ExamCountdown));
+        OnPropertyChanged(nameof(DaysUntilExam));
     }
 
     public void ReloadSettings()
@@ -776,6 +847,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         }
+
+        OnPropertyChanged(nameof(TodayPomodoroProgress));
+        OnPropertyChanged(nameof(TodayPomodoroBarWidth));
+        OnPropertyChanged(nameof(ExamCountdown));
+        OnPropertyChanged(nameof(DaysUntilExam));
 
         _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost, OnPresenceRegained);
     }
