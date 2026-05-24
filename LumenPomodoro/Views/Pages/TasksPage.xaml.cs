@@ -32,6 +32,7 @@ public partial class TasksPage : Page
         Loaded += TasksPage_Loaded;
         ColorComboBox.ItemTemplate = CreateColorTemplate();
         ColorComboBox.ItemsSource = _colorOptions;
+        CategoryComboBox.ItemsSource = TasksViewModel.AvailableCategories;
     }
 
     private static DataTemplate CreateColorTemplate()
@@ -69,12 +70,17 @@ public partial class TasksPage : Page
     private void AddTask_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.NewTaskName = NewTaskNameBox.Text;
+        if (CategoryComboBox.SelectedItem is string category)
+        {
+            _viewModel.NewTaskCategory = category;
+        }
         if (ColorComboBox.SelectedItem is ColorOption colorOption)
         {
             _viewModel.SelectedColor = $"#{colorOption.Color.R:X2}{colorOption.Color.G:X2}{colorOption.Color.B:X2}";
         }
         _viewModel.AddTask();
         NewTaskNameBox.Text = string.Empty;
+        CategoryComboBox.SelectedIndex = 0;
         ColorComboBox.SelectedIndex = 0;
     }
 

@@ -31,9 +31,18 @@
                 <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称"
                          Padding="12,8" FontSize="13"
                          Margin="0,0,0,12" />
-                <StackPanel Orientation="Horizontal">
-                    <ComboBox x:Name="ColorComboBox" Width="120" Margin="0,0,8,0" SelectedIndex="0" />
-                    <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand">
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="CategoryComboBox" Grid.Column="0" SelectedIndex="0"
+                              Background="#1A27272A" BorderBrush="#26FFFFFF" BorderThickness="1"
+                              Foreground="#B3FFFFFF" FontSize="12" Padding="8,6" />
+                    <ComboBox x:Name="ColorComboBox" Grid.Column="2" SelectedIndex="0" />
+                </Grid>
+                <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand">
                         <Button.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                 <GradientStop Color="#059669" Offset="0" />
@@ -50,7 +59,6 @@
                         </Button.Template>
                         <TextBlock Text="添加" FontSize="13" FontWeight="SemiBold" Foreground="White" />
                     </Button>
-                </StackPanel>
             </StackPanel>
         </Border>
 

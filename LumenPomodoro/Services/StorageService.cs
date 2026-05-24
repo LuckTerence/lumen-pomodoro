@@ -13,6 +13,9 @@ public class StorageService : IStorageService
     private readonly string _settingsFile;
     private readonly string _tasksFile;
     private readonly string _sessionsFile;
+    private readonly string _schemaFile;
+
+    private const int CurrentSchemaVersion = 1;
 
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
@@ -35,8 +38,86 @@ public class StorageService : IStorageService
         _settingsFile = Path.Combine(_appDataPath, "settings.json");
         _tasksFile = Path.Combine(_appDataPath, "tasks.json");
         _sessionsFile = Path.Combine(_appDataPath, "sessions.json");
+        _schemaFile = Path.Combine(_appDataPath, "_schema.json");
+
+        RunMigrations();
 
         Log.Debug("StorageService 初始化，数据路径: {Path}", _appDataPath);
+    }
+
+    private int GetStoredSchemaVersion()
+    {
+        try
+        {
+            if (File.Exists(_schemaFile))
+            {
+                var json = File.ReadAllText(_schemaFile);
+                var doc = JsonSerializer.Deserialize<JsonElement>(json);
+                if (doc.TryGetProperty("schema_version", out var version) && version.TryGetInt32(out var v))
+                    return v;
+            }
+        }
+        catch { }
+        // 无 _schema.json 时，检查 settings.json 中的 SchemaVersion
+        if (File.Exists(_settingsFile))
+        {
+            try
+            {
+                var json = File.ReadAllText(_settingsFile);
+                var doc = JsonSerializer.Deserialize<JsonElement>(json);
+                if (doc.TryGetProperty("SchemaVersion", out var version) && version.TryGetInt32(out var v))
+                    return v;
+            }
+            catch { }
+        }
+        return 0;
+    }
+
+    private void SaveSchemaVersion(int version)
+    {
+        var meta = new { schema_version = version, updated_at = DateTime.Now.ToString("O") };
+        File.WriteAllText(_schemaFile,
+            JsonSerializer.Serialize(meta, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private void RunMigrations()
+    {
+        var current = GetStoredSchemaVersion();
+        if (current >= CurrentSchemaVersion) return;
+
+        Log.Information("执行数据迁移: V{From} → V{To}", current, CurrentSchemaVersion);
+
+        // V0 → V1: 初始化 schema 版本，无数据结构变更
+        if (current < 1)
+        {
+            MigrateV0ToV1();
+        }
+
+        SaveSchemaVersion(CurrentSchemaVersion);
+        Log.Information("数据迁移完成");
+    }
+
+    private void MigrateV0ToV1()
+    {
+        // V0 数据无 SchemaVersion 字段，升级到 V1 只需写入版本号
+        // 如果 settings.json 已存在，补写 SchemaVersion
+        if (File.Exists(_settingsFile))
+        {
+            try
+            {
+                var json = File.ReadAllText(_settingsFile);
+                var settings = JsonSerializer.Deserialize<Settings>(json);
+                if (settings != null && settings.SchemaVersion == 0)
+                {
+                    settings.SchemaVersion = 1;
+                    SaveSettings(settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "V0→V1 迁移 settings.json 失败，将保留原文件");
+            }
+        }
     }
 
     public Settings LoadSettings()
@@ -173,12 +254,13 @@ public class StorageService : IStorageService
         }
     }
 
-    private static readonly (string Name, string Color)[] DefaultTaskData =
+    private static readonly (string Name, string Category, string Color)[] DefaultTaskData =
     [
-        ("专注", "#3B82F6"),
-        ("学习", "#10B981"),
-        ("阅读", "#8B5CF6"),
-        ("复习", "#EF4444"),
+        ("考研数学", "数学", "#3B82F6"),
+        ("考研英语", "英语", "#10B981"),
+        ("考研政治", "政治", "#EF4444"),
+        ("专业课",   "专业课", "#8B5CF6"),
+        ("复盘与整理", "其他", "#6B7280"),
     ];
 
     private List<TaskItem> GetDefaultTasks()
@@ -187,7 +269,7 @@ public class StorageService : IStorageService
         {
             Id = $"default_{i}",
             Name = t.Name,
-            Category = string.Empty,
+            Category = t.Category,
             Color = t.Color,
             CreatedAt = DateTime.Now
         }).ToList();

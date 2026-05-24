@@ -13,7 +13,10 @@ public class TasksViewModel : INotifyPropertyChanged
     private ObservableCollection<TaskItem> _tasks = new();
     private string _newTaskName = string.Empty;
     private string _selectedColor = "#3B82F6";
+    private string _newTaskCategory = string.Empty;
     private string? _editingTaskId;
+
+    public static readonly string[] AvailableCategories = ["数学", "英语", "政治", "专业课", "其他"];
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? TasksChanged;
@@ -29,6 +32,12 @@ public class TasksViewModel : INotifyPropertyChanged
     {
         get => _newTaskName;
         set { if (_newTaskName != value) { _newTaskName = value; OnPropertyChanged(); } }
+    }
+
+    public string NewTaskCategory
+    {
+        get => _newTaskCategory;
+        set { if (_newTaskCategory != value) { _newTaskCategory = value; OnPropertyChanged(); } }
     }
 
     public string SelectedColor
@@ -80,7 +89,7 @@ public class TasksViewModel : INotifyPropertyChanged
         var task = new TaskItem
         {
             Name = NewTaskName.Trim(),
-            Category = string.Empty,
+            Category = NewTaskCategory?.Trim() ?? string.Empty,
             Color = SelectedColor,
             CreatedAt = DateTime.Now
         };
@@ -88,6 +97,7 @@ public class TasksViewModel : INotifyPropertyChanged
         Tasks.Add(task);
         SaveAndNotify();
         NewTaskName = string.Empty;
+        NewTaskCategory = string.Empty;
     }
 
     public void DeleteTask(string taskId)
