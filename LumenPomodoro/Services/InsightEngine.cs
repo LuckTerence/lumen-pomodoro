@@ -98,7 +98,7 @@ public class InsightEngine : IInsightEngine
         var total = filtered.Count;
         if (total == 0) return [];
 
-        var colorMap = tasks?.Where(t => !string.IsNullOrEmpty(t.Name))
+        var colorMap = tasks?.Where(t => !string.IsNullOrEmpty(t.Name) && !string.IsNullOrEmpty(t.Color))
             .GroupBy(t => t.Name)
             .ToDictionary(g => g.Key, g => g.First().Color)
             ?? new Dictionary<string, string>();
@@ -209,6 +209,7 @@ public class InsightEngine : IInsightEngine
         if (hourQualityGroups.Count > 0 && insights.Count < MaxInsightCount)
         {
             var maxMinutes = hourQualityGroups.Max(x => x.AvgMinutes);
+            if (maxMinutes <= 0) maxMinutes = 1; // 避免除以0
             var bestTimeSlot = hourQualityGroups
                 .OrderByDescending(x => x.AvgQuality * 0.6 + (x.AvgMinutes / maxMinutes) * 0.4)
                 .First();
