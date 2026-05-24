@@ -47,6 +47,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private DateTime? _examDate;
     private string _examName = "考研";
 
+    private bool _insightsEnabled = true;
+    private bool _dailyReportEnabled = true;
+    private bool _examCountdownEnabled = true;
+    private bool _dynamicIslandEnabled = true;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public int WorkMinutes
@@ -211,6 +216,30 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { if (_examName != value) { _examName = value; OnPropertyChanged(); } }
     }
 
+    public bool InsightsEnabled
+    {
+        get => _insightsEnabled;
+        set { if (_insightsEnabled != value) { _insightsEnabled = value; OnPropertyChanged(); } }
+    }
+
+    public bool DailyReportEnabled
+    {
+        get => _dailyReportEnabled;
+        set { if (_dailyReportEnabled != value) { _dailyReportEnabled = value; OnPropertyChanged(); } }
+    }
+
+    public bool ExamCountdownEnabled
+    {
+        get => _examCountdownEnabled;
+        set { if (_examCountdownEnabled != value) { _examCountdownEnabled = value; OnPropertyChanged(); } }
+    }
+
+    public bool DynamicIslandEnabled
+    {
+        get => _dynamicIslandEnabled;
+        set { if (_dynamicIslandEnabled != value) { _dynamicIslandEnabled = value; OnPropertyChanged(); } }
+    }
+
     public SettingsViewModel(IStorageService storageService, ICameraService cameraService)
     {
         _storageService = storageService;
@@ -256,6 +285,10 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         PresenceDetectionSeconds = settings.PresenceDetectionSeconds;
         ExamDate = settings.ExamDate;
         ExamName = settings.ExamName;
+        InsightsEnabled = settings.InsightsEnabled;
+        DailyReportEnabled = settings.DailyReportEnabled;
+        ExamCountdownEnabled = settings.ExamCountdownEnabled;
+        DynamicIslandEnabled = settings.DynamicIslandEnabled;
     }
 
     private async void LoadAvailableCameras()
@@ -304,7 +337,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             PresenceDetectionEnabled = PresenceDetectionEnabled,
             PresenceDetectionSeconds = PresenceDetectionSeconds,
             ExamDate = ExamDate,
-            ExamName = ExamName
+            ExamName = ExamName,
+            InsightsEnabled = InsightsEnabled,
+            DailyReportEnabled = DailyReportEnabled,
+            ExamCountdownEnabled = ExamCountdownEnabled,
+            DynamicIslandEnabled = DynamicIslandEnabled
         };
 
         _storageService.SaveSettings(settings);

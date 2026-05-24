@@ -290,9 +290,19 @@ public class StatsViewModel : INotifyPropertyChanged
         Insights = _insightEngine.GetInsights(sessions, tasks);
 
         var settings = _storageService.LoadSettings();
-        GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
-        Comparisons = _insightEngine.GetComparisons(sessions);
-        EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions);
+
+        if (settings.InsightsEnabled)
+        {
+            GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
+            Comparisons = _insightEngine.GetComparisons(sessions);
+            EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions);
+        }
+        else
+        {
+            GoalProgress = [];
+            Comparisons = [];
+            EfficiencyTrend = [];
+        }
 
         // 科目均衡分析
         var taskDict = tasks.ToDictionary(t => t.Id, t => t);

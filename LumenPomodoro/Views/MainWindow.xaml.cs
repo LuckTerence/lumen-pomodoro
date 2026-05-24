@@ -118,6 +118,7 @@ public partial class MainWindow : Window
     private void ShowDailyReportIfNeeded()
     {
         var settings = _viewModel.AppSettings;
+        if (!settings.DailyReportEnabled) return;
         if (settings.LastReportShownDate == DateTime.Today) return;
 
         var report = _viewModel.GetYesterdayReport();

@@ -206,7 +206,7 @@
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="弹窗提醒" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="屏幕顶部显示灵动岛通知" FontSize="11" Foreground="#6B7280" />
+                            <TextBlock Text="专注/休息结束时弹出完成面板" FontSize="11" Foreground="#6B7280" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PopupEnabled}" VerticalAlignment="Center" />
                     </Grid>
@@ -275,6 +275,48 @@
                             <TextBlock Text="开机自启" FontSize="13" Foreground="#B3FFFFFF" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoStartEnabled}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 实验功能 ===== -->
+            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="实验功能" FontSize="14" FontWeight="SemiBold"
+                               Foreground="#B3FFFFFF" Margin="0,0,0,4" />
+                    <TextBlock Text="以下功能可以单独开关，关闭后相关数据和界面将被隐藏"
+                               FontSize="11" Foreground="#4B5563" Margin="0,0,0,16" />
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="学习洞察" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="峰值时段、最优日、趋势分析、科目均衡等" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding InsightsEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="每日复盘报告" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="每天启动时展示昨日学习回顾" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DailyReportEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="考试倒计时" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="主界面底部显示距离考试的剩余天数" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding ExamCountdownEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="灵动岛通知" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="窗口最小化时在屏幕角落显示浮动倒计时" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DynamicIslandEnabled}" VerticalAlignment="Center" />
                     </Grid>
                 </StackPanel>
             </Border>

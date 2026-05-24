@@ -2,6 +2,7 @@ namespace LumenPomodoro.Models;
 
 public class Settings
 {
+    public int SchemaVersion { get; set; } = 1;
     public int WorkMinutes { get; set; } = 25;
     public int ShortBreakMinutes { get; set; } = 5;
     public int LongBreakMinutes { get; set; } = 15;
@@ -36,6 +37,12 @@ public class Settings
     public DateTime? ExamDate { get; set; }
     public string ExamName { get; set; } = "考研";
     public DateTime? LastReportShownDate { get; set; }
+
+    // 功能开关（非核心功能）
+    public bool InsightsEnabled { get; set; } = true;
+    public bool DailyReportEnabled { get; set; } = true;
+    public bool ExamCountdownEnabled { get; set; } = true;
+    public bool DynamicIslandEnabled { get; set; } = true;
 }
 
 public enum CameraAlertMode
