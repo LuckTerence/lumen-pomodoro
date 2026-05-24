@@ -762,6 +762,22 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             .DefaultIfEmpty(0)
             .Average();
 
+        // 科目均衡建议
+        var categorySuggestion = "";
+        var allTasks = _storageService.LoadTasks();
+        var yesterdayCategories = sessions
+            .Join(allTasks, s => s.TaskId, t => t.Id,
+                (s, t) => string.IsNullOrEmpty(t.Category) ? t.Name : t.Category)
+            .Distinct()
+            .ToHashSet();
+        var allCategories = allTasks
+            .Select(t => string.IsNullOrEmpty(t.Category) ? t.Name : t.Category)
+            .Distinct()
+            .ToList();
+        var missed = allCategories.Where(c => !yesterdayCategories.Contains(c)).ToList();
+        if (missed.Count > 0 && missed.Count <= 3)
+            categorySuggestion = $"昨天没有学习「{string.Join("」「", missed)}」，今天可以补上进度";
+
         return new DailyReport
         {
             Date = yesterday,
@@ -770,7 +786,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             MainTask = mainTask,
             StreakDays = CalculateStreak(),
             AvgQualityScore = Math.Round(avgQuality, 1),
-            UniqueTasksCount = uniqueTasks
+            UniqueTasksCount = uniqueTasks,
+            CategorySuggestion = categorySuggestion
         };
     }
 

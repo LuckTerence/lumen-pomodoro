@@ -156,6 +156,12 @@
                                    HorizontalAlignment="Center" TextAlignment="Center" />
                     </Border>
 
+                    <Border Background="{DynamicResource SpotifySurface2Brush}" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+                        <TextBlock x:Name="CategorySuggestionText" FontSize="13"
+                                   Foreground="#34D399" TextWrapping="Wrap"
+                                   HorizontalAlignment="Center" TextAlignment="Center" />
+                    </Border>
+
                     <Button Style="{StaticResource SpotifyPillButton}" Click="Close_Click"
                             HorizontalAlignment="Center" Padding="40,12" MinWidth="140"
                             Background="{StaticResource AuroraGradient}">

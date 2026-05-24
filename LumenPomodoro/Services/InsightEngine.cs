@@ -189,7 +189,8 @@ public class InsightEngine : IInsightEngine
             {
                 Title = "你的黄金时段",
                 Description = $"{bestHour.Hour}:00 左右是你效率最高的时段，平均每次专注 {(int)bestHour.Avg} 分钟。",
-                Type = InsightType.PeakHour
+                Type = InsightType.PeakHour,
+                ActionHint = "试试把最重要科目安排在这个时段"
             });
         }
 
@@ -219,7 +220,8 @@ public class InsightEngine : IInsightEngine
             {
                 Title = "最佳学习时段",
                 Description = $"你{timeRange}效率最高，建议安排重要科目。",
-                Type = InsightType.PeakHour
+                Type = InsightType.PeakHour,
+                ActionHint = "今天就把专业课放到这个时段"
             });
         }
 
@@ -264,7 +266,8 @@ public class InsightEngine : IInsightEngine
                 {
                     Title = "节奏调整",
                     Description = "最近专注时长有所下降，试试缩短单次时间或调整学习科目。",
-                    Type = InsightType.Trend
+                    Type = InsightType.Trend,
+                    ActionHint = "从25分钟开始重新找回节奏"
                 });
             }
         }
@@ -289,7 +292,8 @@ public class InsightEngine : IInsightEngine
                 {
                     Title = "休息太久啦",
                     Description = "今天还没有开始专注，准备好了就出发吧。",
-                    Type = InsightType.Streak
+                    Type = InsightType.Streak,
+                    ActionHint = "完成一个番茄钟就能重新点燃 streak"
                 });
             }
         }
@@ -319,7 +323,8 @@ public class InsightEngine : IInsightEngine
                     {
                         Title = "需要关注",
                         Description = $"「{taskAvg.Name}」最近 7 天平均每天只有 {taskAvg.Avg:F1} 个番茄钟，考虑增加投入。",
-                        Type = InsightType.TaskCompletion
+                        Type = InsightType.TaskCompletion,
+                        ActionHint = "今天就先从这个科目开始吧"
                     });
                 }
             }

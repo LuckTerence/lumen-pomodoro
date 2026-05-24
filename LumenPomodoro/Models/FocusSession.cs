@@ -30,4 +30,5 @@ public class DailyReport
     public int StreakDays { get; set; }
     public double AvgQualityScore { get; set; }
     public int UniqueTasksCount { get; set; }
+    public string CategorySuggestion { get; set; } = string.Empty;
 }

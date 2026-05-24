@@ -344,7 +344,13 @@ public partial class MainWindow : Window
             return new TasksPage(tasksVM);
         }
 
-        private StatsPage CreateStatsPage() => new(App.GetRequiredService<StatsViewModel>());
+        private StatsPage CreateStatsPage()
+        {
+            var page = new StatsPage(App.GetRequiredService<StatsViewModel>());
+            var mainWindow = (MainWindow?)Application.Current.MainWindow;
+            page.RequestNavigateToTasks += () => mainWindow?.NavigateToPage(typeof(TasksPage));
+            return page;
+        }
 
         private SettingsPage CreateSettingsPage()
         {

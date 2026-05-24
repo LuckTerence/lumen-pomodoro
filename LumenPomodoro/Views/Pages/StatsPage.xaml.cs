@@ -11,6 +11,7 @@ namespace LumenPomodoro.Views.Pages;
 public partial class StatsPage : Page
 {
     private readonly StatsViewModel _viewModel;
+    public event Action? RequestNavigateToTasks;
 
     public StatsPage(StatsViewModel viewModel)
     {
@@ -86,5 +87,10 @@ public partial class StatsPage : Page
             sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta);
             e.Handled = true;
         }
+    }
+
+    private void AddMissingCategory_Click(object sender, RoutedEventArgs e)
+    {
+        RequestNavigateToTasks?.Invoke();
     }
 }

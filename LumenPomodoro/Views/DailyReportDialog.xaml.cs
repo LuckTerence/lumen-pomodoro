@@ -33,6 +33,17 @@ public partial class DailyReportDialog : Window
         }
 
         EncouragementText.Text = GetEncouragementText(report);
+
+        if (!string.IsNullOrEmpty(report.CategorySuggestion))
+        {
+            CategorySuggestionText.Text = $"💡 {report.CategorySuggestion}";
+            CategorySuggestionText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            CategorySuggestionText.Visibility = Visibility.Collapsed;
+        }
+
         ShowAchievementBadge(report);
     }
 

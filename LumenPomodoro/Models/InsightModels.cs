@@ -4,6 +4,7 @@ public class Insight
 {
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string ActionHint { get; set; } = string.Empty;
     public InsightType Type { get; set; }
 }
 
