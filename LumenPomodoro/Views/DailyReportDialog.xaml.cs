@@ -1,8 +1,8 @@
-using LumenPomodoro.Models;
-using LumenPomodoro.Services;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using LumenPomodoro.Models;
+using LumenPomodoro.Services;
 
 namespace LumenPomodoro.Views;
 

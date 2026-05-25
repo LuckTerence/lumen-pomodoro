@@ -9,7 +9,7 @@ public interface ITimerService : IDisposable
     bool IsPaused { get; }
     int RemainingSeconds { get; }
     int TotalSeconds { get; }
-    
+
     void StartFocus(int minutes);
     void StartBreak(int minutes);
     void Pause();
@@ -17,7 +17,7 @@ public interface ITimerService : IDisposable
     void Reset();
     void Stop();
     void CorrectAfterWake();
-    
+
     event EventHandler<TimerTickEventArgs> TimerTick;
     event EventHandler<TimerCompletedEventArgs> TimerCompleted;
     event EventHandler<TimerModeChangedEventArgs> ModeChanged;

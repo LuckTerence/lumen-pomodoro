@@ -7,7 +7,7 @@ public class Settings
     public int ShortBreakMinutes { get; set; } = 5;
     public int LongBreakMinutes { get; set; } = 15;
     public int LongBreakInterval { get; set; } = 4;
-    
+
     public bool CameraAlertEnabled { get; set; } = true;
     public CameraAlertMode CameraAlertMode { get; set; } = CameraAlertMode.UntilConfirm;
     public int CameraFixedOnSeconds { get; set; } = 180;
@@ -22,15 +22,15 @@ public class Settings
     public int DailyGoalMinutes { get; set; } = 120;
     public int WeeklyGoalMinutes { get; set; } = 600;
     public int DailyTargetPomodoros { get; set; } = 8;
-    
+
     public bool SoundEnabled { get; set; } = true;
     public bool PopupEnabled { get; set; } = true;
     public bool SystemNotificationEnabled { get; set; } = true;
-    
+
     public bool TrayEnabled { get; set; } = false;
     public bool CloseToTray { get; set; } = false;
     public bool AutoStartEnabled { get; set; } = false;
-    
+
     public string Theme { get; set; } = "system";
     public bool AnimationEnabled { get; set; } = true;
     public string? LastSelectedTaskId { get; set; }

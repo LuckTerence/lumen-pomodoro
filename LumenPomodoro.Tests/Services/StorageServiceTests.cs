@@ -124,7 +124,12 @@ public class StorageServiceTests : IDisposable
     {
         var session = new FocusSession
         {
-            Id = "1", TaskId = "t1", TaskName = "Task 1", StartTime = DateTime.Now, Completed = true, FocusMinutes = 25
+            Id = "1",
+            TaskId = "t1",
+            TaskName = "Task 1",
+            StartTime = DateTime.Now,
+            Completed = true,
+            FocusMinutes = 25
         };
 
         _storageService.AddSession(session);

@@ -118,9 +118,9 @@ public partial class TimerPage : Page
         var scaleAnim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(400) };
         scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0)));
         scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.15, KeyTime.FromPercent(0.4))
-            { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } });
+        { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } });
         scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0))
-            { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } });
+        { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } });
 
         Storyboard.SetTarget(scaleAnim, TimerTextBlock);
         Storyboard.SetTargetProperty(scaleAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));

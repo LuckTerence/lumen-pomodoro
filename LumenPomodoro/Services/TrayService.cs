@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Media.Imaging;
-using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+using Hardcodet.Wpf.TaskbarNotification;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;

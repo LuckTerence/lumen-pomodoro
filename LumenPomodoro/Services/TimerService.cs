@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows.Threading;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;

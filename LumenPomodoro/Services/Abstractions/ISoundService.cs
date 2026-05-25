@@ -4,7 +4,7 @@ public interface ISoundService : IDisposable
 {
     bool IsMuted { get; set; }
     double Volume { get; set; }
-    
+
     void PlaySound(string soundName);
     void PlaySoundSync(string soundName);
     void StopSound(string soundName);
