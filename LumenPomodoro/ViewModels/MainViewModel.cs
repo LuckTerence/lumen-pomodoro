@@ -1,12 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Threading;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
-using LumenPomodoro.Views;
 using Serilog;
 
 namespace LumenPomodoro.ViewModels;
@@ -14,9 +12,9 @@ namespace LumenPomodoro.ViewModels;
 public class MainViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly ITimerService _timerService;
-    private readonly ICameraService _cameraService;
     private readonly IStorageService _storageService;
     private readonly ISoundService _soundService;
+    private readonly CameraAlertController _cameraAlert;
 
     private TimerMode _currentStatus = TimerMode.Idle;
     private string _remainingTime = "25:00";
@@ -24,8 +22,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private TaskItem? _selectedTask;
     private List<TaskItem> _tasks = new();
     private DailyStats _todayStats = new();
-    private string _cameraStatus = string.Empty;
-    private bool _isCameraAlertActive;
     private bool _isFocusCompleted;
     private bool _isBreakCompleted;
     private bool _isPendingBreak;
@@ -75,17 +71,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         set { if (!ReferenceEquals(_todayStats, value)) { _todayStats = value; OnPropertyChanged(); OnPropertyChanged(nameof(TodayPomodoroProgress)); OnPropertyChanged(nameof(TodayPomodoroBarWidth)); } }
     }
 
-    public string CameraStatus
-    {
-        get => _cameraStatus;
-        set { if (_cameraStatus != value) { _cameraStatus = value; OnPropertyChanged(); } }
-    }
+    public string CameraStatus => _cameraAlert.Status;
 
-    public bool IsCameraAlertActive
-    {
-        get => _isCameraAlertActive;
-        set { if (_isCameraAlertActive != value) { _isCameraAlertActive = value; OnPropertyChanged(); } }
-    }
+    public bool IsCameraAlertActive => _cameraAlert.IsActive;
 
     public bool IsFocusCompleted
     {
@@ -117,17 +105,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public bool IsDailyReportEnabled => AppSettings.DailyReportEnabled;
     public bool IsDynamicIslandEnabled => AppSettings.DynamicIslandEnabled;
 
-    // Expose interfaces for other consumers (TrayService, SettingsViewModel, etc.)
-    public ICameraService CameraService => _cameraService;
+    public ICameraService CameraService { get; }
     public IStorageService StorageService => _storageService;
 
     private FocusSession? _currentSession;
     private string? _lastCompletedSessionId;
     private bool _disposed;
-    private CameraIndicatorWindow? _indicatorWindow;
     private DispatcherTimer? _trayUpdateTimer;
-    private int _consecutivePresenceLostAlerts = 0;
-    private const int MaxPresenceLostAlerts = 3;
 
     // 专注笔记
     private string _currentNotes = string.Empty;
@@ -166,13 +150,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ? string.Empty
             : $"刚刚完成：{LastCompletedTaskName} · {LastCompletedFocusMinutes} 分钟";
 
-    // 今日目标进度（百分比）
     public double TodayPomodoroProgress =>
         AppSettings.DailyTargetPomodoros > 0
             ? Math.Min(100.0, (double)TodayStats.CompletedPomodoros / AppSettings.DailyTargetPomodoros * 100)
             : 0;
 
-    // 今日目标进度条宽度（像素，父容器240px）
     public double TodayPomodoroBarWidth =>
         AppSettings.DailyTargetPomodoros > 0
             ? Math.Min(240.0, 240.0 * TodayStats.CompletedPomodoros / AppSettings.DailyTargetPomodoros)
@@ -226,8 +208,29 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _storageService = storageService;
         _timerService = timerService;
-        _cameraService = cameraService;
         _soundService = soundService;
+        CameraService = cameraService;
+
+        _cameraAlert = new CameraAlertController(cameraService);
+        _cameraAlert.StatusChanged += _ =>
+        {
+            OnPropertyChanged(nameof(CameraStatus));
+            OnPropertyChanged(nameof(IsCameraAlertActive));
+        };
+        _cameraAlert.ErrorOccurred += HandleCameraError;
+        _cameraAlert.SystemNotificationRequested += (title, msg) =>
+        {
+            if (AppSettings.SystemNotificationEnabled && !IsWindowActive)
+                NotificationRequested?.Invoke(title, msg);
+        };
+        _cameraAlert.WindowActivationRequested += window =>
+        {
+            window.Activate();
+            window.Topmost = true;
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            timer.Tick += (s, e) => { window.Topmost = false; ((DispatcherTimer)s!).Stop(); };
+            timer.Start();
+        };
 
         _timerService.TimerTick += TimerService_TimerTick;
         _timerService.TimerCompleted += TimerService_TimerCompleted;
@@ -235,7 +238,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         LoadData();
 
-        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost, OnPresenceRegained);
+        _cameraAlert.Initialize(AppSettings);
 
         if (AppSettings.TrayEnabled)
         {
@@ -268,7 +271,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void TimerService_TimerTick(object? sender, TimerTickEventArgs e)
     {
-        // DispatcherTimer 在 UI 线程触发，无需 BeginInvoke
         RemainingTime = FormatTime(e.RemainingSeconds);
 
         if (e.TotalSeconds > 0)
@@ -276,7 +278,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             Progress = (int)((double)e.RemainingSeconds / e.TotalSeconds * 100);
         }
 
-        // 更新灵动岛倒计时
         if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
             CountdownUpdateRequested?.Invoke(RemainingTime);
@@ -285,7 +286,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void TimerService_TimerCompleted(object? sender, TimerCompletedEventArgs e)
     {
-        // DispatcherTimer 在 UI 线程触发，无需 BeginInvoke
         if (e.CompletedMode == TimerMode.Focus)
         {
             if (_currentSession != null && !_currentSession.Completed)
@@ -293,7 +293,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 _currentSession.EndTime = DateTime.Now;
                 _currentSession.Completed = true;
 
-                UserRating = 0; // 等待用户手动评分
+                UserRating = 0;
                 LastCompletedTaskName = _currentSession.TaskName;
                 LastCompletedFocusMinutes = _currentSession.FocusMinutes;
                 _storageService.AddSession(_currentSession);
@@ -306,13 +306,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             IsFocusCompleted = true;
             IsPendingBreak = true;
 
-            // 检查是否需要建议长休息
             var todayCount = TodayStats.CompletedPomodoros;
             TodayCompletedCount = todayCount;
             SuggestLongBreak = todayCount > 0 && AppSettings.LongBreakInterval > 0
                 && todayCount % AppSettings.LongBreakInterval == 0;
 
-            StartCameraAlert();
+            _cameraAlert.Start(AppSettings);
+            _storageService.SaveSettings(AppSettings);
             PlayNotificationSound("FocusComplete");
             ShowInAppNotification("专注完成", "该休息了！");
             CheckMilestones();
@@ -322,7 +322,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         else if (e.CompletedMode == TimerMode.Break)
         {
             IsBreakCompleted = true;
-            ForceStopCameraAlert();
+            _cameraAlert.ForceStop();
             PlayNotificationSound("BreakComplete");
             ShowSystemNotification("休息完成！", "准备好开始下一轮了吗？");
             CountdownStopRequested?.Invoke();
@@ -331,62 +331,43 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void TimerService_ModeChanged(object? sender, TimerModeChangedEventArgs e)
     {
-        // DispatcherTimer 在 UI 线程触发，无需 BeginInvoke
         CurrentStatus = e.NewMode;
     }
 
-    private void CameraStatusCallback(string status)
+    private void HandleCameraError(string error)
     {
-        Application.Current.Dispatcher.BeginInvoke(() =>
+        PlayNotificationSound("FocusComplete");
+        ShowSystemNotification("摄像头提醒失败", error);
+
+        if (error.Contains("保护释放"))
         {
-            CameraStatus = status;
-            IsCameraAlertActive = _cameraService.IsRunning;
-            if (!_cameraService.IsRunning)
-                HideCameraIndicator();
-        });
-    }
+            IsFocusCompleted = true;
+        }
 
-    private void CameraErrorCallback(string error)
-    {
-        Application.Current.Dispatcher.BeginInvoke(() =>
+        if (AppSettings.PopupEnabled)
         {
-            CameraStatus = error;
-            IsCameraAlertActive = false;
+            MessageBox.Show(
+                $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
+                "摄像头错误",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
 
-            PlayNotificationSound("FocusComplete");
-            ShowSystemNotification("摄像头提醒失败", error);
-
-            if (error.Contains("保护释放"))
+            if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
             {
-                IsFocusCompleted = true;
-            }
-
-            if (AppSettings.PopupEnabled)
-            {
-                MessageBox.Show(
-                    $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
-                    "摄像头错误",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-
-                if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
+                try
                 {
-                    try
-                    {
-                        System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning(ex, "打开摄像头隐私设置失败");
-                    }
+                    System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "打开摄像头隐私设置失败");
                 }
             }
-        });
+        }
     }
 
     public void StartFocus()
     {
-        _consecutivePresenceLostAlerts = 0;
         CurrentNotes = string.Empty;
         UserRating = 0;
         _lastCompletedSessionId = null;
@@ -414,11 +395,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsPendingBreak = false;
         _timerService.StartFocus(AppSettings.WorkMinutes);
 
-        // 启动灵动岛倒计时
         if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
-            var taskName = SelectedTask.Name;
-            CountdownStartRequested?.Invoke($"专注 · {taskName}");
+            CountdownStartRequested?.Invoke($"专注 · {SelectedTask.Name}");
         }
     }
 
@@ -434,7 +413,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void ResetFocus()
     {
-        ForceStopCameraAlert();
+        _cameraAlert.ForceStop();
         _timerService.Reset();
         _currentSession = null;
         IsFocusCompleted = false;
@@ -448,27 +427,17 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void StartBreak(bool isLongBreak = false)
     {
-        _consecutivePresenceLostAlerts = 0;
-
-        // 保存笔记到已完成的 session
         SaveNotesToLastSession();
 
-        if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && IsCameraAlertActive)
+        if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && _cameraAlert.IsActive)
         {
-            ForceStopCameraAlert();
+            _cameraAlert.ForceStop();
         }
 
         int breakMinutes = isLongBreak ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
         _timerService.StartBreak(breakMinutes);
 
-        if (AppSettings.CameraAlertMode == CameraAlertMode.FollowBreak &&
-            AppSettings.CameraAlertEnabled &&
-            AppSettings.CameraFollowBreakEnabled)
-        {
-            FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()), "启动摄像头(跟随休息)",
-                ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
-            ShowCameraIndicator(Color.FromRgb(0x10, 0xB9, 0x81));
-        }
+        _cameraAlert.StartForBreak(AppSettings);
 
         IsFocusCompleted = false;
         IsBreakCompleted = false;
@@ -476,7 +445,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _currentSession = null;
 
-        // 启动灵动岛倒计时
         if (!IsWindowTopmost && AppSettings.DynamicIslandEnabled)
         {
             var breakType = isLongBreak ? "长休息" : "短休息";
@@ -486,205 +454,31 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void EndBreak()
     {
-        ForceStopCameraAlert();
+        _cameraAlert.ForceStop();
         _timerService.Reset();
         IsBreakCompleted = true;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
-
-        // 停止灵动岛倒计时
         CountdownStopRequested?.Invoke();
     }
 
     public void SkipBreak()
     {
-        // 保存笔记到已完成的 session
         SaveNotesToLastSession();
 
-        ForceStopCameraAlert();
+        _cameraAlert.ForceStop();
         _timerService.Reset();
         IsBreakCompleted = false;
         IsFocusCompleted = false;
         IsPendingBreak = false;
         RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
         Progress = 100;
-
-        // 停止灵动岛倒计时
         CountdownStopRequested?.Invoke();
-    }
-
-    private void StartCameraAlert()
-    {
-        if (!AppSettings.CameraAlertEnabled) return;
-
-        if (!AppSettings.HasShownCameraPrivacyNotice)
-        {
-            var result = MessageBox.Show(
-                "本软件仅在番茄钟结束或休息阶段根据你的设置调用摄像头，用于触发摄像头指示灯提醒。\n\n软件不会拍照、录像、保存或上传摄像头画面。\n\n是否同意启用摄像头提醒？",
-                "摄像头隐私声明",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Information);
-
-            if (result == MessageBoxResult.No)
-            {
-                AppSettings.CameraAlertEnabled = false;
-                _storageService.SaveSettings(AppSettings);
-                return;
-            }
-
-            AppSettings.HasShownCameraPrivacyNotice = true;
-            _storageService.SaveSettings(AppSettings);
-        }
-
-        try
-        {
-            bool cameraStarted = false;
-            switch (AppSettings.CameraAlertMode)
-            {
-                case CameraAlertMode.FixedDuration:
-                    FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraForDurationAsync(AppSettings.CameraFixedOnSeconds)), "摄像头固定时长提醒",
-                        ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
-                    cameraStarted = true;
-                    break;
-                case CameraAlertMode.UntilConfirm:
-                    FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()), "摄像头直到确认提醒",
-                        ex => CameraErrorCallback($"摄像头启动失败: {ex.Message}"));
-                    cameraStarted = true;
-                    break;
-                case CameraAlertMode.FollowBreak:
-                    break;
-            }
-
-            if (cameraStarted)
-            {
-                ShowCameraIndicator(Color.FromRgb(0xF5, 0x9E, 0x0B));
-                ApplyAlertLevel();
-            }
-        }
-        catch (Exception ex)
-        {
-            CameraErrorCallback($"摄像头启动失败: {ex.Message}");
-        }
     }
 
     public void StopCameraAlert()
     {
-        if (!AppSettings.CameraAlertCanManualClose)
-        {
-            MessageBox.Show("当前设置不允许手动关闭摄像头提醒，请在设置中开启。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-        ForceStopCameraAlert();
-    }
-
-    private void ForceStopCameraAlert()
-    {
-        _consecutivePresenceLostAlerts = 0;
-        FireAndForgetAsync(Task.Run(() => _cameraService.StopCameraAsync()), "停止摄像头");
-        HideCameraIndicator();
-    }
-
-    private void OnPresenceLost()
-    {
-        if (!AppSettings.PresenceDetectionEnabled) return;
-
-        Application.Current?.Dispatcher?.BeginInvoke(() =>
-        {
-            _consecutivePresenceLostAlerts++;
-            if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
-
-            ShowSystemNotification("走神提醒", "检测到你已离开，请回到专注状态。");
-
-            if (AppSettings.CameraAlertLevel == CameraAlertLevel.Severe)
-            {
-                if (Application.Current.MainWindow is Window mainWindow)
-                {
-                    mainWindow.Activate();
-                    mainWindow.Topmost = true;
-                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-                    timer.Tick += (s, e) =>
-                    {
-                        mainWindow.Topmost = false;
-                        ((DispatcherTimer)s!).Stop();
-                    };
-                    timer.Start();
-                }
-            }
-        });
-    }
-
-    private void OnPresenceRegained()
-    {
-        _consecutivePresenceLostAlerts = 0;
-    }
-
-    private void ShowCameraIndicator(Color color)
-    {
-        if (Application.Current?.Dispatcher == null) return;
-        Application.Current.Dispatcher.BeginInvoke(() =>
-        {
-            _indicatorWindow ??= new CameraIndicatorWindow();
-            _indicatorWindow.ShowIndicator(color);
-        });
-    }
-
-    private void HideCameraIndicator()
-    {
-        if (Application.Current?.Dispatcher == null) return;
-        Application.Current.Dispatcher.BeginInvoke(() =>
-        {
-            _indicatorWindow?.HideIndicator();
-        });
-    }
-
-    private void ApplyAlertLevel()
-    {
-        switch (AppSettings.CameraAlertLevel)
-        {
-            case CameraAlertLevel.Light:
-                break;
-            case CameraAlertLevel.Medium:
-                break;
-            case CameraAlertLevel.Severe:
-                if (Application.Current?.Dispatcher == null) return;
-                Application.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    if (Application.Current.MainWindow is Window mainWindow)
-                    {
-                        mainWindow.Activate();
-                        mainWindow.Topmost = true;
-                        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-                        timer.Tick += (s, e) =>
-                        {
-                            mainWindow.Topmost = false;
-                            ((DispatcherTimer)s!).Stop();
-                        };
-                        timer.Start();
-                    }
-                });
-                break;
-        }
-    }
-
-    private void PlayNotificationSound(string soundName)
-    {
-        if (!AppSettings.SoundEnabled) return;
-
-        // SoundPlayer.Play() 本身是异步非阻塞的，无需 Task.Run
-        try
-        {
-            _soundService.PlaySound(soundName);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "播放音效 {Name} 失败", soundName);
-        }
-    }
-
-    private void ShowInAppNotification(string title, string message)
-    {
-        if (!AppSettings.PopupEnabled) return;
-        InAppNotificationRequested?.Invoke(title, message);
+        _cameraAlert.TryStop(AppSettings);
     }
 
     private void SaveNotesToLastSession()
@@ -762,7 +556,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             .DefaultIfEmpty(0)
             .Average();
 
-        // 科目均衡建议
         var categorySuggestion = "";
         var allTasks = _storageService.LoadTasks();
         var yesterdayCategories = sessions
@@ -791,13 +584,24 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         };
     }
 
-    private int CalculateStreak()
+    private void PlayNotificationSound(string soundName)
     {
-        var completed = _storageService.LoadSessions()
-            .Where(s => s.Completed && s.EndTime.HasValue)
-            .ToList();
+        if (!AppSettings.SoundEnabled) return;
 
-        return InsightEngine.CalculateStreak(completed);
+        try
+        {
+            _soundService.PlaySound(soundName);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "播放音效 {Name} 失败", soundName);
+        }
+    }
+
+    private void ShowInAppNotification(string title, string message)
+    {
+        if (!AppSettings.PopupEnabled) return;
+        InAppNotificationRequested?.Invoke(title, message);
     }
 
     private void ShowSystemNotification(string title, string message)
@@ -806,6 +610,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         if (IsWindowActive) return;
 
         NotificationRequested?.Invoke(title, message);
+    }
+
+    private int CalculateStreak()
+    {
+        var completed = _storageService.LoadSessions()
+            .Where(s => s.Completed && s.EndTime.HasValue)
+            .ToList();
+
+        return InsightEngine.CalculateStreak(completed);
     }
 
     private string FormatTime(int seconds)
@@ -870,7 +683,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(ExamCountdown));
         OnPropertyChanged(nameof(DaysUntilExam));
 
-        _cameraService.Initialize(AppSettings.CameraIndex, CameraStatusCallback, CameraErrorCallback, OnPresenceLost, OnPresenceRegained);
+        _cameraAlert.Initialize(AppSettings);
     }
 
     public void UpdateTasks(List<TaskItem> tasks)
@@ -893,36 +706,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private static async Task FireAndForgetAsync(Task task, string operationName, Action<Exception>? onError = null)
-    {
-        try
-        {
-            await task.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            Log.Debug("[{Operation}] 操作被取消", operationName);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "FireAndForget [{Operation}] 异常", operationName);
-            onError?.Invoke(ex);
-        }
-    }
-
-    // 兼容旧调用的包装方法（标记为过时）
-    [Obsolete("请使用 FireAndForgetAsync 替代")]
-    private static async void FireAndForget(Task task, string operationName, Action<Exception>? onError = null)
-    {
-        await FireAndForgetAsync(task, operationName, onError);
-    }
-
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
-        // 保存进行中的 session
         if (_currentSession != null && !_currentSession.Completed)
         {
             _currentSession.EndTime = DateTime.Now;
@@ -931,25 +719,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             _currentSession = null;
         }
 
-        _trayUpdateTimer?.Stop();
-        try { _indicatorWindow?.ForceClose(); } catch { }
-        _indicatorWindow = null;
-
+        // 取消订阅单例 TimerService 的事件
         _timerService.TimerTick -= TimerService_TimerTick;
         _timerService.TimerCompleted -= TimerService_TimerCompleted;
         _timerService.ModeChanged -= TimerService_ModeChanged;
-        _timerService.Dispose();
-        _soundService.Dispose();
 
-        try
-        {
-            var task = Task.Run(() => _cameraService.StopCameraAsync());
-            FireAndForgetAsync(task, "Dispose 停止摄像头");
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Dispose 停止摄像头异常");
-        }
+        _trayUpdateTimer?.Stop();
+
+        CameraAlertController.FireAndForgetAsync(_cameraAlert.StopCameraAsync(), "Dispose 停止摄像头");
+
+        // 注意：_timerService 和 _soundService 是单例，由 DI 容器管理生命周期，不在此 Dispose
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
