@@ -141,6 +141,13 @@ public class SoundService : ISoundService
 
         try
         {
+            // 替换前释放旧的 SoundPlayer，避免资源泄漏
+            if (_players.TryGetValue(soundName, out var oldPlayer))
+            {
+                oldPlayer.Stop();
+                oldPlayer.Dispose();
+            }
+
             var player = new SoundPlayer(filePath);
             player.Load();
             _players[soundName] = player;

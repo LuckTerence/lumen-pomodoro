@@ -17,14 +17,13 @@ public partial class DynamicIslandNotificationWindow : Window
     private bool _forceClose;
     private DispatcherTimer? _autoHideTimer;
     private Storyboard? _activeStoryboard;
+    private Storyboard? _pulseStoryboard;
     private bool _isCountdownMode;
     private int _remainingSeconds;
     private DispatcherTimer? _breathingTimer;
 
-    // 苹果风格颜色
-    private static readonly SolidColorBrush DefaultBrush = new(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
-    private static readonly SolidColorBrush WarningBrush = new(Color.FromArgb(0xE0, 0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush UrgentBrush = new(Color.FromArgb(0xE0, 0xEF, 0x44, 0x44));
+    // 苹果风格颜色 — 不可冻结，因为需要动画 ColorProperty
+    private SolidColorBrush? _pillBrush;
 
     public DynamicIslandNotificationWindow()
     {
@@ -85,7 +84,9 @@ public partial class DynamicIslandNotificationWindow : Window
         CountdownBlock.Visibility = Visibility.Collapsed;
 
         // 重置颜色
-        PillBorder.Background = DefaultBrush;
+        _pillBrush ??= new SolidColorBrush(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
+        PillBorder.Background = _pillBrush;
+        _pillBrush.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
 
         PositionAndShow();
         PlayExpandAnimation();
@@ -94,7 +95,8 @@ public partial class DynamicIslandNotificationWindow : Window
         _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
         _autoHideTimer.Tick += (s, e) =>
         {
-            _autoHideTimer?.Stop();
+            if (_autoHideTimer == null) return; // 防止双重触发
+            _autoHideTimer.Stop();
             _autoHideTimer = null;
             PlayCollapseAnimation();
         };
@@ -116,7 +118,9 @@ public partial class DynamicIslandNotificationWindow : Window
         CountdownBlock.Text = "--:--";
 
         // 重置颜色
-        PillBorder.Background = DefaultBrush;
+        _pillBrush ??= new SolidColorBrush(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
+        PillBorder.Background = _pillBrush;
+        _pillBrush.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
 
         PositionAndShow();
         PlayExpandAnimation();
@@ -331,6 +335,7 @@ public partial class DynamicIslandNotificationWindow : Window
         Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
         storyboard.Children.Add(scaleYAnim);
 
+        _pulseStoryboard = storyboard;
         storyboard.Begin();
     }
 
@@ -362,12 +367,12 @@ public partial class DynamicIslandNotificationWindow : Window
             targetColor = Color.FromArgb(0xE0, r, g, b);
         }
 
-        // 平滑过渡颜色
+        // 平滑过渡颜色 — 直接在 SolidColorBrush 上动画 ColorProperty
         var colorAnim = new ColorAnimation(targetColor, TimeSpan.FromSeconds(1))
         {
             EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
         };
-        PillBorder.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+        _pillBrush?.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
     }
 
     #endregion
@@ -408,6 +413,9 @@ public partial class DynamicIslandNotificationWindow : Window
 
         _activeStoryboard?.Stop();
         _activeStoryboard = null;
+
+        _pulseStoryboard?.Stop();
+        _pulseStoryboard = null;
 
         StopBreathingAnimation();
 
