@@ -185,6 +185,56 @@ public class StorageService : IStorageService
         return null;
     }
 
+    private List<TaskItem>? RecoverTasksFromBackup()
+    {
+        var backupFile = _tasksFile + ".bak";
+        if (!File.Exists(backupFile)) return null;
+
+        try
+        {
+            var content = File.ReadAllText(backupFile);
+            var tasks = JsonSerializer.Deserialize<List<TaskItem>>(content);
+            if (tasks != null && tasks.Count > 0)
+            {
+                Log.Information("从备份文件恢复任务列表成功");
+                File.WriteAllText(_tasksFile, content);
+                UpdateTasksCache(tasks);
+                return new List<TaskItem>(tasks);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "从备份恢复任务列表失败");
+        }
+
+        return null;
+    }
+
+    private List<FocusSession>? RecoverSessionsFromBackup()
+    {
+        var backupFile = _sessionsFile + ".bak";
+        if (!File.Exists(backupFile)) return null;
+
+        try
+        {
+            var content = File.ReadAllText(backupFile);
+            var sessions = JsonSerializer.Deserialize<List<FocusSession>>(content);
+            if (sessions != null)
+            {
+                Log.Information("从备份文件恢复会话数据成功");
+                File.WriteAllText(_sessionsFile, content);
+                UpdateSessionsCache(sessions);
+                return sessions;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "从备份恢复会话数据失败");
+        }
+
+        return null;
+    }
+
     private void CreateBackup(string filePath)
     {
         try
@@ -247,8 +297,15 @@ public class StorageService : IStorageService
                     return new List<TaskItem>(tasks);
                 }
             }
-            catch
+            catch (JsonException ex)
             {
+                Log.Error(ex, "任务文件 JSON 格式损坏，尝试从备份恢复");
+                var recovered = RecoverTasksFromBackup();
+                if (recovered != null) return recovered;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "加载任务文件失败，返回默认任务");
             }
 
             var defaults = GetDefaultTasks();
@@ -312,12 +369,20 @@ public class StorageService : IStorageService
             UpdateSessionsCache(sessions);
             return sessions;
         }
-        catch
+        catch (JsonException ex)
         {
-            var empty = new List<FocusSession>();
-            UpdateSessionsCache(empty);
-            return empty;
+            Log.Error(ex, "会话文件 JSON 格式损坏，尝试从备份恢复");
+            var recovered = RecoverSessionsFromBackup();
+            if (recovered != null) return recovered;
         }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "加载会话文件失败");
+        }
+
+        var empty = new List<FocusSession>();
+        UpdateSessionsCache(empty);
+        return empty;
     }
 
     private void UpdateSessionsCache(List<FocusSession> sessions)
