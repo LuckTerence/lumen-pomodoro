@@ -27,12 +27,12 @@ class Program
         if (!IsRuntimeInstalled())
         {
             Console.WriteLine("正在检测 .NET 运行环境...");
-            Console.WriteLine("需要安装 .NET 9 Desktop Runtime (~30MB)。正在下载...");
+            Console.WriteLine("需要安装 .NET 8 Desktop Runtime (~55MB)。正在下载...");
 
             if (!await DownloadAndInstallRuntimeAsync())
             {
                 Console.Error.WriteLine("安装失败，请手动安装:");
-                Console.WriteLine("https://dotnet.microsoft.com/en-us/download/dotnet/9.0");
+                Console.WriteLine("https://dotnet.microsoft.com/en-us/download/dotnet/8.0");
                 Console.WriteLine("按任意键退出...");
                 Console.ReadKey();
                 return 1;
@@ -83,9 +83,12 @@ class Program
             if (proc == null) return false;
 
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000))
+            {
+                // 如果超时仍未退出，StandardOutput 可能已经读完，继续检查文本
+            }
 
-            return output.Contains("Microsoft.WindowsDesktop.App 9.");
+            return output.Contains("Microsoft.WindowsDesktop.App 8.");
         }
         catch
         {
@@ -96,7 +99,7 @@ class Program
                 "Microsoft.WindowsDesktop.App");
             if (!Directory.Exists(runtimeDir)) return false;
 
-            foreach (var dir in Directory.EnumerateDirectories(runtimeDir, "9.*"))
+            foreach (var dir in Directory.EnumerateDirectories(runtimeDir, "8.*"))
                 return true;
 
             return false;
@@ -107,9 +110,10 @@ class Program
     {
         try
         {
-            // .NET 9.0 Windows Desktop Runtime x64 installer URL
-            var url = "https://dotnetcli.azureedge.net/dotnet/WindowsDesktop/9.0.0/"
-                + "windowsdesktop-runtime-9.0.0-win-x64.exe";
+            // .NET 8.0 Windows Desktop Runtime x64 installer URL
+            // 用户安装后可通过 Windows Update 获取后续安全补丁
+            var url = "https://dotnetcli.azureedge.net/dotnet/WindowsDesktop/8.0.0/"
+                + "windowsdesktop-runtime-8.0.0-win-x64.exe";
 
             var installerPath = Path.Combine(Path.GetTempPath(), "dotnet-runtime-installer.exe");
 
