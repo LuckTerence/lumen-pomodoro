@@ -157,13 +157,16 @@ public class TimerService : ITimerService
 
     public void Stop()
     {
+        TimerMode oldMode;
         lock (_lock)
         {
+            oldMode = _currentMode;
             _timer.Stop();
             _isRunning = false;
             _isPaused = false;
             _nextTickTime = DateTime.UtcNow;
         }
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
     }
 
     public void CorrectAfterWake()

@@ -25,11 +25,9 @@ public class StorageService : IStorageService
 
     // Sessions 内存缓存 — 避免重复 JSON 反序列化
     private List<FocusSession>? _sessionsCache;
-    private DateTime _sessionsCacheFileTime;
 
     // Tasks 内存缓存
     private List<TaskItem>? _tasksCache;
-    private DateTime _tasksCacheFileTime;
 
 
     public StorageService(string? appDataPath = null)
@@ -236,13 +234,8 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            // 检查 tasks 缓存
-            if (_tasksCache != null && File.Exists(_tasksFile))
-            {
-                var writeTime = File.GetLastWriteTime(_tasksFile);
-                if (writeTime == _tasksCacheFileTime)
-                    return new List<TaskItem>(_tasksCache);
-            }
+            if (_tasksCache != null)
+                return new List<TaskItem>(_tasksCache);
 
             try
             {
@@ -309,12 +302,8 @@ public class StorageService : IStorageService
     /// </summary>
     private List<FocusSession> GetOrLoadSessions()
     {
-        if (_sessionsCache != null && File.Exists(_sessionsFile))
-        {
-            var writeTime = File.GetLastWriteTime(_sessionsFile);
-            if (writeTime == _sessionsCacheFileTime)
-                return _sessionsCache;
-        }
+        if (_sessionsCache != null)
+            return _sessionsCache;
 
         try
         {
@@ -334,9 +323,6 @@ public class StorageService : IStorageService
     private void UpdateSessionsCache(List<FocusSession> sessions)
     {
         _sessionsCache = sessions;
-        _sessionsCacheFileTime = File.Exists(_sessionsFile)
-            ? File.GetLastWriteTime(_sessionsFile)
-            : DateTime.MinValue;
     }
 
     /// <summary>内部使用，保留兼容</summary>
@@ -386,9 +372,6 @@ public class StorageService : IStorageService
     private void UpdateTasksCache(List<TaskItem> tasks)
     {
         _tasksCache = tasks;
-        _tasksCacheFileTime = File.Exists(_tasksFile)
-            ? File.GetLastWriteTime(_tasksFile)
-            : DateTime.MinValue;
     }
 
     private void SaveSessionsWithTransaction(List<FocusSession> sessions)

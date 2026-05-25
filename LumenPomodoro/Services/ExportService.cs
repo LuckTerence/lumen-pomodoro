@@ -9,21 +9,25 @@ namespace LumenPomodoro.Services;
 public class ExportService : IExportService
 {
     private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
+
+    // 预估每行 CSV 字符数：Id(36) + TaskId(36) + TaskName(20) + 2*DateTime(19) + FocusMinutes(3) + Completed(5) + 分隔符(6) + 引号 ≈ 150
+    private const int EstimatedCharsPerRow = 150;
+
     public string ExportToCsv(List<FocusSession> sessions)
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder((sessions.Count + 1) * EstimatedCharsPerRow);
         sb.AppendLine("Id,TaskId,TaskName,StartTime,EndTime,FocusMinutes,Completed");
 
         foreach (var s in sessions)
         {
-            sb.AppendLine(string.Join(",",
-                Escape(s.Id),
-                Escape(s.TaskId),
-                Escape(s.TaskName),
-                Escape(s.StartTime.ToString("yyyy-MM-dd HH:mm:ss")),
-                Escape(s.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""),
-                s.FocusMinutes,
-                s.Completed));
+            AppendField(sb, s.Id);
+            AppendField(sb, s.TaskId);
+            AppendField(sb, s.TaskName);
+            AppendField(sb, s.StartTime.ToString("yyyy-MM-dd HH:mm:ss"));
+            AppendField(sb, s.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "");
+            sb.Append(s.FocusMinutes);
+            sb.Append(',');
+            sb.AppendLine(s.Completed ? "true" : "false");
         }
 
         return sb.ToString();
@@ -43,11 +47,24 @@ public class ExportService : IExportService
         File.WriteAllText(filePath, content, Encoding.UTF8);
     }
 
-    private static string Escape(string value)
+    private static void AppendField(StringBuilder sb, string value)
     {
-        if (string.IsNullOrEmpty(value)) return "\"\"";
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        return value;
+        if (string.IsNullOrEmpty(value))
+        {
+            sb.Append("\"\",");
+            return;
+        }
+
+        var needsQuoting = value.Contains(',') || value.Contains('"') || value.Contains('\n');
+        if (!needsQuoting)
+        {
+            sb.Append(value);
+            sb.Append(',');
+            return;
+        }
+
+        sb.Append('"');
+        sb.Append(value.Replace("\"", "\"\""));
+        sb.Append("\",");
     }
 }
