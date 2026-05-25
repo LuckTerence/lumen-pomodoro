@@ -17,6 +17,8 @@ public class StorageService : IStorageService
 
     private const int CurrentSchemaVersion = 1;
 
+    private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
+
     private DailyStats? _cachedTodayStats;
     private DateTime _cacheDate;
     private readonly object _fileLock = new object();
@@ -77,7 +79,7 @@ public class StorageService : IStorageService
     {
         var meta = new { schema_version = version, updated_at = DateTime.Now.ToString("O") };
         File.WriteAllText(_schemaFile,
-            JsonSerializer.Serialize(meta, new JsonSerializerOptions { WriteIndented = true }));
+            JsonSerializer.Serialize(meta, IndentedOptions));
     }
 
     private void RunMigrations()
@@ -201,13 +203,32 @@ public class StorageService : IStorageService
         }
     }
 
+    /// <summary>
+    /// 使用临时文件实现原子写入：先写 .tmp，再 File.Replace 到目标文件。
+    /// 防止进程崩溃时 JSON 文件损坏。
+    /// </summary>
+    private static void AtomicWriteAllText(string filePath, string content)
+    {
+        var tempFile = filePath + ".tmp";
+        File.WriteAllText(tempFile, content);
+
+        if (File.Exists(filePath))
+        {
+            File.Replace(tempFile, filePath, filePath + ".bak");
+        }
+        else
+        {
+            File.Move(tempFile, filePath);
+        }
+    }
+
     public void SaveSettings(Settings settings)
     {
         lock (_fileLock)
         {
             CreateBackup(_settingsFile);
-            var content = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_settingsFile, content);
+            var content = JsonSerializer.Serialize(settings, IndentedOptions);
+            AtomicWriteAllText(_settingsFile, content);
         }
     }
 
@@ -248,8 +269,8 @@ public class StorageService : IStorageService
         lock (_fileLock)
         {
             CreateBackup(_tasksFile);
-            var content = JsonSerializer.Serialize(tasks, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_tasksFile, content);
+            var content = JsonSerializer.Serialize(tasks, IndentedOptions);
+            AtomicWriteAllText(_tasksFile, content);
             UpdateTasksCache(tasks);
         }
     }
@@ -259,7 +280,7 @@ public class StorageService : IStorageService
         ("考研数学", "数学", "#3B82F6"),
         ("考研英语", "英语", "#10B981"),
         ("考研政治", "政治", "#EF4444"),
-        ("专业课",   "专业课", "#8B5CF6"),
+        ("专业课", "专业课", "#8B5CF6"),
         ("复盘与整理", "其他", "#6B7280"),
     ];
 
@@ -325,8 +346,8 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            var content = JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_sessionsFile, content);
+            var content = JsonSerializer.Serialize(sessions, IndentedOptions);
+            AtomicWriteAllText(_sessionsFile, content);
             UpdateSessionsCache(sessions);
         }
         InvalidateStatsCache();
@@ -377,7 +398,7 @@ public class StorageService : IStorageService
 
         try
         {
-            var content = JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
+            var content = JsonSerializer.Serialize(sessions, IndentedOptions);
 
             if (File.Exists(_sessionsFile))
             {

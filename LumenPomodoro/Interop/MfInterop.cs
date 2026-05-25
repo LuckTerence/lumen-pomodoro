@@ -44,8 +44,8 @@ internal static unsafe class ComVtbl
     public static int Attributes_GetAllocatedString(IntPtr pAttr, Guid* key,
         out IntPtr strPtr, out int length)
     {
-        IntPtr tmpStr;
-        int tmpLen;
+        IntPtr tmpStr = IntPtr.Zero;
+        int tmpLen = 0;
         // IMFAttributes::GetAllocatedString = slot 13.
         var getString = (delegate* unmanaged<IntPtr, Guid*, IntPtr*, int*, int>)(*(IntPtr***)pAttr)[13];
         var hr = getString(pAttr, key, &tmpStr, &tmpLen);
@@ -56,7 +56,7 @@ internal static unsafe class ComVtbl
 
     public static int Activate_ActivateObject(IntPtr pActivate, Guid* riid, out IntPtr ppv)
     {
-        IntPtr tmp;
+        IntPtr tmp = IntPtr.Zero;
         // IMFActivate::ActivateObject = slot 33.
         var activate = (delegate* unmanaged<IntPtr, Guid*, IntPtr*, int>)(*(IntPtr***)pActivate)[33];
         var hr = activate(pActivate, riid, &tmp);
@@ -67,10 +67,10 @@ internal static unsafe class ComVtbl
     public static int SourceReader_ReadSample(IntPtr pReader, int streamIndex, int controlFlags,
         out int actualStreamIndex, out int streamFlags, out long timestamp, out IntPtr sample)
     {
-        int actualIndex;
-        int flags;
-        long ts;
-        IntPtr samplePtr;
+        int actualIndex = 0;
+        int flags = 0;
+        long ts = 0;
+        IntPtr samplePtr = IntPtr.Zero;
         // IMFSourceReader::ReadSample = slot 9.
         var readSample = (delegate* unmanaged<IntPtr, int, int, int*, int*, long*, IntPtr*, int>)
             (*(IntPtr***)pReader)[9];

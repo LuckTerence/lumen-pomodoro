@@ -1,13 +1,14 @@
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
-using System.Text.Json;
 
 namespace LumenPomodoro.Services;
 
 public class ExportService : IExportService
 {
+    private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
     public string ExportToCsv(List<FocusSession> sessions)
     {
         var sb = new StringBuilder();
@@ -30,7 +31,7 @@ public class ExportService : IExportService
 
     public string ExportToJson(List<FocusSession> sessions)
     {
-        return JsonSerializer.Serialize(sessions, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(sessions, IndentedOptions);
     }
 
     public void ExportToFile(List<FocusSession> sessions, string filePath, ExportFormat format)

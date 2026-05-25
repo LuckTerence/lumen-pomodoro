@@ -285,6 +285,10 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        // 清理 DependencyPropertyDescriptor 事件（否则阻止 GC）
+        DependencyPropertyDescriptor.FromProperty(TopmostProperty, typeof(Window))
+            .RemoveValueChanged(this, OnTopmostChanged);
+
         _dynamicIslandWindow?.ForceClose();
         _viewModel.Dispose();
         _trayService?.Dispose();

@@ -13,8 +13,8 @@ public sealed class CameraService : ICameraService
 {
     private volatile bool _isRunning;
     private volatile bool _isInitializing;
-    private CancellationTokenSource? _cancellationTokenSource;
-    private Task? _cameraTask;
+    private volatile CancellationTokenSource? _cancellationTokenSource;
+    private volatile Task? _cameraTask;
     private int _cameraIndex;
     private Action<string>? _statusCallback;
     private Action<string>? _errorCallback;
@@ -51,8 +51,7 @@ public sealed class CameraService : ICameraService
 
         _startTime = DateTime.Now;
         var newCts = new CancellationTokenSource();
-        var oldCts = _cancellationTokenSource;
-        _cancellationTokenSource = newCts;
+        var oldCts = Interlocked.Exchange(ref _cancellationTokenSource, newCts);
         oldCts?.Cancel();
         oldCts?.Dispose();
 
@@ -69,6 +68,8 @@ public sealed class CameraService : ICameraService
         catch (Exception ex)
         {
             Log.Error(ex, "摄像头启动失败");
+            newCts.Cancel();
+            newCts.Dispose();
             StopDevice();
             lock (_lock) { _isRunning = false; }
 
@@ -83,7 +84,7 @@ public sealed class CameraService : ICameraService
         }
         finally
         {
-            _isInitializing = false;
+            lock (_lock) { _isInitializing = false; }
         }
 
         return Task.CompletedTask;
@@ -107,13 +108,16 @@ public sealed class CameraService : ICameraService
     {
         if (!_isRunning && _sourceReader == IntPtr.Zero && _mediaSource == IntPtr.Zero) return;
 
-        _cancellationTokenSource?.Cancel();
+        // 捕获本地 CTS 引用，防止并发 StartCameraAsync 覆盖 _cancellationTokenSource
+        var cts = _cancellationTokenSource;
+        cts?.Cancel();
 
-        if (_cameraTask != null)
+        var cameraTask = _cameraTask;
+        if (cameraTask != null)
         {
             try
             {
-                await _cameraTask.WaitAsync(TimeSpan.FromSeconds(2));
+                await cameraTask.WaitAsync(TimeSpan.FromSeconds(2));
             }
             catch (OperationCanceledException) { }
             catch (TimeoutException)
@@ -129,8 +133,9 @@ public sealed class CameraService : ICameraService
         StopDevice();
         lock (_lock) { _isRunning = false; }
         _cameraTask = null;
-        _cancellationTokenSource?.Dispose();
-        _cancellationTokenSource = null;
+        cts?.Dispose();
+        if (ReferenceEquals(cts, _cancellationTokenSource))
+            _cancellationTokenSource = null;
         _statusCallback?.Invoke("摄像头已关闭");
     }
 
@@ -259,19 +264,25 @@ public sealed class CameraService : ICameraService
 
     private void EnsureMfStarted()
     {
-        if (_mfStarted) return;
+        lock (_lock)
+        {
+            if (_mfStarted) return;
 
-        var hr = MfNative.MFStartup(MfConst.MF_VERSION);
-        Log.Information("Camera: MFStartup = 0x{Code:X8}", hr);
-        if (hr < 0) throw new InvalidOperationException($"Media Foundation 初始化失败 (0x{hr:X8})");
-        _mfStarted = true;
+            var hr = MfNative.MFStartup(MfConst.MF_VERSION);
+            Log.Information("Camera: MFStartup = 0x{Code:X8}", hr);
+            if (hr < 0) throw new InvalidOperationException($"Media Foundation 初始化失败 (0x{hr:X8})");
+            _mfStarted = true;
+        }
     }
 
     private void ShutdownMf()
     {
-        if (!_mfStarted) return;
-        MfNative.MFShutdown();
-        _mfStarted = false;
+        lock (_lock)
+        {
+            if (!_mfStarted) return;
+            MfNative.MFShutdown();
+            _mfStarted = false;
+        }
     }
 
     private List<string> EnumerateDeviceNames()

@@ -168,6 +168,10 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+
+        // 释放 DI 容器中的单例服务（CameraService, TimerService, SoundService 等）
+        (Services as IDisposable)?.Dispose();
+
         Log.Information("应用退出");
         Log.CloseAndFlush();
         base.OnExit(e);
