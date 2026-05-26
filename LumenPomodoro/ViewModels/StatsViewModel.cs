@@ -300,13 +300,9 @@ public class StatsViewModel : INotifyPropertyChanged
         // 按当前周期过滤
         DateTime periodStart, periodEnd;
         List<FocusSession> filteredSessions;
-
         switch (_currentPeriod)
         {
             case StatsPeriod.Day:
-                filteredSessions = sessions
-                    .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == _currentDate.Date)
-                    .ToList();
                 StatsDateLabel = _currentDate.Date == DateTime.Today
                     ? "今日统计"
                     : _currentDate.ToString("M月d日");
@@ -318,35 +314,22 @@ public class StatsViewModel : INotifyPropertyChanged
             case StatsPeriod.Week:
                 var weekStart = _currentDate.AddDays(-(int)_currentDate.DayOfWeek);
                 var weekEnd = weekStart.AddDays(6);
-                filteredSessions = sessions
-                    .Where(s => s.Completed && s.EndTime.HasValue
-                        && s.EndTime.Value.Date >= weekStart.Date
-                        && s.EndTime.Value.Date <= weekEnd.Date)
-                    .ToList();
                 StatsDateLabel = $"{weekStart:M月d日}-{weekEnd:M月d日}";
                 periodStart = weekStart;
                 periodEnd = weekEnd;
-                var maxWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-                CanGoNext = _currentDate < maxWeek;
+                CanGoNext = _currentDate < DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
                 break;
 
             case StatsPeriod.Month:
                 var monthStart = new DateTime(_currentDate.Year, _currentDate.Month, 1);
                 var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-                filteredSessions = sessions
-                    .Where(s => s.Completed && s.EndTime.HasValue
-                        && s.EndTime.Value.Date >= monthStart.Date
-                        && s.EndTime.Value.Date <= monthEnd.Date)
-                    .ToList();
                 StatsDateLabel = $"{_currentDate.Year}年{_currentDate.Month}月";
                 periodStart = monthStart;
                 periodEnd = monthEnd;
-                var maxMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                CanGoNext = _currentDate < maxMonth;
+                CanGoNext = _currentDate < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
                 break;
 
             default:
-                filteredSessions = [];
                 periodStart = DateTime.Today;
                 periodEnd = DateTime.Today;
                 break;

@@ -72,6 +72,7 @@ public sealed class CameraService : ICameraService
             Log.Error(ex, "摄像头启动失败");
             newCts.Cancel();
             newCts.Dispose();
+            Interlocked.CompareExchange(ref _cancellationTokenSource, null, newCts);
             StopDevice();
             lock (_lock) { _isRunning = false; }
 

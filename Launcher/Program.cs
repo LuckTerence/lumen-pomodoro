@@ -85,7 +85,7 @@ class Program
             var output = proc.StandardOutput.ReadToEnd();
             if (!proc.WaitForExit(3000))
             {
-                // 如果超时仍未退出，StandardOutput 可能已经读完，继续检查文本
+                try { proc.Kill(); } catch { }
             }
 
             return output.Contains("Microsoft.WindowsDesktop.App 8.");

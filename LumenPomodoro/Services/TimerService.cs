@@ -236,7 +236,7 @@ public class TimerService : ITimerService
             while (_nextTickTime <= now && ticksToProcess < 10) // 最多补偿10个tick，防止长时间卡顿一次性扣除过多
             {
                 ticksToProcess++;
-                _nextTickTime = _nextTickTime.AddSeconds(1);
+                _nextTickTime = _nextTickTime.AddSeconds(TickSeconds);
             }
 
             _remainingSeconds = Math.Max(0, _remainingSeconds - ticksToProcess);

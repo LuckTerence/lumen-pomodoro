@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using LumenPomodoro.Models;
-using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
 
@@ -26,7 +25,6 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private int _selectedCameraIndex;
     private bool _cameraAlertCanManualClose;
     private CameraAlertLevel _cameraAlertLevel = CameraAlertLevel.Medium;
-    private bool _hasShownCameraPrivacyNotice;
     private bool _presenceDetectionEnabled = true;
     private int _presenceDetectionSeconds = 5;
     private ObservableCollection<string> _availableCameras;
@@ -247,7 +245,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         _availableCameras = new ObservableCollection<string>();
 
         LoadSettings();
-        LoadAvailableCameras();
+        LoadAvailableCamerasAsync().ConfigureAwait(false);
     }
 
     private void LoadSettings()
@@ -265,7 +263,6 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         CameraFollowBreakEnabled = settings.CameraFollowBreakEnabled;
         CameraAlertCanManualClose = settings.CameraAlertCanManualClose;
         CameraAlertLevel = settings.CameraAlertLevel;
-        _hasShownCameraPrivacyNotice = settings.HasShownCameraPrivacyNotice;
         SelectedCameraIndex = settings.CameraIndex;
 
         SoundEnabled = settings.SoundEnabled;
@@ -291,9 +288,9 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         DynamicIslandEnabled = settings.DynamicIslandEnabled;
     }
 
-    private async void LoadAvailableCameras()
+    private async Task LoadAvailableCamerasAsync()
     {
-        var cameras = await _cameraService.GetAvailableCamerasAsync();
+        var cameras = await _cameraService.GetAvailableCamerasAsync().ConfigureAwait(false);
         AvailableCameras.Clear();
         foreach (var camera in cameras)
         {
