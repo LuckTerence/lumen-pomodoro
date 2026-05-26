@@ -21,7 +21,6 @@ public partial class SettingsPage : Page, IDisposable
 
     private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
     {
-        _viewModel.Cleanup();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

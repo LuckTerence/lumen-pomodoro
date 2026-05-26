@@ -15,6 +15,8 @@ public class PresenceDetector
 
     private const double MovementThreshold = 0.15;
 
+    private const int DownsampleSize = 16;
+
     private int _stillFrameCount;
 
     public int StillFrameThreshold { get; set; } = 5;
@@ -25,7 +27,7 @@ public class PresenceDetector
 
     public bool ProcessFrame(byte[] pixelData, int width, int height, int stride)
     {
-        var current = DownsampleToGrayscale(pixelData, width, height, stride, 16, 16);
+        var current = DownsampleToGrayscale(pixelData, width, height, stride, DownsampleSize, DownsampleSize);
 
         if (_previousFrame == null)
         {

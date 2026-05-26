@@ -123,26 +123,36 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     // 手动评分 (1-5 星)
     private int _userRating;
+    private string _ratingStars = string.Empty;
     public int UserRating
     {
         get => _userRating;
-        set { if (_userRating != value) { _userRating = value; OnPropertyChanged(); OnPropertyChanged(nameof(RatingStars)); } }
+        set
+        {
+            if (_userRating != value)
+            {
+                _userRating = value;
+                _ratingStars = value > 0 ? new string('★', value) + new string('☆', 5 - value) : string.Empty;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RatingStars));
+            }
+        }
     }
-    public string RatingStars => UserRating > 0 ? string.Concat(Enumerable.Repeat("★", UserRating)) + string.Concat(Enumerable.Repeat("☆", 5 - UserRating)) : string.Empty;
+    public string RatingStars => _ratingStars;
 
     // 最近完成的专注摘要
     private string _lastCompletedTaskName = string.Empty;
     public string LastCompletedTaskName
     {
         get => _lastCompletedTaskName;
-        set { if (_lastCompletedTaskName != value) { _lastCompletedTaskName = value; OnPropertyChanged(); } }
+        set { if (_lastCompletedTaskName != value) { _lastCompletedTaskName = value; OnPropertyChanged(); OnPropertyChanged(nameof(LastCompletedSummary)); } }
     }
 
     private int _lastCompletedFocusMinutes;
     public int LastCompletedFocusMinutes
     {
         get => _lastCompletedFocusMinutes;
-        set { if (_lastCompletedFocusMinutes != value) { _lastCompletedFocusMinutes = value; OnPropertyChanged(); } }
+        set { if (_lastCompletedFocusMinutes != value) { _lastCompletedFocusMinutes = value; OnPropertyChanged(); OnPropertyChanged(nameof(LastCompletedSummary)); } }
     }
 
     public string LastCompletedSummary =>
@@ -196,6 +206,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public event Action<string>? CountdownUpdateRequested;
     public event Action? CountdownStopRequested;
 
+    internal const double TopmostDurationSeconds = 3;
     private bool _isWindowTopmost;
     public bool IsWindowTopmost
     {
@@ -227,7 +238,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             window.Activate();
             window.Topmost = true;
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TopmostDurationSeconds) };
             timer.Tick += (s, e) => { window.Topmost = false; ((DispatcherTimer)s!).Stop(); };
             timer.Start();
         };
@@ -539,13 +550,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public DailyReport? GetYesterdayReport()
     {
         var yesterday = DateTime.Today.AddDays(-1);
-        // 一次加载所有已完成 sessions，避免 CalculateStreak() 再调一次 LoadSessions()
-        var allCompleted = _storageService.LoadSessions()
-            .Where(s => s.Completed && s.EndTime.HasValue)
-            .ToList();
-        var sessions = allCompleted
-            .Where(s => s.EndTime!.Value.Date == yesterday)
-            .ToList();
+        // 一次遍历同时填充 allCompleted 和 yesterday sessions，避免两次 Where
+        var allCompleted = new List<FocusSession>();
+        var sessions = new List<FocusSession>();
+        foreach (var s in _storageService.LoadSessions().Where(s => s.Completed && s.EndTime.HasValue))
+        {
+            allCompleted.Add(s);
+            if (s.EndTime!.Value.Date == yesterday)
+                sessions.Add(s);
+        }
 
         if (!sessions.Any()) return null;
 
@@ -731,19 +744,4 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
-    }
-
-    protected bool SetProperty<T>(ref T field, T value, IEqualityComparer<T> comparer, [CallerMemberName] string? propertyName = null)
-    {
-        if (comparer.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
-    }
 }

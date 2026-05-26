@@ -17,6 +17,8 @@ public class InsightEngine : IInsightEngine
     private const int MaxInsightCount = 5;
     private static readonly int[] Milestones = [10, 50, 100, 500, 1000];
 
+    private static DateTime GetMonday(DateTime date) => date.AddDays(-(int)date.DayOfWeek);
+
     /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<HeatmapDay> GetHeatmapData(List<FocusSession> sessions)
     {
@@ -31,11 +33,8 @@ public class InsightEngine : IInsightEngine
         var daysToShow = Math.Max(90, Math.Min(365, fullRange + 7));
         var startDate = today.AddDays(-(daysToShow - 1));
 
-        var completedSessions = completedAll
+        var dailyMinutes = completedAll
             .Where(s => s.EndTime!.Value.Date >= startDate)
-            .ToList();
-
-        var dailyMinutes = completedSessions
             .GroupBy(s => s.EndTime!.Value.Date)
             .ToDictionary(g => g.Key, g => g.Sum(s => s.FocusMinutes));
 
@@ -63,11 +62,8 @@ public class InsightEngine : IInsightEngine
     /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<HourlyDataPoint> GetHourlyDistribution(List<FocusSession> sessions, DateTime start, DateTime end)
     {
-        var filtered = sessions
+        var hourlyGroups = sessions
             .Where(s => s.EndTime!.Value.Date >= start.Date && s.EndTime!.Value.Date <= end.Date)
-            .ToList();
-
-        var hourlyGroups = filtered
             .GroupBy(s => s.EndTime!.Value.Hour)
             .ToDictionary(g => g.Key, g => new { Minutes = g.Sum(s => s.FocusMinutes), Count = g.Count() });
 
@@ -115,7 +111,7 @@ public class InsightEngine : IInsightEngine
     public List<WeeklyDataPoint> GetWeeklyTrend(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
-        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
         // 一次性按周 GroupBy，避免 8 次 O(n) 全表扫描
@@ -380,7 +376,7 @@ public class InsightEngine : IInsightEngine
         var today = DateTime.Today;
         var completed = sessions;
 
-        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
         // 单次遍历同时计算日 + 周
@@ -426,7 +422,7 @@ public class InsightEngine : IInsightEngine
         var today = DateTime.Today;
         var completed = sessions;
 
-        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
         var lastMonday = thisMonday.AddDays(-7);
         var thisMonthStart = new DateTime(today.Year, today.Month, 1);
@@ -467,7 +463,7 @@ public class InsightEngine : IInsightEngine
     public List<EfficiencyDataPoint> GetEfficiencyTrend(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
-        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
         // 按周预分组，避免 8 次 O(n) 扫描

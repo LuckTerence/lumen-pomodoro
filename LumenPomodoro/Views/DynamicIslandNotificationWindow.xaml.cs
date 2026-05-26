@@ -32,6 +32,8 @@ public partial class DynamicIslandNotificationWindow : Window
         SizeChanged += (_, _) => CenterAtScreenTop();
     }
 
+    private const double AutoHideSeconds = 2.5;
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
     private static extern int GetWindowLong32(IntPtr hwnd, int index);
 
@@ -92,7 +94,7 @@ public partial class DynamicIslandNotificationWindow : Window
         PlayExpandAnimation();
 
         // 2.5 秒后淡出
-        _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
+        _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(AutoHideSeconds) };
         _autoHideTimer.Tick += (s, e) =>
         {
             if (_autoHideTimer == null) return; // 防止双重触发

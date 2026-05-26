@@ -57,7 +57,7 @@ public class StorageService : IStorageService
                     return v;
             }
         }
-        catch { }
+        catch (JsonException) { }
         // 无 _schema.json 时，检查 settings.json 中的 SchemaVersion
         if (File.Exists(_settingsFile))
         {
@@ -68,7 +68,7 @@ public class StorageService : IStorageService
                 if (doc.TryGetProperty("SchemaVersion", out var version) && version.TryGetInt32(out var v))
                     return v;
             }
-            catch { }
+            catch (JsonException) { }
         }
         return 0;
     }
@@ -428,8 +428,6 @@ public class StorageService : IStorageService
         _sessionsCache = sessions;
     }
 
-    /// <summary>内部使用，保留兼容</summary>
-    private List<FocusSession> LoadSessionsCore() => GetOrLoadSessions();
 
     public void SaveSessions(List<FocusSession> sessions)
     {
@@ -479,46 +477,10 @@ public class StorageService : IStorageService
 
     private void SaveSessionsWithTransaction(List<FocusSession> sessions)
     {
-        var backupFile = _sessionsFile + ".bak";
-        var tempFile = _sessionsFile + ".tmp";
-
-        try
-        {
-            var content = JsonSerializer.Serialize(sessions, IndentedOptions);
-
-            if (File.Exists(_sessionsFile))
-            {
-                File.Copy(_sessionsFile, backupFile, true);
-            }
-
-            File.WriteAllText(tempFile, content);
-
-            if (File.Exists(_sessionsFile))
-            {
-                File.Replace(tempFile, _sessionsFile, backupFile);
-            }
-            else
-            {
-                File.Move(tempFile, _sessionsFile);
-            }
-
-            InvalidateStatsCache();
-
-            // 写入成功后更新缓存（避免下次读磁盘）
-            UpdateSessionsCache(sessions);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "保存会话数据失败");
-            // 写入失败，缓存可能过时
-            _sessionsCache = null;
-            if (File.Exists(backupFile))
-            {
-                File.Copy(backupFile, _sessionsFile, true);
-            }
-            try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-            throw;
-        }
+        var content = JsonSerializer.Serialize(sessions, IndentedOptions);
+        AtomicWriteAllText(_sessionsFile, content);
+        UpdateSessionsCache(sessions);
+        InvalidateStatsCache();
     }
 
     public DailyStats GetTodayStats()

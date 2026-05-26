@@ -14,7 +14,7 @@ public sealed class CameraService : ICameraService
     private volatile bool _isRunning;
     private volatile bool _isInitializing;
     private volatile CancellationTokenSource? _cancellationTokenSource;
-    private volatile Task? _cameraTask;
+    private Task? _cameraTask;
     private int _cameraIndex;
     private Action<string>? _statusCallback;
     private Action<string>? _errorCallback;
@@ -25,10 +25,12 @@ public sealed class CameraService : ICameraService
     private IntPtr _sourceReader;
     private DateTime _startTime;
 
-    private List<string>? _cachedCameraNames;
+    private volatile List<string>? _cachedCameraNames;
     private int _cachedCameraCount = -1;
 
     private const int MaxRunMinutes = 30;
+    private static readonly TimeSpan CameraStopTimeout = TimeSpan.FromSeconds(2);
+    private const int CameraPollIntervalMs = 100;
 
     public bool IsRunning => _isRunning;
 
@@ -57,12 +59,12 @@ public sealed class CameraService : ICameraService
 
         try
         {
-            _statusCallback?.Invoke("正在初始化摄像头...");
+            var cb = _statusCallback; cb?.Invoke("正在初始化摄像头...");
             EnsureMfStarted();
             OpenSelectedCamera();
 
             lock (_lock) { _isRunning = true; }
-            _statusCallback?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
+            cb = _statusCallback; cb?.Invoke("摄像头提醒中：当前摄像头被用于点亮指示灯，不会保存或上传画面。");
             _cameraTask = Task.Run(() => KeepCameraActiveAsync(newCts.Token), newCts.Token);
         }
         catch (Exception ex)
@@ -80,7 +82,7 @@ public sealed class CameraService : ICameraService
                     "摄像头权限被拒绝，请前往 Windows 隐私设置开启摄像头权限",
                 _ => $"摄像头打开失败: {ex.Message}"
             };
-            _errorCallback?.Invoke(msg);
+            var ecb = _errorCallback; ecb?.Invoke(msg);
         }
         finally
         {
@@ -112,12 +114,12 @@ public sealed class CameraService : ICameraService
         var cts = _cancellationTokenSource;
         cts?.Cancel();
 
-        var cameraTask = _cameraTask;
+        var cameraTask = Volatile.Read(ref _cameraTask);
         if (cameraTask != null)
         {
             try
             {
-                await cameraTask.WaitAsync(TimeSpan.FromSeconds(2));
+                await cameraTask.WaitAsync(CameraStopTimeout);
             }
             catch (OperationCanceledException) { }
             catch (TimeoutException)
@@ -136,18 +138,19 @@ public sealed class CameraService : ICameraService
         cts?.Dispose();
         if (ReferenceEquals(cts, _cancellationTokenSource))
             _cancellationTokenSource = null;
-        _statusCallback?.Invoke("摄像头已关闭");
+        var cb = _statusCallback; cb?.Invoke("摄像头已关闭");
     }
 
     public Task<List<string>> GetAvailableCamerasAsync()
     {
-        if (_cachedCameraNames != null) return Task.FromResult(_cachedCameraNames);
+        var names = _cachedCameraNames;
+        if (names != null) return Task.FromResult(names);
 
         try
         {
-            var names = EnumerateDeviceNames();
+            names = EnumerateDeviceNames();
             _cachedCameraNames = names.Count > 0 ? names : new List<string> { "默认摄像头" };
-            _cachedCameraCount = _cachedCameraNames.Count;
+            _cachedCameraCount = names.Count;
         }
         catch (Exception ex)
         {
@@ -164,7 +167,7 @@ public sealed class CameraService : ICameraService
         if (_cachedCameraCount >= 0) return Task.FromResult(_cachedCameraCount);
 
         try { _cachedCameraCount = Math.Max(1, EnumerateDeviceNames().Count); }
-        catch { _cachedCameraCount = 1; }
+        catch (Exception ex) { Log.Debug(ex, "摄像头枚举失败，使用默认计数 1"); _cachedCameraCount = 1; }
 
         return Task.FromResult(_cachedCameraCount);
     }
@@ -238,7 +241,7 @@ public sealed class CameraService : ICameraService
         {
             if ((DateTime.Now - _startTime).TotalMinutes >= MaxRunMinutes)
             {
-                _errorCallback?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
+                var ecb = _errorCallback; ecb?.Invoke($"摄像头已运行超过 {MaxRunMinutes} 分钟，自动保护释放");
                 break;
             }
 
@@ -257,7 +260,7 @@ public sealed class CameraService : ICameraService
             if (sample != IntPtr.Zero) ComVtbl.Release(sample);
             if (hr < 0) Log.Debug("Camera: ReadSample = 0x{Code:X8}", hr);
 
-            try { await Task.Delay(100, token); }
+            try { await Task.Delay(CameraPollIntervalMs, token); }
             catch (OperationCanceledException) { break; }
         }
     }

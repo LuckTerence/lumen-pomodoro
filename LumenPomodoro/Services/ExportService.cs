@@ -12,6 +12,7 @@ public class ExportService : IExportService
 
     // 预估每行 CSV 字符数：Id(36) + TaskId(36) + TaskName(20) + 2*DateTime(19) + FocusMinutes(3) + Completed(5) + 分隔符(6) + 引号 ≈ 150
     private const int EstimatedCharsPerRow = 150;
+    private const string CsvDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
     public string ExportToCsv(List<FocusSession> sessions)
     {
@@ -23,8 +24,8 @@ public class ExportService : IExportService
             AppendField(sb, s.Id);
             AppendField(sb, s.TaskId);
             AppendField(sb, s.TaskName);
-            AppendField(sb, s.StartTime.ToString("yyyy-MM-dd HH:mm:ss"));
-            AppendField(sb, s.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "");
+            AppendField(sb, s.StartTime.ToString(CsvDateTimeFormat));
+            AppendField(sb, s.EndTime?.ToString(CsvDateTimeFormat) ?? "");
             sb.Append(s.FocusMinutes);
             sb.Append(',');
             sb.AppendLine(s.Completed ? "true" : "false");

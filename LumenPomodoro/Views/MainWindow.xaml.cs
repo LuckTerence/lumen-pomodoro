@@ -195,7 +195,7 @@ public partial class MainWindow : Window
         }
 
         try { DragMove(); }
-        catch (InvalidOperationException) { }
+        catch (InvalidOperationException) { /* 鼠标未按下时 DragMove 无效，忽略 */ }
     }
 
     private static bool IsFromInteractiveElement(DependencyObject? source)
@@ -350,7 +350,7 @@ public partial class MainWindow : Window
 
         private StatsPage CreateStatsPage()
         {
-            var page = new StatsPage(App.GetRequiredService<StatsViewModel>());
+            var page = new StatsPage(App.GetRequiredService<StatsViewModel>(), App.GetRequiredService<IExportService>());
             var mainWindow = (MainWindow?)Application.Current.MainWindow;
             page.RequestNavigateToTasks += () => mainWindow?.NavigateToPage(typeof(TasksPage));
             return page;

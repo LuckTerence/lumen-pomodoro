@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
+using Serilog;
 
 namespace LumenPomodoro.ViewModels;
 
@@ -355,9 +355,6 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public void Cleanup()
-    {
-    }
 
     private void UpdateAutoStart()
     {
@@ -382,7 +379,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
                 }
                 else
                 {
-                    try { key.DeleteValue("LumenPomodoro", false); } catch { }
+                    try { key.DeleteValue("LumenPomodoro", false); } catch (Exception ex) { Log.Debug(ex, "删除注册表自启动项失败"); }
                 }
             }
         }
@@ -393,7 +390,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show($"设置开机自启失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            Debug.WriteLine($"[SettingsViewModel] 更新自启动失败: {ex.Message}");
+            Log.Error(ex, "更新自启动失败");
         }
     }
 
@@ -408,36 +405,12 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[SettingsViewModel] 应用主题失败: {ex.Message}");
+            Log.Error(ex, "应用主题失败");
         }
-    }
-
-    private static async Task FireAndForgetAsync(Task task, string operationName)
-    {
-        try
-        {
-            await task.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            Debug.WriteLine($"[SettingsViewModel] FireAndForget [{operationName}] 操作被取消");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[SettingsViewModel] FireAndForget [{operationName}] 异常: {ex.Message}");
-        }
-    }
-
-    // 兼容旧调用的包装方法（标记为过时）
-    [Obsolete("请使用 FireAndForgetAsync 替代")]
-    private static async void FireAndForget(Task task, string operationName)
-    {
-        await FireAndForgetAsync(task, operationName);
     }
 
     public void Dispose()
     {
-        Cleanup();
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

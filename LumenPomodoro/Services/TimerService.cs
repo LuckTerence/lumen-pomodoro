@@ -8,6 +8,8 @@ namespace LumenPomodoro.Services;
 
 public class TimerService : ITimerService
 {
+    private const int TimerIntervalMs = 250;
+    private const int TickSeconds = 1;
     private readonly DispatcherTimer _timer;
     private readonly object _lock = new object();
     private int _remainingSeconds;
@@ -33,7 +35,7 @@ public class TimerService : ITimerService
     {
         // 使用250ms检查频率，平衡精度和功耗
         // 实际tick对齐通过_nextTickTime控制，避免UI线程繁忙导致的累积误差
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(TimerIntervalMs) };
         _timer.Tick += Timer_Tick;
         _currentMode = TimerMode.Idle;
         _lastTickTime = DateTime.UtcNow;
@@ -52,7 +54,7 @@ public class TimerService : ITimerService
             _isRunning = true;
             _isPaused = false;
             _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(1); // 设置第一个tick时间
+            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds); // 设置第一个tick时间
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -75,7 +77,7 @@ public class TimerService : ITimerService
             _isRunning = true;
             _isPaused = false;
             _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(1);
+            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
             _timer.Start();
             remaining = _remainingSeconds;
             total = _totalSeconds;
@@ -105,7 +107,7 @@ public class TimerService : ITimerService
 
         if (shouldInvoke)
         {
-            Log.Debug("计时器暂停，之前模式: {Mode}", oldMode);
+            Log.Debug("计时器暂停，之前模式: {Mode}", oldMode.ToString());
             ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Paused));
         }
     }
@@ -122,7 +124,7 @@ public class TimerService : ITimerService
                 restoredMode = _modeBeforePause;
                 _currentMode = restoredMode;
                 _lastTickTime = DateTime.UtcNow;
-                _nextTickTime = _lastTickTime.AddSeconds(1);
+                _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
                 _timer.Start();
                 shouldInvoke = true;
             }
@@ -189,7 +191,7 @@ public class TimerService : ITimerService
             // elapsed可能包含小数部分，转换为int会截断，但误差小于1秒可接受
             _remainingSeconds = Math.Max(0, _remainingSeconds - (int)elapsed);
             _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(1);
+            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
             remaining = _remainingSeconds;
             total = _totalSeconds;
             mode = _currentMode;

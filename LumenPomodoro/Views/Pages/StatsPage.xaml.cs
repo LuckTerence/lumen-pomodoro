@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
 using Microsoft.Win32;
@@ -11,11 +10,13 @@ namespace LumenPomodoro.Views.Pages;
 public partial class StatsPage : Page
 {
     private readonly StatsViewModel _viewModel;
+    private readonly IExportService _exportService;
     public event Action? RequestNavigateToTasks;
 
-    public StatsPage(StatsViewModel viewModel)
+    public StatsPage(StatsViewModel viewModel, IExportService exportService)
     {
         _viewModel = viewModel;
+        _exportService = exportService;
         InitializeComponent();
         DataContext = _viewModel;
         _viewModel.Refresh();
@@ -60,8 +61,7 @@ public partial class StatsPage : Page
         };
         if (dialog.ShowDialog() == true)
         {
-            var exportService = new ExportService();
-            exportService.ExportToFile(_viewModel.GetAllSessions(), dialog.FileName, ExportFormat.Csv);
+            _exportService.ExportToFile(_viewModel.GetAllSessions(), dialog.FileName, ExportFormat.Csv);
         }
     }
 
@@ -75,8 +75,7 @@ public partial class StatsPage : Page
         };
         if (dialog.ShowDialog() == true)
         {
-            var exportService = new ExportService();
-            exportService.ExportToFile(_viewModel.GetAllSessions(), dialog.FileName, ExportFormat.Json);
+            _exportService.ExportToFile(_viewModel.GetAllSessions(), dialog.FileName, ExportFormat.Json);
         }
     }
 

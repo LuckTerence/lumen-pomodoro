@@ -15,8 +15,7 @@ public enum InsightType
     Trend,
     Streak,
     TaskCompletion,
-    Motivation,
-    Comparison
+    Motivation
 }
 
 public class HeatmapDay

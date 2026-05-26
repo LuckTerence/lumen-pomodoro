@@ -107,7 +107,7 @@ public partial class App : Application
             MessageBox.Show($"发生未预期的错误：{e.Exception.Message}\n\n软件将继续运行，但部分功能可能受影响。",
                 "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
-        catch { }
+        catch (Exception ex) { Log.Fatal(ex, "显示致命错误对话框失败"); }
 
         e.Handled = true;
     }
@@ -122,7 +122,7 @@ public partial class App : Application
             {
                 MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            catch { }
+            catch (Exception fatalEx) { Log.Fatal(fatalEx, "显示致命错误对话框失败"); }
         }
     }
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -198,10 +199,10 @@ public class TrayService : ITrayService
         if (stats.TaskStats.Any())
         {
             message += "\n\n任务分布:";
+            var sb = new StringBuilder();
             foreach (var task in stats.TaskStats)
-            {
-                message += $"\n  {task.Key}: {task.Value} 个";
-            }
+                sb.AppendLine($"  {task.Key}: {task.Value} 个");
+            message += sb.ToString();
         }
 
         MessageBox.Show(message, "今日统计", MessageBoxButton.OK, MessageBoxImage.Information);
