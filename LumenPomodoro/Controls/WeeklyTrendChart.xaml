@@ -1,5 +1,6 @@
-<UserControl x:Class="LumenPomodoro.Controls.WeeklyTrendChart"
+<controls:ChartBase x:Class="LumenPomodoro.Controls.WeeklyTrendChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:LumenPomodoro.Controls">
     <Canvas x:Name="ChartCanvas" Height="140" HorizontalAlignment="Stretch" />
-</UserControl>
+</controls:ChartBase>

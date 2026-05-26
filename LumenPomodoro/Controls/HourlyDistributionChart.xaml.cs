@@ -7,7 +7,7 @@ using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Controls;
 
-public partial class HourlyDistributionChart : UserControl
+public partial class HourlyDistributionChart : ChartBase
 {
     public static readonly DependencyProperty HourlyDataProperty =
         DependencyProperty.Register(nameof(HourlyData), typeof(List<HourlyDataPoint>), typeof(HourlyDistributionChart),
@@ -19,51 +19,27 @@ public partial class HourlyDistributionChart : UserControl
         set => SetValue(HourlyDataProperty, value);
     }
 
-    private List<HourlyDataPoint>? _lastRenderedData;
-    private Size _lastRenderedSize;
-    private int _lastThemeHash;
-
     public HourlyDistributionChart()
     {
         InitializeComponent();
-        SizeChanged += (_, _) => Render();
-        Loaded += (_, _) => Render();
-        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
-        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
-    }
-
-    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
-    {
-        _lastThemeHash = 0; // 强制重绘
-        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (HourlyDistributionChart)d;
-        control._lastRenderedData = null; // 强制重绘
+        control.InvalidateCache();
         control.Render();
     }
 
-    private void Render()
+    protected override void Render()
     {
         var data = HourlyData;
-        if (data == null || data.Count == 0 || ActualWidth <= 0)
+        if (data == null || data.Count == 0)
         {
             ChartCanvas.Children.Clear();
-            _lastRenderedData = null;
             return;
         }
-
-        // 数据、尺寸、主题未变时跳过重绘
-        var currentSize = new Size(ActualWidth, ActualHeight);
-        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
-        if (ReferenceEquals(data, _lastRenderedData) && currentSize == _lastRenderedSize && currentThemeHash == _lastThemeHash && ChartCanvas.Children.Count > 0)
-            return;
-
-        _lastRenderedData = data;
-        _lastRenderedSize = currentSize;
-        _lastThemeHash = currentThemeHash;
+        if (SkipIfUnchanged(data)) return;
 
         ChartCanvas.Children.Clear();
 
@@ -78,8 +54,7 @@ public partial class HourlyDistributionChart : UserControl
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
                           ?? new SolidColorBrush(Color.FromRgb(0, 102, 204));
-        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush
-                        ?? Brushes.Gray;
+        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray;
         var accentColor = ((SolidColorBrush)accentBrush).Color;
 
         for (int h = 0; h < 24; h++)
@@ -104,7 +79,6 @@ public partial class HourlyDistributionChart : UserControl
             Canvas.SetTop(bar, barAreaHeight - barHeight);
             ChartCanvas.Children.Add(bar);
 
-            // 每3小时标注
             if (h % 3 == 0)
             {
                 var label = new TextBlock

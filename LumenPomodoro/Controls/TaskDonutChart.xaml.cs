@@ -6,7 +6,7 @@ using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Controls;
 
-public partial class TaskDonutChart : UserControl
+public partial class TaskDonutChart : ChartBase
 {
     public static readonly DependencyProperty TaskSlicesProperty =
         DependencyProperty.Register(nameof(TaskSlices), typeof(List<TaskSlice>), typeof(TaskDonutChart),
@@ -18,47 +18,28 @@ public partial class TaskDonutChart : UserControl
         set => SetValue(TaskSlicesProperty, value);
     }
 
-    private List<TaskSlice>? _lastRenderedData;
-    private int _lastThemeHash;
-
     public TaskDonutChart()
     {
         InitializeComponent();
-        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
-        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
-    }
-
-    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
-    {
-        _lastThemeHash = 0; // 强制重绘
-        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (TaskDonutChart)d;
-        control._lastRenderedData = null; // 强制重绘
+        control.InvalidateCache();
         control.Render();
     }
 
-    private void Render()
+    protected override void Render()
     {
         var slices = TaskSlices;
         if (slices == null || slices.Count == 0)
         {
             DonutCanvas.Children.Clear();
             LegendPanel.Children.Clear();
-            _lastRenderedData = null;
             return;
         }
-
-        // 数据和主题都未变时跳过重绘
-        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
-        if (ReferenceEquals(slices, _lastRenderedData) && currentThemeHash == _lastThemeHash && DonutCanvas.Children.Count > 0)
-            return;
-
-        _lastRenderedData = slices;
-        _lastThemeHash = currentThemeHash;
+        if (SkipIfUnchanged(slices)) return;
 
         DonutCanvas.Children.Clear();
         LegendPanel.Children.Clear();
@@ -68,7 +49,6 @@ public partial class TaskDonutChart : UserControl
         var radius = 42.0;
         var thickness = 18.0;
 
-        // 中心文字（Measure 居中）
         var totalText = new TextBlock
         {
             Text = total.ToString(),
@@ -93,12 +73,11 @@ public partial class TaskDonutChart : UserControl
         Canvas.SetTop(subText, center - subText.DesiredSize.Height / 2 + 12);
         DonutCanvas.Children.Add(subText);
 
-        // 环形切片
-        double cumulativeAngle = -90; // 从 12 点钟方向开始
+        double cumulativeAngle = -90;
         foreach (var slice in slices)
         {
             var sweepAngle = slice.Percentage / 100.0 * 360.0;
-            if (sweepAngle < 1.0) sweepAngle = 1.0; // 最小 1 度
+            if (sweepAngle < 1.0) sweepAngle = 1.0;
 
             var color = ParseColor(slice.TaskColor);
             var geometry = CreateArcGeometry(center, radius, cumulativeAngle, sweepAngle);
@@ -114,12 +93,10 @@ public partial class TaskDonutChart : UserControl
 
             cumulativeAngle += sweepAngle;
 
-            // 图例项
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
             row.Children.Add(new Ellipse
             {
-                Width = 10,
-                Height = 10,
+                Width = 10, Height = 10,
                 Fill = new SolidColorBrush(color),
                 Margin = new Thickness(0, 0, 8, 0),
                 VerticalAlignment = VerticalAlignment.Center

@@ -6,7 +6,7 @@ using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Controls;
 
-public partial class WeeklyTrendChart : UserControl
+public partial class WeeklyTrendChart : ChartBase
 {
     public static readonly DependencyProperty WeeklyDataProperty =
         DependencyProperty.Register(nameof(WeeklyData), typeof(List<WeeklyDataPoint>), typeof(WeeklyTrendChart),
@@ -18,51 +18,27 @@ public partial class WeeklyTrendChart : UserControl
         set => SetValue(WeeklyDataProperty, value);
     }
 
-    private List<WeeklyDataPoint>? _lastRenderedData;
-    private Size _lastRenderedSize;
-    private int _lastThemeHash;
-
     public WeeklyTrendChart()
     {
         InitializeComponent();
-        SizeChanged += (_, _) => Render();
-        Loaded += (_, _) => Render();
-        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
-        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
-    }
-
-    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
-    {
-        _lastThemeHash = 0; // 强制重绘
-        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (WeeklyTrendChart)d;
-        control._lastRenderedData = null; // 强制重绘
+        control.InvalidateCache();
         control.Render();
     }
 
-    private void Render()
+    protected override void Render()
     {
         var data = WeeklyData;
-        if (data == null || data.Count < 2 || ActualWidth <= 0)
+        if (data == null || data.Count < 2)
         {
             ChartCanvas.Children.Clear();
-            _lastRenderedData = null;
             return;
         }
-
-        // 数据、尺寸、主题未变时跳过重绘
-        var currentSize = new Size(ActualWidth, ActualHeight);
-        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
-        if (ReferenceEquals(data, _lastRenderedData) && currentSize == _lastRenderedSize && currentThemeHash == _lastThemeHash && ChartCanvas.Children.Count > 0)
-            return;
-
-        _lastRenderedData = data;
-        _lastRenderedSize = currentSize;
-        _lastThemeHash = currentThemeHash;
+        if (SkipIfUnchanged(data)) return;
 
         ChartCanvas.Children.Clear();
 
@@ -78,11 +54,9 @@ public partial class WeeklyTrendChart : UserControl
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
                           ?? new SolidColorBrush(Color.FromRgb(0, 102, 204));
-        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush
-                        ?? Brushes.Gray;
+        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray;
         var accentColor = ((SolidColorBrush)accentBrush).Color;
 
-        // 计算数据点
         var points = new List<Point>();
         for (int i = 0; i < data.Count; i++)
         {
@@ -91,7 +65,6 @@ public partial class WeeklyTrendChart : UserControl
             points.Add(new Point(x, y));
         }
 
-        // 填充区域
         var fillPoints = new PointCollection(points);
         fillPoints.Add(new Point(points[^1].X, marginTop + chartHeight));
         fillPoints.Add(new Point(points[0].X, marginTop + chartHeight));
@@ -102,18 +75,15 @@ public partial class WeeklyTrendChart : UserControl
         };
         ChartCanvas.Children.Add(fillPolygon);
 
-        // 折线
-        var linePoints = new PointCollection(points);
         var polyline = new Polyline
         {
-            Points = linePoints,
+            Points = new PointCollection(points),
             Stroke = accentBrush,
             StrokeThickness = 2,
             StrokeLineJoin = PenLineJoin.Round
         };
         ChartCanvas.Children.Add(polyline);
 
-        // 数据点 + 标签
         for (int i = 0; i < points.Count; i++)
         {
             var dot = new Ellipse
@@ -127,7 +97,6 @@ public partial class WeeklyTrendChart : UserControl
             Canvas.SetTop(dot, points[i].Y - 3);
             ChartCanvas.Children.Add(dot);
 
-            // 周标签
             var label = new TextBlock
             {
                 Text = data[i].WeekStart.ToString("M/d"),
@@ -141,7 +110,6 @@ public partial class WeeklyTrendChart : UserControl
             ChartCanvas.Children.Add(label);
         }
 
-        // 平均线
         var avgMinutes = data.Average(d => d.TotalMinutes);
         var avgY = marginTop + chartHeight - (avgMinutes / maxMinutes * chartHeight);
         var avgLine = new Line

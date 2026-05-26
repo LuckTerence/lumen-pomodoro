@@ -6,7 +6,7 @@ using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Controls;
 
-public partial class HeatmapCalendar : UserControl
+public partial class HeatmapCalendar : ChartBase
 {
     public static readonly DependencyProperty HeatmapDaysProperty =
         DependencyProperty.Register(nameof(HeatmapDays), typeof(List<HeatmapDay>), typeof(HeatmapCalendar),
@@ -21,47 +21,21 @@ public partial class HeatmapCalendar : UserControl
     private static readonly string[] DayLabels = ["周一", "", "周三", "", "周五", "", ""];
     private static readonly string[] MonthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
 
-    // 渲染缓存 — 数据和尺寸未变时跳过重绘
-    private List<HeatmapDay>? _lastRenderedData;
-    private Size _lastRenderedSize;
-    private int _lastThemeHash;
-
     public HeatmapCalendar()
     {
         InitializeComponent();
-        SizeChanged += (_, _) => Render();
-        Loaded += (_, _) => Render();
-        Wpf.Ui.Appearance.ApplicationThemeManager.Changed += ThemeChangedHandler;
-        Unloaded += (_, _) => Wpf.Ui.Appearance.ApplicationThemeManager.Changed -= ThemeChangedHandler;
-    }
-
-    private void ThemeChangedHandler(Wpf.Ui.Appearance.ApplicationTheme currentApplicationTheme, Color systemAccent)
-    {
-        _lastThemeHash = 0; // 强制重绘
-        Render();
     }
 
     private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        var control = (HeatmapCalendar)d;
-        control._lastRenderedData = null; // 数据变化，强制重绘
-        control.Render();
+        ((HeatmapCalendar)d).Render();
     }
 
-    private void Render()
+    protected override void Render()
     {
         var data = HeatmapDays;
-        if (data == null || data.Count == 0 || ActualWidth <= 0) return;
-
-        // 数据和尺寸都未变时跳过重绘
-        var currentSize = new Size(ActualWidth, ActualHeight);
-        var currentThemeHash = Application.Current.TryFindResource("AccentFillColorDefaultBrush")?.GetHashCode() ?? 0;
-        if (ReferenceEquals(data, _lastRenderedData) && currentSize == _lastRenderedSize && currentThemeHash == _lastThemeHash && HeatmapCanvas.Children.Count > 0)
-            return;
-
-        _lastRenderedData = data;
-        _lastRenderedSize = currentSize;
-        _lastThemeHash = currentThemeHash;
+        if (data == null || data.Count == 0) return;
+        if (SkipIfUnchanged(data)) return;
 
         HeatmapCanvas.Children.Clear();
 
@@ -94,10 +68,8 @@ public partial class HeatmapCalendar : UserControl
             accentBrush
         };
 
-        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush
-                        ?? Brushes.Gray;
+        var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray;
 
-        // 日期标签
         for (int row = 0; row < 7; row++)
         {
             if (!string.IsNullOrEmpty(DayLabels[row]))
@@ -114,15 +86,11 @@ public partial class HeatmapCalendar : UserControl
             }
         }
 
-        // 月份标签按该月在热力图中第一次出现的位置落点
         var monthMarked = new bool[12];
         foreach (var day in data.OrderBy(d => d.Date))
         {
             var monthIndex = day.Date.Month - 1;
-            if (monthMarked[monthIndex])
-            {
-                continue;
-            }
+            if (monthMarked[monthIndex]) continue;
 
             monthMarked[monthIndex] = true;
             var col = (day.Date.Date - gridStart).Days / 7;
@@ -137,7 +105,6 @@ public partial class HeatmapCalendar : UserControl
             HeatmapCanvas.Children.Add(mLabel);
         }
 
-        // 热力图格子
         foreach (var day in data.OrderBy(d => d.Date))
         {
             var col = (day.Date.Date - gridStart).Days / 7;
@@ -162,13 +129,8 @@ public partial class HeatmapCalendar : UserControl
         HeatmapCanvas.Width = marginLeft + totalColumns * cellSize + (totalColumns - 1) * gap + 4;
     }
 
-    private static int GetMondayBasedRow(DateTime date)
-    {
-        return ((int)date.DayOfWeek + 6) % 7;
-    }
+    private static int GetMondayBasedRow(DateTime date) => ((int)date.DayOfWeek + 6) % 7;
 
-    private static Color GetBrushColor(Brush brush, Color fallback)
-    {
-        return brush is SolidColorBrush solid ? solid.Color : fallback;
-    }
+    private static Color GetBrushColor(Brush brush, Color fallback) =>
+        brush is SolidColorBrush solid ? solid.Color : fallback;
 }
