@@ -60,6 +60,40 @@
                 </StackPanel>
             </Grid>
 
+            <!-- ===== 过滤栏 ===== -->
+            <!-- 过滤切换按钮 -->
+            <Button Content="🔍 过滤" Click="ToggleFilter_Click"
+                    Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                    FontSize="12" HorizontalAlignment="Right" Margin="0,0,0,8"
+                    Cursor="Hand" />
+
+            <Border Background="#3327272A" CornerRadius="16" Padding="16" Margin="0,0,0,16"
+                    Visibility="{Binding IsFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <DatePicker SelectedDate="{Binding FilterDateFrom}" FontSize="12"
+                                Margin="0,0,0,8" />
+                    <DatePicker SelectedDate="{Binding FilterDateTo}" FontSize="12"
+                                Margin="0,0,0,8" />
+                    <TextBox Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="12"
+                             Background="#1AFFFFFF" Foreground="White" BorderThickness="0"
+                             Padding="8,6" Margin="0,0,0,8" />
+                    <ComboBox ItemsSource="{Binding AvailableTasks}"
+                              SelectedItem="{Binding SelectedFilterTask}"
+                              DisplayMemberPath="Name"
+                              FontSize="12" Margin="0,0,0,8"
+                              Background="#1AFFFFFF" Foreground="White" BorderThickness="0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="重置" Click="ResetFilter_Click"
+                                Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                                FontSize="12" Cursor="Hand" Padding="8,4" />
+                        <Button Content="应用" Click="ApplyFilter_Click"
+                                Foreground="White" Background="#3B82F6" BorderThickness="0"
+                                FontSize="12" Cursor="Hand" Padding="16,4" Margin="8,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- ===== 概览卡片 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <Grid>

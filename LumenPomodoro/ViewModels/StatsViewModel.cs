@@ -41,6 +41,15 @@ public class StatsViewModel : INotifyPropertyChanged
     private string _zeroCategoryWarning = string.Empty;
     private int _maxCategoryMinutes;
 
+    // 过滤条件
+    private DateTime? _filterDateFrom;
+    private DateTime? _filterDateTo;
+    private string _filterKeyword = string.Empty;
+    private TaskItem? _selectedFilterTask;
+    private List<TaskItem> _availableTasks = [];
+    private bool _isFilterVisible;
+    private bool _hasActiveFilter;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public int CompletedPomodoros
@@ -172,6 +181,78 @@ public class StatsViewModel : INotifyPropertyChanged
         set { if (_maxCategoryMinutes != value) { _maxCategoryMinutes = value; OnPropertyChanged(); } }
     }
 
+    // 过滤属性
+    public DateTime? FilterDateFrom
+    {
+        get => _filterDateFrom;
+        set { if (_filterDateFrom != value) { _filterDateFrom = value; OnPropertyChanged(); } }
+    }
+
+    public DateTime? FilterDateTo
+    {
+        get => _filterDateTo;
+        set { if (_filterDateTo != value) { _filterDateTo = value; OnPropertyChanged(); } }
+    }
+
+    public string FilterKeyword
+    {
+        get => _filterKeyword;
+        set { if (_filterKeyword != value) { _filterKeyword = value; OnPropertyChanged(); } }
+    }
+
+    public TaskItem? SelectedFilterTask
+    {
+        get => _selectedFilterTask;
+        set { if (_selectedFilterTask != value) { _selectedFilterTask = value; OnPropertyChanged(); } }
+    }
+
+    public List<TaskItem> AvailableTasks
+    {
+        get => _availableTasks;
+        set { if (_availableTasks != value) { _availableTasks = value; OnPropertyChanged(); } }
+    }
+
+    public bool IsFilterVisible
+    {
+        get => _isFilterVisible;
+        set { if (_isFilterVisible != value) { _isFilterVisible = value; OnPropertyChanged(); } }
+    }
+
+    public bool HasActiveFilter
+    {
+        get => _hasActiveFilter;
+        set { if (_hasActiveFilter != value) { _hasActiveFilter = value; OnPropertyChanged(); } }
+    }
+
+    public void ToggleFilter()
+    {
+        IsFilterVisible = !IsFilterVisible;
+        if (IsFilterVisible) LoadAvailableTasks();
+    }
+
+    public void ApplyFilter()
+    {
+        HasActiveFilter = FilterDateFrom.HasValue || FilterDateTo.HasValue
+            || !string.IsNullOrWhiteSpace(FilterKeyword) || SelectedFilterTask != null;
+        LoadStatsForCurrentPeriod();
+    }
+
+    public void ResetFilter()
+    {
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilterKeyword = string.Empty;
+        SelectedFilterTask = null;
+        HasActiveFilter = false;
+        IsFilterVisible = false;
+        LoadStatsForCurrentPeriod();
+    }
+
+    private void LoadAvailableTasks()
+    {
+        AvailableTasks = _storageService.LoadTasks();
+    }
+
     public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
     {
         _storageService = storageService;
@@ -269,6 +350,39 @@ public class StatsViewModel : INotifyPropertyChanged
                 periodStart = DateTime.Today;
                 periodEnd = DateTime.Today;
                 break;
+        }
+
+        // 应用自定义日期范围（覆盖周期选择）
+        if (_filterDateFrom.HasValue && _filterDateTo.HasValue)
+        {
+            periodStart = _filterDateFrom.Value.Date;
+            periodEnd = _filterDateTo.Value.Date;
+            filteredSessions = sessions
+                .Where(s => s.Completed && s.EndTime.HasValue
+                    && s.EndTime.Value.Date >= periodStart
+                    && s.EndTime.Value.Date <= periodEnd)
+                .ToList();
+            StatsDateLabel = $"{periodStart:M月d日} - {periodEnd:M月d日}";
+            CanGoNext = false;
+        }
+
+        // 应用任务筛选
+        if (SelectedFilterTask != null)
+        {
+            filteredSessions = filteredSessions
+                .Where(s => s.TaskId == SelectedFilterTask.Id)
+                .ToList();
+        }
+
+        // 应用关键词搜索
+        if (!string.IsNullOrWhiteSpace(FilterKeyword))
+        {
+            var keyword = FilterKeyword.Trim();
+            filteredSessions = filteredSessions
+                .Where(s =>
+                    (s.TaskName?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true) ||
+                    (s.Notes?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true))
+                .ToList();
         }
 
         CompletedPomodoros = filteredSessions.Count;

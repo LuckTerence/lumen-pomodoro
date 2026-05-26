@@ -93,4 +93,19 @@ public partial class StatsPage : Page
     {
         RequestNavigateToTasks?.Invoke();
     }
+
+    private void ToggleFilter_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ToggleFilter();
+    }
+
+    private void ApplyFilter_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ApplyFilter();
+    }
+
+    private void ResetFilter_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ResetFilter();
+    }
 }
