@@ -7,7 +7,6 @@ public class InsightEngine : IInsightEngine
 {
     private static readonly string[] DayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
-    // 魔法数字提取为常量
     private const int MinSessionsForInsight = 3;
     private const int StreakThreshold = 3;
     private const double TrendChangeThreshold = 0.15;
@@ -18,13 +17,11 @@ public class InsightEngine : IInsightEngine
     private const int MaxInsightCount = 5;
     private static readonly int[] Milestones = [10, 50, 100, 500, 1000];
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<HeatmapDay> GetHeatmapData(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
-
-        var completedAll = sessions
-            .Where(s => s.Completed && s.EndTime.HasValue)
-            .ToList();
+        var completedAll = sessions;
 
         var earliestDate = completedAll.Count > 0
             ? completedAll.Min(s => s.EndTime!.Value.Date)
@@ -63,12 +60,11 @@ public class InsightEngine : IInsightEngine
         return result;
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<HourlyDataPoint> GetHourlyDistribution(List<FocusSession> sessions, DateTime start, DateTime end)
     {
         var filtered = sessions
-            .Where(s => s.Completed && s.EndTime.HasValue
-                && s.EndTime.Value.Date >= start.Date
-                && s.EndTime.Value.Date <= end.Date)
+            .Where(s => s.EndTime!.Value.Date >= start.Date && s.EndTime!.Value.Date <= end.Date)
             .ToList();
 
         var hourlyGroups = filtered
@@ -87,12 +83,11 @@ public class InsightEngine : IInsightEngine
         return result;
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<TaskSlice> GetTaskBreakdown(List<FocusSession> sessions, DateTime start, DateTime end, List<TaskItem>? tasks = null)
     {
         var filtered = sessions
-            .Where(s => s.Completed && s.EndTime.HasValue
-                && s.EndTime.Value.Date >= start.Date
-                && s.EndTime.Value.Date <= end.Date)
+            .Where(s => s.EndTime!.Value.Date >= start.Date && s.EndTime!.Value.Date <= end.Date)
             .ToList();
 
         var total = filtered.Count;
@@ -116,23 +111,28 @@ public class InsightEngine : IInsightEngine
             .ToList();
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<WeeklyDataPoint> GetWeeklyTrend(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
         var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
+        // 一次性按周 GroupBy，避免 8 次 O(n) 全表扫描
+        var weekGroups = sessions
+            .GroupBy(s =>
+            {
+                var daysFromFirst = (s.EndTime!.Value.Date - thisMonday.AddDays(-7 * 7)).Days;
+                return daysFromFirst >= 0 ? daysFromFirst / 7 : -1;
+            })
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         var result = new List<WeeklyDataPoint>(8);
         for (int i = 7; i >= 0; i--)
         {
             var weekStart = thisMonday.AddDays(-7 * i);
-            var weekEnd = weekStart.AddDays(7);
-
-            var weekSessions = sessions
-                .Where(s => s.Completed && s.EndTime.HasValue
-                    && s.EndTime.Value.Date >= weekStart.Date
-                    && s.EndTime.Value.Date < weekEnd.Date)
-                .ToList();
+            weekGroups.TryGetValue(i, out var weekSessions);
+            weekSessions ??= [];
 
             result.Add(new WeeklyDataPoint
             {
@@ -145,10 +145,11 @@ public class InsightEngine : IInsightEngine
         return result;
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<Insight> GetInsights(List<FocusSession> sessions, List<TaskItem> tasks)
     {
         var insights = new List<Insight>();
-        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        var completed = sessions;
 
         if (completed.Count < MinSessionsForInsight)
         {
@@ -161,10 +162,16 @@ public class InsightEngine : IInsightEngine
             return insights;
         }
 
-        // === 预计算所有分组，后续子分析复用，避免重复遍历 ===
+        // === 单次 GroupBy 合并 hourGroups + hourQualityGroups ===
         var hourGroups = completed
             .GroupBy(s => s.EndTime!.Value.Hour)
-            .Select(g => new { Hour = g.Key, Avg = g.Average(s => s.FocusMinutes), Count = g.Count() })
+            .Select(g => new
+            {
+                Hour = g.Key,
+                Count = g.Count(),
+                AvgMinutes = g.Average(s => s.FocusMinutes),
+                AvgQuality = g.Average(s => s.QualityScore)
+            })
             .Where(x => x.Count >= MinSessionsForInsight)
             .ToList();
 
@@ -180,38 +187,25 @@ public class InsightEngine : IInsightEngine
 
         var totalPomodoros = completed.Count;
 
-        // 1. 峰值时段 — 直接用预计算的 hourGroups
-        var bestHour = hourGroups.OrderByDescending(x => x.Avg).FirstOrDefault();
-
+        // 1. 峰值时段
+        var bestHour = hourGroups.OrderByDescending(x => x.AvgMinutes).FirstOrDefault();
         if (bestHour != null)
         {
             insights.Add(new Insight
             {
                 Title = "你的黄金时段",
-                Description = $"{bestHour.Hour}:00 左右是你效率最高的时段，平均每次专注 {(int)bestHour.Avg} 分钟。",
+                Description = $"{bestHour.Hour}:00 左右是你效率最高的时段，平均每次专注 {(int)bestHour.AvgMinutes} 分钟。",
                 Type = InsightType.PeakHour,
                 ActionHint = "试试把最重要科目安排在这个时段"
             });
         }
 
-        // 1.5 最佳学习时段推荐 — 基于质量分
-        var hourQualityGroups = completed
-            .GroupBy(s => s.EndTime!.Value.Hour)
-            .Select(g => new
-            {
-                Hour = g.Key,
-                Count = g.Count(),
-                AvgQuality = g.Average(s => s.QualityScore),
-                AvgMinutes = g.Average(s => s.FocusMinutes)
-            })
-            .Where(x => x.Count >= MinSessionsForInsight)
-            .ToList();
-
-        if (hourQualityGroups.Count > 0 && insights.Count < MaxInsightCount)
+        // 2. 最佳学习时段（基于质量分，复用 hourGroups）
+        if (hourGroups.Count > 0 && insights.Count < MaxInsightCount)
         {
-            var maxMinutes = hourQualityGroups.Max(x => x.AvgMinutes);
-            if (maxMinutes <= 0) maxMinutes = 1; // 避免除以0
-            var bestTimeSlot = hourQualityGroups
+            var maxMinutes = hourGroups.Max(x => x.AvgMinutes);
+            if (maxMinutes <= 0) maxMinutes = 1;
+            var bestTimeSlot = hourGroups
                 .OrderByDescending(x => x.AvgQuality * 0.6 + (x.AvgMinutes / maxMinutes) * 0.4)
                 .First();
 
@@ -225,9 +219,8 @@ public class InsightEngine : IInsightEngine
             });
         }
 
-        // 2. 最佳日期 — 直接用预计算的 dayGroups
+        // 3. 最佳日期
         var bestDay = dayGroups.OrderByDescending(x => x.Total).FirstOrDefault();
-
         if (bestDay != null)
         {
             insights.Add(new Insight
@@ -238,7 +231,7 @@ public class InsightEngine : IInsightEngine
             });
         }
 
-        // 3. 趋势检测 — 用 dateGroups 代替全表扫描
+        // 4. 趋势检测
         var fourWeeksAgo = DateTime.Today.AddDays(-RecentWeeksForTrend * 7);
         var eightWeeksAgo = DateTime.Today.AddDays(-RecentWeeksForTrend * 2 * 7);
         var recent4Weeks = dateGroups
@@ -272,7 +265,7 @@ public class InsightEngine : IInsightEngine
             }
         }
 
-        // 4. 连续天数
+        // 5. 连续天数
         var streak = CalculateStreak(completed);
         if (streak >= StreakThreshold)
         {
@@ -298,7 +291,7 @@ public class InsightEngine : IInsightEngine
             }
         }
 
-        // 5. 任务提醒 — 用 dateGroups 代替 Where 全表扫描
+        // 6. 任务提醒
         var cutoff = DateTime.Today.AddDays(-TaskAttentionDays);
         var last7Days = dateGroups
             .Where(kvp => kvp.Key >= cutoff)
@@ -330,7 +323,7 @@ public class InsightEngine : IInsightEngine
             }
         }
 
-        // 6. 里程碑
+        // 7. 里程碑
         var latestMilestone = Milestones.Where(m => totalPomodoros >= m).DefaultIfEmpty(0).Max();
         if (latestMilestone > 0 && insights.Count == 0)
         {
@@ -342,7 +335,6 @@ public class InsightEngine : IInsightEngine
             });
         }
 
-        // 兜底
         if (insights.Count == 0)
         {
             insights.Add(new Insight
@@ -381,17 +373,27 @@ public class InsightEngine : IInsightEngine
         return streak;
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<GoalProgress> GetGoalProgress(List<FocusSession> sessions, int dailyGoalMinutes, int weeklyGoalMinutes)
     {
         var result = new List<GoalProgress>();
         var today = DateTime.Today;
-        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        var completed = sessions;
+
+        var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
+
+        // 单次遍历同时计算日 + 周
+        int todayMinutes = 0, weekMinutes = 0;
+        foreach (var s in completed)
+        {
+            var date = s.EndTime!.Value.Date;
+            if (date >= thisMonday.Date && date <= today) weekMinutes += s.FocusMinutes;
+            if (date == today) todayMinutes += s.FocusMinutes;
+        }
 
         if (dailyGoalMinutes > 0)
         {
-            var todayMinutes = completed
-                .Where(s => s.EndTime!.Value.Date == today)
-                .Sum(s => s.FocusMinutes);
             result.Add(new GoalProgress
             {
                 Label = "每日目标",
@@ -404,11 +406,6 @@ public class InsightEngine : IInsightEngine
 
         if (weeklyGoalMinutes > 0)
         {
-            var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-            if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
-            var weekMinutes = completed
-                .Where(s => s.EndTime!.Value.Date >= thisMonday.Date && s.EndTime!.Value.Date <= today)
-                .Sum(s => s.FocusMinutes);
             result.Add(new GoalProgress
             {
                 Label = "每周目标",
@@ -422,36 +419,33 @@ public class InsightEngine : IInsightEngine
         return result;
     }
 
+    /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<ComparisonData> GetComparisons(List<FocusSession> sessions)
     {
         var result = new List<ComparisonData>();
         var today = DateTime.Today;
-        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        var completed = sessions;
 
         var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
         var lastMonday = thisMonday.AddDays(-7);
-
-        var thisWeekMinutes = completed
-            .Where(s => s.EndTime!.Value.Date >= thisMonday.Date && s.EndTime!.Value.Date <= today)
-            .Sum(s => s.FocusMinutes);
-        var lastWeekMinutes = completed
-            .Where(s => s.EndTime!.Value.Date >= lastMonday.Date && s.EndTime!.Value.Date < thisMonday.Date)
-            .Sum(s => s.FocusMinutes);
-
-        result.Add(BuildComparison("本周 vs 上周", thisWeekMinutes, lastWeekMinutes));
-
         var thisMonthStart = new DateTime(today.Year, today.Month, 1);
         var lastMonthStart = thisMonthStart.AddMonths(-1);
 
-        var thisMonthMinutes = completed
-            .Where(s => s.EndTime!.Value.Date >= thisMonthStart.Date && s.EndTime!.Value.Date <= today)
-            .Sum(s => s.FocusMinutes);
-        var lastMonthMinutes = completed
-            .Where(s => s.EndTime!.Value.Date >= lastMonthStart.Date && s.EndTime!.Value.Date < thisMonthStart.Date)
-            .Sum(s => s.FocusMinutes);
+        // 单次遍历计算 4 个指标
+        int thisWeek = 0, lastWeek = 0, thisMonth = 0, lastMonth = 0;
+        foreach (var s in completed)
+        {
+            var date = s.EndTime!.Value.Date;
+            if (date >= thisMonday.Date && date <= today) thisWeek += s.FocusMinutes;
+            else if (date >= lastMonday.Date && date < thisMonday.Date) lastWeek += s.FocusMinutes;
 
-        result.Add(BuildComparison("本月 vs 上月", thisMonthMinutes, lastMonthMinutes));
+            if (date >= thisMonthStart.Date && date <= today) thisMonth += s.FocusMinutes;
+            else if (date >= lastMonthStart.Date && date < thisMonthStart.Date) lastMonth += s.FocusMinutes;
+        }
+
+        result.Add(BuildComparison("本周 vs 上周", thisWeek, lastWeek));
+        result.Add(BuildComparison("本月 vs 上月", thisMonth, lastMonth));
 
         return result;
     }
@@ -469,21 +463,28 @@ public class InsightEngine : IInsightEngine
         };
     }
 
+    /// <param name="sessions">全量 sessions（含未完成），用于计算完成率</param>
     public List<EfficiencyDataPoint> GetEfficiencyTrend(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
         var thisMonday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
+        // 按周预分组，避免 8 次 O(n) 扫描
+        var weekGroups = sessions
+            .GroupBy(s =>
+            {
+                var daysFromFirst = (s.StartTime.Date - thisMonday.AddDays(-7 * 7)).Days;
+                return daysFromFirst >= 0 ? daysFromFirst / 7 : -1;
+            })
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         var result = new List<EfficiencyDataPoint>(8);
         for (int i = 7; i >= 0; i--)
         {
             var weekStart = thisMonday.AddDays(-7 * i);
-            var weekEnd = weekStart.AddDays(7);
-
-            var weekSessions = sessions
-                .Where(s => s.StartTime.Date >= weekStart.Date && s.StartTime.Date < weekEnd.Date)
-                .ToList();
+            weekGroups.TryGetValue(i, out var weekSessions);
+            weekSessions ??= [];
 
             var completed = weekSessions.Where(s => s.Completed).ToList();
 

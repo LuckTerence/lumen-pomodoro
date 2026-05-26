@@ -539,8 +539,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public DailyReport? GetYesterdayReport()
     {
         var yesterday = DateTime.Today.AddDays(-1);
-        var sessions = _storageService.LoadSessions()
-            .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == yesterday)
+        // 一次加载所有已完成 sessions，避免 CalculateStreak() 再调一次 LoadSessions()
+        var allCompleted = _storageService.LoadSessions()
+            .Where(s => s.Completed && s.EndTime.HasValue)
+            .ToList();
+        var sessions = allCompleted
+            .Where(s => s.EndTime!.Value.Date == yesterday)
             .ToList();
 
         if (!sessions.Any()) return null;
@@ -577,7 +581,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             CompletedPomodoros = sessions.Count,
             TotalMinutes = sessions.Sum(s => s.FocusMinutes),
             MainTask = mainTask,
-            StreakDays = CalculateStreak(),
+            StreakDays = InsightEngine.CalculateStreak(allCompleted),
             AvgQualityScore = Math.Round(avgQuality, 1),
             UniqueTasksCount = uniqueTasks,
             CategorySuggestion = categorySuggestion
@@ -610,15 +614,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         if (IsWindowActive) return;
 
         NotificationRequested?.Invoke(title, message);
-    }
-
-    private int CalculateStreak()
-    {
-        var completed = _storageService.LoadSessions()
-            .Where(s => s.Completed && s.EndTime.HasValue)
-            .ToList();
-
-        return InsightEngine.CalculateStreak(completed);
     }
 
     private string FormatTime(int seconds)

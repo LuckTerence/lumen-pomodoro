@@ -357,33 +357,25 @@ public class StatsViewModel : INotifyPropertyChanged
         {
             periodStart = _filterDateFrom.Value.Date;
             periodEnd = _filterDateTo.Value.Date;
-            filteredSessions = sessions
-                .Where(s => s.Completed && s.EndTime.HasValue
-                    && s.EndTime.Value.Date >= periodStart
-                    && s.EndTime.Value.Date <= periodEnd)
-                .ToList();
             StatsDateLabel = $"{periodStart:M月d日} - {periodEnd:M月d日}";
             CanGoNext = false;
         }
 
-        // 应用任务筛选
-        if (SelectedFilterTask != null)
-        {
-            filteredSessions = filteredSessions
-                .Where(s => s.TaskId == SelectedFilterTask.Id)
-                .ToList();
-        }
+        // 构建为单次 .ToList() 的复合过滤，避免中间 List 分配
+        var taskFilterId = SelectedFilterTask?.Id;
+        var keyword = string.IsNullOrWhiteSpace(FilterKeyword) ? null : FilterKeyword.Trim();
+        var fromDate = periodStart;
+        var toDate = periodEnd;
 
-        // 应用关键词搜索
-        if (!string.IsNullOrWhiteSpace(FilterKeyword))
-        {
-            var keyword = FilterKeyword.Trim();
-            filteredSessions = filteredSessions
-                .Where(s =>
-                    (s.TaskName?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true) ||
-                    (s.Notes?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true))
-                .ToList();
-        }
+        filteredSessions = sessions
+            .Where(s => s.Completed && s.EndTime.HasValue
+                && s.EndTime.Value.Date >= fromDate
+                && s.EndTime.Value.Date <= toDate
+                && (taskFilterId == null || s.TaskId == taskFilterId)
+                && (keyword == null
+                    || (s.TaskName?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true)
+                    || (s.Notes?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true)))
+            .ToList();
 
         CompletedPomodoros = filteredSessions.Count;
         TotalFocusMinutes = filteredSessions.Sum(s => s.FocusMinutes);
@@ -392,24 +384,24 @@ public class StatsViewModel : INotifyPropertyChanged
             ? scoredSessions.Average(s => s.QualityScore)
             : 0;
 
-        // 计算连续天数
+        // 预过滤已完成 sessions，避免各 InsightEngine 方法重复 .Where(s => s.Completed)
         var completedSessions = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
         StreakDays = InsightEngine.CalculateStreak(completedSessions);
 
-        // 图表数据 — 所有方法复用同一 sessions 引用
-        HeatmapDays = _insightEngine.GetHeatmapData(sessions);
-        HourlyData = _insightEngine.GetHourlyDistribution(sessions, periodStart, periodEnd);
-        TaskBreakdown = _insightEngine.GetTaskBreakdown(sessions, periodStart, periodEnd, tasks);
-        WeeklyTrend = _insightEngine.GetWeeklyTrend(sessions);
-        Insights = _insightEngine.GetInsights(sessions, tasks);
+        // 图表数据 — 传入已预过滤的 completedSessions
+        HeatmapDays = _insightEngine.GetHeatmapData(completedSessions);
+        HourlyData = _insightEngine.GetHourlyDistribution(completedSessions, periodStart, periodEnd);
+        TaskBreakdown = _insightEngine.GetTaskBreakdown(completedSessions, periodStart, periodEnd, tasks);
+        WeeklyTrend = _insightEngine.GetWeeklyTrend(completedSessions);
+        Insights = _insightEngine.GetInsights(completedSessions, tasks);
 
         var settings = _storageService.LoadSettings();
 
         if (settings.InsightsEnabled)
         {
-            GoalProgress = _insightEngine.GetGoalProgress(sessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
-            Comparisons = _insightEngine.GetComparisons(sessions);
-            EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions);
+            GoalProgress = _insightEngine.GetGoalProgress(completedSessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
+            Comparisons = _insightEngine.GetComparisons(completedSessions);
+            EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions); // 需要全量 sessions 计算完成率
         }
         else
         {
