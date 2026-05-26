@@ -22,6 +22,9 @@ public partial class TasksPage : Page
         new ColorOption { Name = "红色", Color = (Color)ColorConverter.ConvertFromString("#EF4444")! },
         new ColorOption { Name = "紫色", Color = (Color)ColorConverter.ConvertFromString("#8B5CF6")! },
         new ColorOption { Name = "灰色", Color = (Color)ColorConverter.ConvertFromString("#6B7280")! },
+        new ColorOption { Name = "橙色", Color = (Color)ColorConverter.ConvertFromString("#F59E0B")! },
+        new ColorOption { Name = "深橙", Color = (Color)ColorConverter.ConvertFromString("#F97316")! },
+        new ColorOption { Name = "青色", Color = (Color)ColorConverter.ConvertFromString("#06B6D4")! },
     };
 
     public TasksPage(TasksViewModel viewModel)
@@ -140,6 +143,20 @@ public partial class TasksPage : Page
         if (result == MessageBoxResult.Yes)
         {
             _viewModel.DeleteTask(taskId);
+        }
+    }
+
+    private void RestoreDefaults_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            "将恢复所有考试科目默认预设任务。\n你的自建任务会保留，不会被删除。\n\n确定要恢复吗？",
+            "恢复默认任务",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _viewModel.RestoreDefaults();
         }
     }
 }

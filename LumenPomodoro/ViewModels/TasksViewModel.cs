@@ -16,7 +16,7 @@ public class TasksViewModel : INotifyPropertyChanged
     private string _newTaskCategory = string.Empty;
     private string? _editingTaskId;
 
-    public static readonly string[] AvailableCategories = ["数学", "英语", "政治", "专业课", "其他"];
+    public static readonly string[] AvailableCategories = ["数学", "英语", "政治", "专业课", "其他", "行测", "申论", "教资", "法考", "CPA", "编程"];
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? TasksChanged;
@@ -137,6 +137,15 @@ public class TasksViewModel : INotifyPropertyChanged
         }
 
         EditingTaskId = null;
+    }
+
+    /// <summary>
+    /// 恢复默认预设任务。保留用户自建任务，替换/新增所有考试科目预设。
+    /// </summary>
+    public void RestoreDefaults()
+    {
+        _storageService.RestoreDefaultTasks();
+        LoadTasks();
     }
 
     private void SaveAndNotify()

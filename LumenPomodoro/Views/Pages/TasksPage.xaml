@@ -145,5 +145,11 @@
             <TextBlock Text="在下方添加你的第一个任务" FontSize="11" Foreground="#4B5563"
                        HorizontalAlignment="Center" Margin="0,4,0,0" />
         </StackPanel>
+
+        <!-- 恢复默认任务 -->
+        <Button Grid.Row="3" Content="恢复默认任务" Click="RestoreDefaults_Click"
+                Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                FontSize="12" HorizontalAlignment="Center" Margin="0,12,0,0"
+                Cursor="Hand" />
     </Grid>
 </Page>

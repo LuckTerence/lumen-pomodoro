@@ -8,6 +8,7 @@ public interface IStorageService
     void SaveSettings(Settings settings);
     List<TaskItem> LoadTasks();
     void SaveTasks(List<TaskItem> tasks);
+    void RestoreDefaultTasks();
     List<FocusSession> LoadSessions();
     void AddSession(FocusSession session);
     void UpdateSession(string sessionId, Action<FocusSession> updater);

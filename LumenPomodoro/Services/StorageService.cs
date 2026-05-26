@@ -327,11 +327,29 @@ public class StorageService : IStorageService
 
     private static readonly (string Name, string Category, string Color)[] DefaultTaskData =
     [
+        // 考研 (Kaoyan)
         ("考研数学", "数学", "#3B82F6"),
         ("考研英语", "英语", "#10B981"),
         ("考研政治", "政治", "#EF4444"),
         ("专业课", "专业课", "#8B5CF6"),
         ("复盘与整理", "其他", "#6B7280"),
+        // 公务员考试 (Civil Service)
+        ("行测-言语理解", "行测", "#F59E0B"),
+        ("行测-数量关系", "行测", "#F97316"),
+        ("行测-判断推理", "行测", "#EF4444"),
+        ("行测-资料分析", "行测", "#3B82F6"),
+        ("行测-常识判断", "行测", "#8B5CF6"),
+        ("申论写作", "申论", "#10B981"),
+        // 教师资格证 (Teacher Qualification)
+        ("综合素质(教资)", "教资", "#8B5CF6"),
+        ("教育知识与能力", "教资", "#3B82F6"),
+        ("学科知识", "教资", "#10B981"),
+        // 其他考试
+        ("英语四级", "英语", "#F59E0B"),
+        ("英语六级", "英语", "#EF4444"),
+        ("法考复习", "法考", "#8B5CF6"),
+        ("注册会计师", "CPA", "#3B82F6"),
+        ("雅思备考", "英语", "#06B6D4"),
     ];
 
     private List<TaskItem> GetDefaultTasks()
@@ -344,6 +362,26 @@ public class StorageService : IStorageService
             Color = t.Color,
             CreatedAt = DateTime.Now
         }).ToList();
+    }
+
+    /// <summary>
+    /// 恢复默认预设任务。保留用户自建任务（ID 不以 default_ 开头），
+    /// 替换/新增所有默认预设。
+    /// </summary>
+    public void RestoreDefaultTasks()
+    {
+        lock (_fileLock)
+        {
+            var existing = LoadTasks();
+            var userTasks = existing.Where(t => !t.Id.StartsWith("default_")).ToList();
+            var defaults = GetDefaultTasks();
+
+            var merged = new List<TaskItem>(defaults);
+            merged.AddRange(userTasks);
+
+            SaveTasks(merged);
+            UpdateTasksCache(merged);
+        }
     }
 
     public List<FocusSession> LoadSessions()
