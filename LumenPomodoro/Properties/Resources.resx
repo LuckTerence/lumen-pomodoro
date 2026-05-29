@@ -58,4 +58,64 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="App_Title" xml:space="preserve">
+    <value>Lumen 番茄钟</value>
+  </data>
+  <data name="Focus_Complete" xml:space="preserve">
+    <value>专注完成</value>
+  </data>
+  <data name="Break_Time" xml:space="preserve">
+    <value>该休息了！</value>
+  </data>
+  <data name="Focus_Start" xml:space="preserve">
+    <value>专注 · {0}</value>
+  </data>
+  <data name="Break_Complete" xml:space="preserve">
+    <value>休息完成！</value>
+  </data>
+  <data name="Break_Ready" xml:space="preserve">
+    <value>准备好开始下一轮了吗？</value>
+  </data>
+  <data name="Milestone_First" xml:space="preserve">
+    <value>第一个番茄完成！</value>
+  </data>
+  <data name="Milestone_Daily" xml:space="preserve">
+    <value>今日目标达成！</value>
+  </data>
+  <data name="Milestone_Target" xml:space="preserve">
+    <value>今日番茄目标达成！</value>
+  </data>
+  <data name="Settings_Sound" xml:space="preserve">
+    <value>声音</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="Short_Break" xml:space="preserve">
+    <value>短休息</value>
+  </data>
+  <data name="Long_Break" xml:space="preserve">
+    <value>长休息</value>
+  </data>
+  <data name="Default_Task_Selection" xml:space="preserve">
+    <value>选择任务</value>
+  </data>
+  <data name="Task_Math" xml:space="preserve">
+    <value>数学</value>
+  </data>
+  <data name="Task_English" xml:space="preserve">
+    <value>英语</value>
+  </data>
+  <data name="Task_Politics" xml:space="preserve">
+    <value>政治</value>
+  </data>
+  <data name="Task_Major" xml:space="preserve">
+    <value>专业课</value>
+  </data>
+  <data name="Task_Review" xml:space="preserve">
+    <value>复盘与整理</value>
+  </data>
 </root>

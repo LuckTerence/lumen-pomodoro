@@ -187,7 +187,7 @@ public partial class ArcProgress : UserControl
         }
 
         BackgroundArc.Data = _cachedBackgroundGeometry!;
-        BackgroundArc.Stroke = BackgroundArcBrush ?? new SolidColorBrush(Color.FromArgb(30, 128, 128, 128));
+        BackgroundArc.Stroke = BackgroundArcBrush ?? ChartPalette.BackgroundSubtle;
         BackgroundArc.StrokeThickness = StrokeThickness;
 
         // fraction 接近 1.0 时复用全圆 Geometry

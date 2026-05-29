@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
@@ -75,6 +76,7 @@ public partial class TimerPage : Page
                         StopBreathingAnimation();
                         PlayCompletionAnimation();
                         StartBreathingAnimation();
+                        PlayArcProgressPulse();
                         StartBreakButton?.Focus();
                     }
                     else
@@ -140,6 +142,21 @@ public partial class TimerPage : Page
         if (_completionStoryboard == null) return;
         _completionStoryboard.Stop();
         _completionStoryboard = null;
+    }
+
+    /// <summary>专注完成时 ArcProgress 做一次柔和高亮脉冲</summary>
+    private void PlayArcProgressPulse()
+    {
+        if (!_viewModel.AppSettings.AnimationEnabled || ProgressRing == null) return;
+
+        var pulseAnim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(600) };
+        pulseAnim.KeyFrames.Add(new EasingDoubleKeyFrame(4, KeyTime.FromPercent(0)));    // 原粗细
+        pulseAnim.KeyFrames.Add(new EasingDoubleKeyFrame(10, KeyTime.FromPercent(0.25))
+        { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        pulseAnim.KeyFrames.Add(new EasingDoubleKeyFrame(4, KeyTime.FromPercent(1.0))
+        { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } });
+
+        ProgressRing.BeginAnimation(Controls.ArcProgress.StrokeThicknessProperty, pulseAnim);
     }
 
     private void StartBreathingAnimation()
@@ -255,24 +272,35 @@ public partial class TimerPage : Page
 
     private void FadeInActivePanel()
     {
+        if (!_viewModel.AppSettings.AnimationEnabled)
+        {
+            foreach (var p in new[] { IdlePanel, FocusPanel, PausedPanel, BreakPanel, CompletedPanel })
+                p.Opacity = p.Visibility == Visibility.Visible ? 1.0 : 0.0;
+            return;
+        }
+
         var panels = new[] { IdlePanel, FocusPanel, PausedPanel, BreakPanel, CompletedPanel };
         foreach (var panel in panels)
         {
             if (panel.Visibility == Visibility.Visible)
             {
-                var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
-                panel.BeginAnimation(UIElement.OpacityProperty, anim);
+                var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                panel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+
+                var translate = new TranslateTransform(0, 8);
+                panel.RenderTransform = translate;
+                var translateAnim = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(300))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                translate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
             }
-            else
-            {
-                panel.Opacity = 0;
-            }
+            else { panel.Opacity = 0; }
         }
 
-        // 状态标签同步淡入
         if (StateLabelBlock != null)
         {
-            var labelAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
+            var labelAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
             StateLabelBlock.BeginAnimation(UIElement.OpacityProperty, labelAnim);
         }
     }
@@ -290,7 +318,21 @@ public partial class TimerPage : Page
     private void Star_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && int.TryParse(btn.Tag.ToString(), out var stars))
+        {
             _viewModel.SetRating(stars);
+
+            if (_viewModel.AppSettings.AnimationEnabled && btn.RenderTransform is ScaleTransform st)
+            {
+                var bounceAnim = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(400) };
+                bounceAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0)));
+                bounceAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.35, KeyTime.FromPercent(0.3))
+                { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 } });
+                bounceAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } });
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, bounceAnim);
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, bounceAnim);
+            }
+        }
     }
 
     private void StartFocusButton_Click(object sender, RoutedEventArgs e) => _viewModel.StartFocus();
@@ -304,6 +346,16 @@ public partial class TimerPage : Page
     private void StopCameraButton_Click(object sender, RoutedEventArgs e) => _viewModel.StopCameraAlert();
     private void AdjustTimeUp_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(5); UpdateStepLabel(); }
     private void AdjustTimeDown_Click(object sender, RoutedEventArgs e) { _viewModel.AdjustWorkMinutes(-5); UpdateStepLabel(); }
+
+    private void PresetStandard_Click(object sender, RoutedEventArgs e) { _viewModel.ApplyPreset(PomodoroPreset.Standard); UpdateStepLabel(); }
+    private void PresetDeep_Click(object sender, RoutedEventArgs e) { _viewModel.ApplyPreset(PomodoroPreset.DeepWork); UpdateStepLabel(); }
+    private void PresetSprint_Click(object sender, RoutedEventArgs e) { _viewModel.ApplyPreset(PomodoroPreset.Sprint); UpdateStepLabel(); }
+
+    private void HelpButton_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new Views.ShortcutHelpWindow { Owner = Window.GetWindow(this) };
+        window.ShowDialog();
+    }
 
     protected override void OnKeyDown(KeyEventArgs e)
     {

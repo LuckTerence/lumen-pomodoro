@@ -23,10 +23,10 @@
 
         <!-- 标题 -->
         <TextBlock Grid.Row="0" Text="任务管理" FontSize="21" FontWeight="SemiBold"
-                   Foreground="White" Margin="0,0,0,20" />
+                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,20" />
 
         <!-- 添加任务 -->
-        <Border Grid.Row="1" Background="#3327272A" CornerRadius="16" Padding="16" Margin="0,0,0,16">
+        <Border Grid.Row="1" Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="16" Margin="0,0,0,16">
             <StackPanel>
                 <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称"
                          Padding="12,8" FontSize="13"
@@ -38,17 +38,12 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <ComboBox x:Name="CategoryComboBox" Grid.Column="0" SelectedIndex="0"
-                              Background="#1A27272A" BorderBrush="#26FFFFFF" BorderThickness="1"
-                              Foreground="#B3FFFFFF" FontSize="12" Padding="8,6" />
+                              Background="{StaticResource SurfaceOverlayBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1"
+                              Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Padding="8,6" />
                     <ComboBox x:Name="ColorComboBox" Grid.Column="2" SelectedIndex="0" />
                 </Grid>
-                <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand">
-                        <Button.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#059669" Offset="0" />
-                                <GradientStop Color="#34D399" Offset="1" />
-                            </LinearGradientBrush>
-                        </Button.Background>
+                <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand"
+                        Background="{StaticResource AccentBaseBrush}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" CornerRadius="16"
@@ -79,7 +74,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="0,0,0,8" Padding="16,12"
-                                Background="#3327272A" CornerRadius="12">
+                                Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="12">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -94,12 +89,12 @@
                                 </Ellipse>
 
                                 <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" FontWeight="Medium"
-                                           Foreground="#B3FFFFFF" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
                                            TextTrimming="CharacterEllipsis" />
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Click="SelectTask_Click" Tag="{Binding Id}" Padding="12,6" Cursor="Hand"
-                                            Background="#1A27272A" BorderBrush="#26FFFFFF" BorderThickness="1">
+                                            Background="{StaticResource SurfaceOverlayBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border Background="{TemplateBinding Background}"
@@ -110,15 +105,15 @@
                                                 </Border>
                                             </ControlTemplate>
                                         </Button.Template>
-                                        <TextBlock Text="选择" FontSize="12" Foreground="#B3FFFFFF" />
+                                        <TextBlock Text="选择" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
                                     </Button>
                                     <Button Click="EditTask_Click" Tag="{Binding Id}" Padding="12,6" Margin="6,0,0,0" Cursor="Hand"
                                             Background="Transparent" BorderThickness="0">
-                                        <TextBlock Text="编辑" FontSize="12" Foreground="#6B7280" />
+                                        <TextBlock Text="编辑" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" />
                                     </Button>
                                     <Button Click="DeleteTask_Click" Tag="{Binding Id}" Padding="12,6" Margin="6,0,0,0" Cursor="Hand"
                                             Background="Transparent" BorderThickness="0">
-                                        <TextBlock Text="删除" FontSize="12" Foreground="#4B5563" />
+                                        <TextBlock Text="删除" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" />
                                     </Button>
                                 </StackPanel>
                             </Grid>
@@ -140,15 +135,16 @@
                     </Style.Triggers>
                 </Style>
             </StackPanel.Style>
-            <TextBlock Text="+" FontSize="36" Foreground="#4B5563" HorizontalAlignment="Center" Margin="0,0,0,12" />
-            <TextBlock Text="还没有任务" FontSize="15" Foreground="#6B7280" HorizontalAlignment="Center" />
-            <TextBlock Text="在下方添加你的第一个任务" FontSize="11" Foreground="#4B5563"
-                       HorizontalAlignment="Center" Margin="0,4,0,0" />
+            <TextBlock Text="+" FontSize="48" Foreground="{StaticResource AccentBaseBrush}" HorizontalAlignment="Center" Margin="0,0,0,16" Opacity="0.6" />
+            <TextBlock Text="创建你的第一个任务" FontSize="16" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+            <TextBlock Text="在下方输入任务名称，开始专注之旅" FontSize="12"
+                       Foreground="{StaticResource TextTertiaryBrush}" HorizontalAlignment="Center" Margin="0,6,0,0" />
         </StackPanel>
 
         <!-- 恢复默认任务 -->
         <Button Grid.Row="3" Content="恢复默认任务" Click="RestoreDefaults_Click"
-                Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                Foreground="{StaticResource TextTertiaryBrush}" Background="Transparent" BorderThickness="0"
                 FontSize="12" HorizontalAlignment="Center" Margin="0,12,0,0"
                 Cursor="Hand" />
     </Grid>

@@ -314,17 +314,6 @@ public class StorageService : IStorageService
         }
     }
 
-    public void SaveTasks(List<TaskItem> tasks)
-    {
-        lock (_fileLock)
-        {
-            CreateBackup(_tasksFile);
-            var content = JsonSerializer.Serialize(tasks, IndentedOptions);
-            AtomicWriteAllText(_tasksFile, content);
-            UpdateTasksCache(tasks);
-        }
-    }
-
     private static readonly (string Name, string Category, string Color)[] DefaultTaskData =
     [
         // 考研 (Kaoyan)
@@ -436,8 +425,8 @@ public class StorageService : IStorageService
             var content = JsonSerializer.Serialize(sessions, IndentedOptions);
             AtomicWriteAllText(_sessionsFile, content);
             UpdateSessionsCache(sessions);
+            InvalidateStatsCache();
         }
-        InvalidateStatsCache();
     }
 
     public void AddSession(FocusSession session)
@@ -462,6 +451,18 @@ public class StorageService : IStorageService
                 updater(session);
                 SaveSessionsWithTransaction(sessions);
             }
+        }
+    }
+
+    public void SaveTasks(List<TaskItem> tasks)
+    {
+        lock (_fileLock)
+        {
+            CreateBackup(_tasksFile);
+            var content = JsonSerializer.Serialize(tasks, IndentedOptions);
+            AtomicWriteAllText(_tasksFile, content);
+            UpdateTasksCache(tasks);
+            InvalidateStatsCache();
         }
     }
 

@@ -53,7 +53,7 @@ public partial class HourlyDistributionChart : ChartBase
         var barWidth = barAreaWidth / 24 - 2;
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
-                          ?? new SolidColorBrush(Color.FromRgb(0, 102, 204));
+                          ?? ChartPalette.Accent;
         var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray;
         var accentColor = ((SolidColorBrush)accentBrush).Color;
 

@@ -8,6 +8,13 @@
         Background="Transparent"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         Closing="Window_Closing">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Border CornerRadius="16" Background="#CC1A1A1A">
         <Ellipse x:Name="IndicatorDot" Width="14" Height="14"
                  VerticalAlignment="Center" HorizontalAlignment="Center"

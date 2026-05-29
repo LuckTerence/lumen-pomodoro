@@ -53,12 +53,12 @@ public partial class HeatmapCalendar : ChartBase
         var cellPlusGap = cellSize + gap;
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
-                          ?? new SolidColorBrush(Color.FromRgb(0, 102, 204));
+                          ?? ChartPalette.Accent;
 
         var bgBrush = Application.Current.TryFindResource("CardBackgroundFillColorSecondaryBrush") as Brush
-                      ?? new SolidColorBrush(Color.FromArgb(30, 128, 128, 128));
+                      ?? ChartPalette.BackgroundSubtle;
 
-        var accentColor = GetBrushColor(accentBrush, Color.FromRgb(0, 102, 204));
+        var accentColor = GetBrushColor(accentBrush, ChartPalette.Accent.Color);
         var levelBrushes = new Brush[]
         {
             bgBrush,

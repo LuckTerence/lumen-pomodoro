@@ -17,18 +17,6 @@
             <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
             <converters:StatusConverter x:Key="StatusConverter" />
             <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter" />
-
-            <!-- 极光渐变 -->
-            <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#2563EB" Offset="0" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
-
-            <!-- 播放按钮渐变 -->
-            <LinearGradientBrush x:Key="PlayButtonGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#059669" Offset="0" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -92,17 +80,9 @@
 
                 <!-- 圆环进度 + 计时器数字 -->
                 <Grid Width="240" Height="240">
-                    <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="4">
-                        <controls:ArcProgress.ForegroundArcBrush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#2563EB" Offset="0" />
-                                <GradientStop Color="#34D399" Offset="1" />
-                            </LinearGradientBrush>
-                        </controls:ArcProgress.ForegroundArcBrush>
-                        <controls:ArcProgress.BackgroundArcBrush>
-                            <SolidColorBrush Color="#27272A" />
-                        </controls:ArcProgress.BackgroundArcBrush>
-                    </controls:ArcProgress>
+                    <controls:ArcProgress x:Name="ProgressRing" Progress="{Binding Progress}" StrokeThickness="4"
+                                          ForegroundArcBrush="{StaticResource AccentBaseBrush}"
+                                          BackgroundArcBrush="{StaticResource SurfaceOverlayBrush}" />
                     <TextBlock x:Name="TimerTextBlock" Text="{Binding RemainingTime}"
                                FontSize="72" FontWeight="Light" FontFamily="Consolas"
                                Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -128,35 +108,27 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <!-- 播放按钮（极光渐变） -->
-                        <Button x:Name="PlayButton" Click="StartFocusButton_Click" Width="64" Height="64"
-                                HorizontalAlignment="Center" HorizontalContentAlignment="Center"
-                                VerticalAlignment="Center" VerticalContentAlignment="Center"
-                                Cursor="Hand" BorderThickness="0" Background="Transparent">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid x:Name="PlayButtonGrid" Width="64" Height="64"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Ellipse Fill="{StaticResource PlayButtonGradient}" Width="64" Height="64"
-                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Ellipse.Effect>
-                                                <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.3" Color="#34D399"/>
-                                            </Ellipse.Effect>
-                                        </Ellipse>
-                                        <Path Data="M24,16 L44,32 L24,48 Z" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Width="20" Height="24" Stretch="Uniform" Margin="-2,0,0,0" />
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="PlayButtonGrid" Property="Opacity" Value="0.85" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
+                        <!-- 播放按钮 -->
+                        <Button x:Name="PlayButton" Click="StartFocusButton_Click" Style="{StaticResource CircularPlayButton}" />
+
+                        <!-- 预设快速切换 -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,4">
+                            <Button Click="PresetStandard_Click" Width="52" Height="28" Cursor="Hand" Style="{StaticResource Chip}"
+                                    ToolTip="标准 25/5/15">
+                                <TextBlock Text="标准" FontSize="11" />
+                            </Button>
+                            <Button Click="PresetDeep_Click" Width="52" Height="28" Cursor="Hand" Style="{StaticResource Chip}"
+                                    Margin="6,0,6,0" ToolTip="深度工作 50/10/20">
+                                <TextBlock Text="深度" FontSize="11" />
+                            </Button>
+                            <Button Click="PresetSprint_Click" Width="52" Height="28" Cursor="Hand" Style="{StaticResource Chip}"
+                                    ToolTip="冲刺 15/3/10">
+                                <TextBlock Text="冲刺" FontSize="11" />
+                            </Button>
+                        </StackPanel>
 
                         <!-- 时间调整（轻量级） -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
                             <Button Click="AdjustTimeDown_Click" Width="32" Height="32" Cursor="Hand"
                                     Background="Transparent" BorderThickness="0" Opacity="0.6">
                                 <TextBlock Text="-" FontSize="18" Foreground="#6B7280" />
@@ -168,6 +140,12 @@
                                 <TextBlock Text="+" FontSize="18" Foreground="#6B7280" />
                             </Button>
                         </StackPanel>
+                        <Button x:Name="HelpButton" Click="HelpButton_Click" Width="28" Height="28"
+                                HorizontalAlignment="Center" Margin="0,8,0,0" Cursor="Hand"
+                                Background="Transparent" BorderThickness="0" Opacity="0.4"
+                                ToolTip="快捷键帮助">
+                            <TextBlock Text="?" FontSize="16" Foreground="#6B7280" />
+                        </Button>
                     </StackPanel>
 
                     <!-- 专注中：暂停/重置 -->

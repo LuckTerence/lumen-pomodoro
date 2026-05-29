@@ -50,9 +50,9 @@ public partial class EfficiencyTrendChart : ChartBase
         var stepX = chartWidth / (data.Count - 1);
 
         var accentBrush = Application.Current.TryFindResource("AccentFillColorDefaultBrush") as Brush
-                          ?? new SolidColorBrush(Color.FromRgb(0, 102, 204));
+                          ?? ChartPalette.Accent;
         var successBrush = Application.Current.TryFindResource("SuccessBrush") as Brush
-                           ?? new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                           ?? ChartPalette.Success;
         var textBrush = Application.Current.TryFindResource("TextFillColorSecondaryBrush") as Brush ?? Brushes.Gray;
 
         var completionPoints = new List<Point>();

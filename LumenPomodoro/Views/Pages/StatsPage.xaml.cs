@@ -19,12 +19,25 @@ public partial class StatsPage : Page
         _exportService = exportService;
         InitializeComponent();
         DataContext = _viewModel;
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(StatsViewModel.TotalFocusMinutes))
+                UpdateEmptyState();
+        };
         _viewModel.Refresh();
+        UpdateEmptyState();
     }
 
     public void Refresh()
     {
         _viewModel.Refresh();
+        UpdateEmptyState();
+    }
+
+    private void UpdateEmptyState()
+    {
+        if (EmptyStatsArea != null)
+            EmptyStatsArea.Visibility = _viewModel.TotalFocusMinutes == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void PrevDate_Click(object sender, RoutedEventArgs e)

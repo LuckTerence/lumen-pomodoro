@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Media;
+using System.Windows.Media;
+using System.Windows.Threading;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
 
@@ -9,36 +10,54 @@ namespace LumenPomodoro.Services;
 
 public class SoundService : ISoundService
 {
-    private readonly Dictionary<string, SoundPlayer> _players;
+    private readonly Dictionary<string, MediaPlayer> _players;
     private readonly string _soundsDirectory;
     private double _volume = 1.0;
     private bool _isMuted;
 
-    /// <summary>
-    /// 占位属性 — System.Media.SoundPlayer 不支持音量控制，此属性无实际效果。
-    /// </summary>
     public double Volume
     {
         get => _volume;
         set
         {
             _volume = Math.Clamp(value, 0.0, 1.0);
+            ApplyVolumeToAll();
         }
     }
 
     public bool IsMuted
     {
         get => _isMuted;
-        set => _isMuted = value;
+        set
+        {
+            _isMuted = value;
+            ApplyVolumeToAll();
+        }
     }
 
     public SoundService()
     {
-        _players = new Dictionary<string, SoundPlayer>();
+        _players = new Dictionary<string, MediaPlayer>();
         _soundsDirectory = GetSoundsDirectory();
         Directory.CreateDirectory(_soundsDirectory);
 
         LoadDefaultSounds();
+    }
+
+    private void ApplyVolumeToAll()
+    {
+        double effectiveVolume = _isMuted ? 0.0 : _volume;
+        foreach (var player in _players.Values)
+        {
+            try
+            {
+                player.Volume = effectiveVolume;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "设置音量失败");
+            }
+        }
     }
 
     private void LoadDefaultSounds()
@@ -56,8 +75,9 @@ public class SoundService : ISoundService
             {
                 try
                 {
-                    var player = new SoundPlayer(kvp.Value);
-                    player.Load();
+                    var player = new MediaPlayer();
+                    player.Open(new Uri(kvp.Value));
+                    player.Volume = _volume;
                     _players[kvp.Key] = player;
                 }
                 catch (Exception ex)
@@ -72,11 +92,13 @@ public class SoundService : ISoundService
     {
         if (_isMuted) return;
 
-        if (_players.ContainsKey(soundName))
+        if (_players.TryGetValue(soundName, out var player))
         {
             try
             {
-                _players[soundName].Play();
+                player.Stop();
+                player.Position = TimeSpan.Zero;
+                player.Play();
             }
             catch (Exception ex)
             {
@@ -89,11 +111,23 @@ public class SoundService : ISoundService
     {
         if (_isMuted) return;
 
-        if (_players.ContainsKey(soundName))
+        if (_players.TryGetValue(soundName, out var player))
         {
             try
             {
-                _players[soundName].PlaySync();
+                var frame = new DispatcherFrame();
+                void OnMediaEnded(object? s, EventArgs e)
+                {
+                    player.MediaEnded -= OnMediaEnded;
+                    frame.Continue = false;
+                }
+                player.MediaEnded += OnMediaEnded;
+
+                player.Stop();
+                player.Position = TimeSpan.Zero;
+                player.Play();
+
+                Dispatcher.PushFrame(frame);
             }
             catch (Exception ex)
             {
@@ -104,11 +138,12 @@ public class SoundService : ISoundService
 
     public void StopSound(string soundName)
     {
-        if (_players.ContainsKey(soundName))
+        if (_players.TryGetValue(soundName, out var player))
         {
             try
             {
-                _players[soundName].Stop();
+                player.Stop();
+                player.Position = TimeSpan.Zero;
             }
             catch (Exception ex)
             {
@@ -119,15 +154,16 @@ public class SoundService : ISoundService
 
     public void StopAllSounds()
     {
-        foreach (var player in _players.Values)
+        foreach (var kvp in _players)
         {
             try
             {
-                player.Stop();
+                kvp.Value.Stop();
+                kvp.Value.Position = TimeSpan.Zero;
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "停止音效失败");
+                Log.Warning(ex, "停止音效 {Name} 失败", kvp.Key);
             }
         }
     }
@@ -141,15 +177,15 @@ public class SoundService : ISoundService
 
         try
         {
-            // 替换前释放旧的 SoundPlayer，避免资源泄漏
             if (_players.TryGetValue(soundName, out var oldPlayer))
             {
                 oldPlayer.Stop();
-                oldPlayer.Dispose();
+                oldPlayer.Close();
             }
 
-            var player = new SoundPlayer(filePath);
-            player.Load();
+            var player = new MediaPlayer();
+            player.Open(new Uri(filePath));
+            player.Volume = _isMuted ? 0.0 : _volume;
             _players[soundName] = player;
         }
         catch (Exception ex)
@@ -241,16 +277,16 @@ public class SoundService : ISoundService
 
     public void Dispose()
     {
-        StopAllSounds();
-        foreach (var player in _players.Values)
+        foreach (var kvp in _players)
         {
             try
             {
-                player.Dispose();
+                kvp.Value.Stop();
+                kvp.Value.Close();
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "Dispose 音效失败");
+                Log.Warning(ex, "Dispose 音效 {Name} 失败", kvp.Key);
             }
         }
         _players.Clear();

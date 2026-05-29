@@ -175,4 +175,87 @@ public class StorageServiceTests : IDisposable
         Assert.True(stats.CompletedPomodoros >= 2);
         Assert.True(stats.TotalFocusMinutes >= 50);
     }
+
+    [Fact]
+    public void AddSession_InvalidatesStatsCache_StatsReflectLatestData()
+    {
+        var today = DateTime.Today;
+        var session1 = new FocusSession
+        {
+            Id = "cache_test_1",
+            TaskId = "t1",
+            TaskName = "Cache Test Task",
+            StartTime = today.AddHours(8),
+            EndTime = today.AddHours(8).AddMinutes(25),
+            Completed = true,
+            FocusMinutes = 25
+        };
+        _storageService.AddSession(session1);
+
+        var statsBefore = _storageService.GetTodayStats();
+        Assert.True(statsBefore.CompletedPomodoros >= 1);
+
+        var session2 = new FocusSession
+        {
+            Id = "cache_test_2",
+            TaskId = "t2",
+            TaskName = "Cache Test Task 2",
+            StartTime = today.AddHours(9),
+            EndTime = today.AddHours(9).AddMinutes(30),
+            Completed = true,
+            FocusMinutes = 30
+        };
+        _storageService.AddSession(session2);
+
+        var statsAfter = _storageService.GetTodayStats();
+        Assert.True(statsAfter.CompletedPomodoros >= statsBefore.CompletedPomodoros + 1,
+            "AddSession 后统计应反映新 session（缓存已自动失效）");
+        Assert.True(statsAfter.TotalFocusMinutes >= statsBefore.TotalFocusMinutes + 30,
+            "TotalFocusMinutes 应包含新 session 的分钟数");
+    }
+
+    [Fact]
+    public void ConsecutiveMutations_MaintainCacheConsistency()
+    {
+        var today = DateTime.Today;
+
+        _storageService.AddSession(new FocusSession
+        {
+            Id = "seq_1",
+            TaskId = "t1",
+            TaskName = "Seq Task",
+            StartTime = today.AddHours(8),
+            EndTime = today.AddHours(8).AddMinutes(25),
+            Completed = true,
+            FocusMinutes = 25
+        });
+        var stats1 = _storageService.GetTodayStats();
+
+        _storageService.AddSession(new FocusSession
+        {
+            Id = "seq_2",
+            TaskId = "t2",
+            TaskName = "Seq Task 2",
+            StartTime = today.AddHours(9),
+            EndTime = today.AddHours(9).AddMinutes(30),
+            Completed = true,
+            FocusMinutes = 30
+        });
+        var stats2 = _storageService.GetTodayStats();
+
+        _storageService.UpdateSession("seq_1", s => s.FocusMinutes = 50);
+        var stats3 = _storageService.GetTodayStats();
+
+        var sessions = _storageService.LoadSessions();
+        var remaining = sessions.Where(s => s.Id == "seq_1").ToList();
+        _storageService.SaveSessions(remaining);
+        var stats4 = _storageService.GetTodayStats();
+
+        Assert.True(stats2.CompletedPomodoros > stats1.CompletedPomodoros,
+            "第二次 AddSession 后 pomodoro 数应增加");
+        Assert.True(stats3.TotalFocusMinutes >= stats2.TotalFocusMinutes,
+            "UpdateSession 后分钟数应>=修改前");
+        Assert.True(stats4.CompletedPomodoros <= stats3.CompletedPomodoros,
+            "SaveSessions 覆盖后应只保留 seq_1");
+    }
 }

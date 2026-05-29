@@ -10,6 +10,13 @@ public class TimerService : ITimerService
 {
     private const int TimerIntervalMs = 250;
     private const int TickSeconds = 1;
+
+    /// <summary>唤醒补偿：忽略 2 秒内的偏差（系统延迟误判）</summary>
+    private const double WakeCompensationMinSeconds = 2;
+    /// <summary>唤醒补偿：超过 24 小时视为时钟调整而非真实睡眠</summary>
+    private const double WakeCompensationMaxSeconds = 86400;
+    /// <summary>每 tick 最多补偿次数，防止长时间卡顿一次性扣除过多秒数</summary>
+    private const int MaxTickCompensationCount = 10;
     private readonly DispatcherTimer _timer;
     private readonly object _lock = new object();
     private int _remainingSeconds;
@@ -183,9 +190,9 @@ public class TimerService : ITimerService
             if (!_isRunning || _isPaused) return;
 
             var elapsed = (DateTime.UtcNow - _lastTickTime).TotalSeconds;
-            // 小于2秒忽略（避免系统延迟误判）
-            // 大于24小时忽略（可能是时钟调整，而非实际睡眠）
-            if (elapsed < 2 || elapsed > 86400) return;
+            // 小于 WakeCompensationMinSeconds 忽略（避免系统延迟误判）
+            // 大于 WakeCompensationMaxSeconds 忽略（可能是时钟调整，而非实际睡眠）
+            if (elapsed < WakeCompensationMinSeconds || elapsed > WakeCompensationMaxSeconds) return;
 
             // 扣除所有错过的秒数（系统休眠期间计时器停止运行）
             // elapsed可能包含小数部分，转换为int会截断，但误差小于1秒可接受
@@ -233,7 +240,7 @@ public class TimerService : ITimerService
 
             // 计算需要触发的tick次数（通常为1，补偿延迟时可能>1）
             int ticksToProcess = 0;
-            while (_nextTickTime <= now && ticksToProcess < 10) // 最多补偿10个tick，防止长时间卡顿一次性扣除过多
+            while (_nextTickTime <= now && ticksToProcess < MaxTickCompensationCount) // 最多补偿 MaxTickCompensationCount 个tick，防止长时间卡顿一次性扣除过多
             {
                 ticksToProcess++;
                 _nextTickTime = _nextTickTime.AddSeconds(TickSeconds);

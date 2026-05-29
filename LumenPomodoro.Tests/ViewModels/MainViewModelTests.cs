@@ -171,4 +171,23 @@ public class MainViewModelTests
         _viewModel.Dispose();
         _cameraService.Verify(c => c.StopCameraAsync(), Times.Once);
     }
+
+    [Fact]
+    public void ApplyPreset_Standard_SetsWorkAndBreakMinutes()
+    {
+        _viewModel.ApplyPreset(PomodoroPreset.Standard);
+
+        Assert.Equal(25, _viewModel.AppSettings.WorkMinutes);
+        Assert.Equal(5, _viewModel.AppSettings.ShortBreakMinutes);
+        Assert.Equal(15, _viewModel.AppSettings.LongBreakMinutes);
+        Assert.Equal(4, _viewModel.AppSettings.LongBreakInterval);
+    }
+
+    [Fact]
+    public void ApplyPreset_Custom_DoesNotOverrideValues()
+    {
+        var original = _viewModel.AppSettings.WorkMinutes;
+        _viewModel.ApplyPreset(PomodoroPreset.Custom);
+        Assert.Equal(original, _viewModel.AppSettings.WorkMinutes);
+    }
 }

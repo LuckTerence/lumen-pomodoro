@@ -1,16 +1,11 @@
 <Window x:Class="LumenPomodoro.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:pages="clr-namespace:LumenPomodoro.Views.Pages"
-        mc:Ignorable="d"
         Title="Lumen Pomodoro" Width="480" Height="680" MinHeight="560"
-        ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterScreen"
-        WindowStyle="None"
-        Background="Transparent"
+        ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen"
+        WindowStyle="None" Background="Transparent"
         Icon="pack://application:,,,/app.ico">
 
     <Window.Resources>
@@ -18,109 +13,51 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Themes/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- 极光渐变画刷 -->
-            <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#2563EB" Offset="0" />
-                <GradientStop Color="#059669" Offset="0.5" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
-
-            <!-- 极光渐变（竖向） -->
-            <LinearGradientBrush x:Key="AuroraGradientVertical" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#2563EB" Offset="0" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
-
-            <!-- 播放按钮渐变 -->
-            <LinearGradientBrush x:Key="PlayButtonGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#059669" Offset="0" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
-
-            <!-- 导航栏激活指示器 -->
-            <SolidColorBrush x:Key="NavActiveBrush" Color="#34D399" />
-            <SolidColorBrush x:Key="NavInactiveBrush" Color="#6B7280" />
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- 最外层玻璃容器 -->
-    <Border x:Name="GlassBorder"
-            CornerRadius="16"
-            Background="#A61A1A1E"
-            BorderBrush="#26FFFFFF"
-            BorderThickness="1"
-            MouseLeftButtonDown="WindowDragArea_MouseLeftButtonDown"
+    <Border x:Name="GlassBorder" CornerRadius="12"
+            Background="#A6181818" BorderBrush="{StaticResource DividerBrush}"
+            BorderThickness="1" MouseLeftButtonDown="WindowDragArea_MouseLeftButtonDown"
             RenderTransformOrigin="0.5,0.5">
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="24" Opacity="0.4" Color="Black"/>
-        </Border.Effect>
-
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="48" />  <!-- 标题栏 -->
-                <RowDefinition Height="*" />   <!-- 内容区 -->
-                <RowDefinition Height="Auto" /> <!-- 底部导航 -->
+                <RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
-            <!-- ===== 标题栏 ===== -->
+            <!-- 标题栏 -->
             <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- Logo + 标题 -->
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="Lumen" FontSize="14" FontWeight="SemiBold"
-                               Foreground="#FFFFFF" VerticalAlignment="Center" />
-                    <TextBlock Text="Pomodoro" FontSize="14" FontWeight="Light"
-                               Foreground="#6B7280" VerticalAlignment="Center" Margin="4,0,0,0" />
+                    <TextBlock Text="Lumen" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="Pomodoro" FontSize="14" FontWeight="Light" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="4,0,0,0"/>
                 </StackPanel>
-
-                <!-- 窗口控制按钮 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="MinimizeBtn" Width="46" Height="32"
-                            Background="Transparent" BorderThickness="0"
-                            Click="MinimizeButton_Click" ToolTip="最小化"
-                            Cursor="Hand">
-                        <Rectangle Width="12" Height="1" Fill="#6B7280" />
+                    <Button x:Name="MinimizeBtn" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="MinimizeButton_Click" Cursor="Hand">
+                        <Rectangle Width="12" Height="1" Fill="{StaticResource TextTertiaryBrush}"/>
                     </Button>
-                    <Button x:Name="MaximizeBtn" Width="46" Height="32"
-                            Background="Transparent" BorderThickness="0"
-                            Click="MaximizeButton_Click" ToolTip="最大化"
-                            Cursor="Hand">
-                        <Border Width="10" Height="10" BorderBrush="#6B7280" BorderThickness="1.5" CornerRadius="2" />
+                    <Button x:Name="MaximizeBtn" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="MaximizeButton_Click" Cursor="Hand">
+                        <Border Width="10" Height="10" BorderBrush="{StaticResource TextTertiaryBrush}" BorderThickness="1.5" CornerRadius="2"/>
                     </Button>
-                    <Button x:Name="CloseBtn" Width="46" Height="32"
-                            Background="Transparent" BorderThickness="0"
-                            Click="CloseButton_Click" ToolTip="关闭"
-                            Cursor="Hand">
+                    <Button x:Name="CloseBtn" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="CloseButton_Click" Cursor="Hand">
                         <Grid>
-                            <Line X1="0" Y1="0" X2="10" Y2="10" Stroke="#6B7280" StrokeThickness="1.5" />
-                            <Line X1="10" Y1="0" X2="0" Y2="10" Stroke="#6B7280" StrokeThickness="1.5" />
+                            <Line X1="0" Y1="0" X2="10" Y2="10" Stroke="{StaticResource TextTertiaryBrush}" StrokeThickness="1.5"/>
+                            <Line X1="10" Y1="0" X2="0" Y2="10" Stroke="{StaticResource TextTertiaryBrush}" StrokeThickness="1.5"/>
                         </Grid>
                     </Button>
                 </StackPanel>
             </Grid>
-
-            <!-- ===== 内容区 ===== -->
-            <Border Grid.Row="1" Margin="0,0,0,0">
-                <ui:NavigationView x:Name="NavView" PaneDisplayMode="Top" Transition="SlideBottom"
-                                   IsBackButtonVisible="Collapsed"
-                                   Background="Transparent">
+            <!-- 内容 -->
+            <Border Grid.Row="1">
+                <ui:NavigationView x:Name="NavView" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" Background="Transparent">
                     <ui:NavigationView.MenuItems>
-                        <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}" />
-                        <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}" />
-                        <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}" />
-                        <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}" />
+                        <ui:NavigationViewItem Content="计时器" Icon="{ui:SymbolIcon Timer24}" TargetPageType="{x:Type pages:TimerPage}"/>
+                        <ui:NavigationViewItem Content="任务" Icon="{ui:SymbolIcon TaskListSquareLtr24}" TargetPageType="{x:Type pages:TasksPage}"/>
+                        <ui:NavigationViewItem Content="统计" Icon="{ui:SymbolIcon ChartMultiple24}" TargetPageType="{x:Type pages:StatsPage}"/>
+                        <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type pages:SettingsPage}"/>
                     </ui:NavigationView.MenuItems>
                 </ui:NavigationView>
             </Border>
-
-            <!-- ===== 底部分隔线 ===== -->
-            <Border Grid.Row="2" Height="1" Background="#1AFFFFFF" />
+            <Border Grid.Row="2" Height="1" Background="{StaticResource DividerBrush}"/>
         </Grid>
     </Border>
 </Window>

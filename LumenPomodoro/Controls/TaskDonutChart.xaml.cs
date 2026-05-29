@@ -150,7 +150,7 @@ public partial class TaskDonutChart : ChartBase
 
     private static Color ParseColor(string hex)
     {
-        if (string.IsNullOrEmpty(hex) || !hex.StartsWith('#')) return Color.FromRgb(59, 130, 246);
+        if (string.IsNullOrEmpty(hex) || !hex.StartsWith('#')) return ChartPalette.Info.Color;
         try
         {
             var r = Convert.ToByte(hex.Substring(1, 2), 16);
@@ -160,7 +160,7 @@ public partial class TaskDonutChart : ChartBase
         }
         catch
         {
-            return Color.FromRgb(59, 130, 246);
+            return ChartPalette.Info.Color;
         }
     }
 }

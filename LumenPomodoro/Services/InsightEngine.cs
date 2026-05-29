@@ -7,14 +7,23 @@ public class InsightEngine : IInsightEngine
 {
     private static readonly string[] DayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
+    /// <summary>生成洞察所需的最少完成 session 数</summary>
     private const int MinSessionsForInsight = 3;
+    /// <summary>连击天数最低阈值，达到后触发鼓励洞察</summary>
     private const int StreakThreshold = 3;
+    /// <summary>周趋势变化阈值（15%），超过此比例认为有明显趋势</summary>
     private const double TrendChangeThreshold = 0.15;
+    /// <summary>计算趋势时回溯的最近周数</summary>
     private const int RecentWeeksForTrend = 4;
+    /// <summary>任务关注度分析回溯天数</summary>
     private const int TaskAttentionDays = 7;
+    /// <summary>任务关注度：每日平均 session 阈值，低于此值建议关注</summary>
     private const double TaskAttentionAvgThreshold = 1.0;
+    /// <summary>任务关注度：周期内最低总 session 数才触发分析</summary>
     private const int TaskAttentionMinTotal = 5;
+    /// <summary>单次生成洞察的最大条数</summary>
     private const int MaxInsightCount = 5;
+    /// <summary>里程碑番茄数数组，达成时生成里程碑洞察</summary>
     private static readonly int[] Milestones = [10, 50, 100, 500, 1000];
 
     private static DateTime GetMonday(DateTime date) => date.AddDays(-(int)date.DayOfWeek);

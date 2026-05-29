@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
@@ -69,6 +71,7 @@ public partial class App : Application
         // Generate default sound files
         SoundService.GenerateDefaultWavFiles();
 
+        ApplyLanguageOnStartup();
         ApplyThemeOnStartup();
     }
 
@@ -140,29 +143,33 @@ public partial class App : Application
         }
     }
 
-    private void ApplyThemeOnStartup()
+    private void ApplyLanguageOnStartup()
     {
         var storageService = Services.GetRequiredService<IStorageService>();
         var settings = storageService.LoadSettings();
-        ApplyTheme(settings.Theme);
+        ApplyLanguage(settings.Language);
+    }
+
+    public void ApplyLanguage(string language)
+    {
+        CultureInfo culture = language switch
+        {
+            "en" => new CultureInfo("en-US"),
+            "zh" => new CultureInfo("zh-CN"),
+            _ => CultureInfo.CurrentCulture.Name.StartsWith("zh") ? new CultureInfo("zh-CN") : new CultureInfo("en-US")
+        };
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
+    }
+
+    private void ApplyThemeOnStartup()
+    {
+        ApplicationThemeManager.Apply(ApplicationTheme.Dark);
     }
 
     public void ApplyTheme(string theme)
     {
-        switch (theme.ToLower())
-        {
-            case "dark":
-                ApplicationThemeManager.Apply(ApplicationTheme.Dark);
-                break;
-            case "light":
-                ApplicationThemeManager.Apply(ApplicationTheme.Light);
-                break;
-            default:
-                var systemTheme = ApplicationThemeManager.GetSystemTheme();
-                ApplicationThemeManager.Apply(
-                    systemTheme == SystemTheme.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
-                break;
-        }
+        ApplicationThemeManager.Apply(ApplicationTheme.Dark);
     }
 
     protected override void OnExit(ExitEventArgs e)

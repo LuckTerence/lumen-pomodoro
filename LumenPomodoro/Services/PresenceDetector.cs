@@ -71,10 +71,37 @@ public class PresenceDetector
         IsPresent = true;
     }
 
+    private const int BytesPerPixel = 4; // BGRA format
+
     private static byte[] DownsampleToGrayscale(byte[] pixelData, int srcWidth, int srcHeight,
         int stride, int dstWidth, int dstHeight)
     {
         var result = new byte[dstWidth * dstHeight];
+
+        if (pixelData == null || pixelData.Length == 0)
+        {
+            Log.Warning("[PresenceDetector] pixelData is null or empty");
+            return result;
+        }
+
+        int minStride = srcWidth * BytesPerPixel;
+        if (stride < minStride)
+        {
+            Log.Warning(
+                "[PresenceDetector] stride ({Stride}) < width * BytesPerPixel ({MinStride})",
+                stride, minStride);
+            return result;
+        }
+
+        int minRequiredLength = (srcHeight - 1) * stride + minStride;
+        if (pixelData.Length < minRequiredLength)
+        {
+            Log.Warning(
+                "[PresenceDetector] pixelData length ({ActualLength}) < required for frame ({RequiredLength})",
+                pixelData.Length, minRequiredLength);
+            return result;
+        }
+
         float xScale = (float)srcWidth / dstWidth;
         float yScale = (float)srcHeight / dstHeight;
 
@@ -84,9 +111,9 @@ public class PresenceDetector
             {
                 int sx = (int)(dx * xScale);
                 int sy = (int)(dy * yScale);
-                int offset = sy * stride + sx * 4;
+                int offset = sy * stride + sx * BytesPerPixel;
 
-                if (offset + 2 < pixelData.Length)
+                if (offset + (BytesPerPixel - 1) < pixelData.Length)
                 {
                     byte b = pixelData[offset];
                     byte g = pixelData[offset + 1];

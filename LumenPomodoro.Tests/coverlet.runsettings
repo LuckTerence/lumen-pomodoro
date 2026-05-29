@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <ExcludeByFile>**/obj/**/*.g.cs</ExcludeByFile>
+          <Exclude>[LumenPomodoro]XamlGeneratedNamespace.*</Exclude>
+          <ExcludeByFile>**/Views/**</ExcludeByFile>
+          <ExcludeByFile>**/Controls/**</ExcludeByFile>
+          <ExcludeByFile>**/Converters/**</ExcludeByFile>
+          <ExcludeByFile>**/App.xaml.cs</ExcludeByFile>
+          <ExcludeByFile>**/Interop/**</ExcludeByFile>
+          <ExcludeByFile>**/app.ico</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

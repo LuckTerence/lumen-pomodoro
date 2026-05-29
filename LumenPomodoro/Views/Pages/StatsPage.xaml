@@ -94,6 +94,18 @@
                 </StackPanel>
             </Border>
 
+            <!-- ===== 空状态 ===== -->
+            <StackPanel x:Name="EmptyStatsArea" Margin="0,40,0,0" HorizontalAlignment="Center"
+                        Visibility="Collapsed">
+                <TextBlock Text="0" FontSize="48" Foreground="{StaticResource AccentBaseBrush}"
+                           HorizontalAlignment="Center" Opacity="0.6" Margin="0,0,0,16" />
+                <TextBlock Text="暂无统计数据" FontSize="16" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock Text="完成第一个番茄后，这里会显示你的专注数据" FontSize="12"
+                           Foreground="{StaticResource TextTertiaryBrush}"
+                           HorizontalAlignment="Center" Margin="0,6,0,0" />
+            </StackPanel>
+
             <!-- ===== 概览卡片 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <Grid>
@@ -132,6 +144,33 @@
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                 </Grid>
+            </Border>
+
+            <!-- ===== 成就徽章 ===== -->
+            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16"
+                    Visibility="{Binding HasAchievements, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="成就" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding Achievements}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,12,6" Padding="10,8" CornerRadius="8"
+                                        Background="#1A34D399">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontSize="13" Foreground="White" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="#6B7280" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </Border>
 
             <!-- ===== 目标进度 ===== -->

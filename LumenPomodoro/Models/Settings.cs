@@ -70,6 +70,9 @@ public class Settings
     public bool DailyReportEnabled { get; set; } = true;
     public bool ExamCountdownEnabled { get; set; } = true;
     public bool DynamicIslandEnabled { get; set; } = true;
+
+    /// <summary>界面语言: "system" / "zh" / "en"</summary>
+    public string Language { get; set; } = "system";
 }
 
 public enum CameraAlertMode

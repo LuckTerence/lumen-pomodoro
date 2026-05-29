@@ -44,4 +44,24 @@ public class ExportServiceTests
         Assert.NotNull(parsed);
         Assert.Single(parsed);
     }
+
+    [Fact]
+    public void ExportToHtml_GeneratesSelfContainedDocument()
+    {
+        var sessions = new List<FocusSession>
+        {
+            new() { Id = "1", TaskId = "t1", TaskName = "数学",
+                    StartTime = DateTime.Today.AddHours(9),
+                    EndTime = DateTime.Today.AddHours(9).AddMinutes(25),
+                    FocusMinutes = 25, Completed = true, QualityScore = 4 }
+        };
+        var html = _exportService.ExportToHtml(sessions);
+
+        Assert.Contains("<!DOCTYPE html>", html);
+        Assert.Contains("<title>Lumen Pomodoro", html);
+        Assert.Contains("<style>", html);
+        Assert.Contains("数学", html);
+        Assert.Contains("25", html);
+        Assert.Contains("4", html);
+    }
 }

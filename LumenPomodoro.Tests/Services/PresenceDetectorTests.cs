@@ -129,4 +129,66 @@ public class PresenceDetectorTests
         Assert.Equal(5, detector.StillFrameCount);
         Assert.True(detector.IsPresent);
     }
+
+    [Fact]
+    public void ProcessFrame_NullPixelData_DoesNotThrow()
+    {
+        var detector = new PresenceDetector();
+
+        var result = detector.ProcessFrame(null!, FrameWidth, FrameHeight, FrameStride);
+
+        Assert.True(result);
+        Assert.True(detector.IsPresent);
+    }
+
+    [Fact]
+    public void ProcessFrame_EmptyPixelData_DoesNotThrow()
+    {
+        var detector = new PresenceDetector();
+
+        var result = detector.ProcessFrame(Array.Empty<byte>(), FrameWidth, FrameHeight, FrameStride);
+
+        Assert.True(result);
+        Assert.True(detector.IsPresent);
+    }
+
+    [Fact]
+    public void ProcessFrame_BufferTooShort_DoesNotThrow()
+    {
+        var detector = new PresenceDetector();
+        var shortBuffer = new byte[500]; // Minimum required would be 16 * 64 = 1024
+
+        var result = detector.ProcessFrame(shortBuffer, FrameWidth, FrameHeight, FrameStride);
+
+        Assert.True(result);
+        Assert.True(detector.IsPresent);
+    }
+
+    [Fact]
+    public void ProcessFrame_StrideTooSmall_DoesNotThrow()
+    {
+        var detector = new PresenceDetector();
+        var frame = CreateUniformFrame(100); // 1024 bytes, but stride=32 < width*4=64
+
+        var result = detector.ProcessFrame(frame, FrameWidth, FrameHeight, stride: 32);
+
+        Assert.True(result);
+        Assert.True(detector.IsPresent);
+    }
+
+    [Fact]
+    public void ProcessFrame_BufferExactlyAtBoundary_ProcessesNormally()
+    {
+        var detector = new PresenceDetector { StillFrameThreshold = 3 };
+        // Frame: 16*64 = 1024 is the exact minimum
+        var frame = CreateUniformFrame(BaseValue);
+
+        detector.ProcessFrame(frame, FrameWidth, FrameHeight, FrameStride);
+        detector.ProcessFrame(frame, FrameWidth, FrameHeight, FrameStride);
+        detector.ProcessFrame(frame, FrameWidth, FrameHeight, FrameStride);
+        var result = detector.ProcessFrame(frame, FrameWidth, FrameHeight, FrameStride);
+
+        Assert.False(result);
+        Assert.False(detector.IsPresent);
+    }
 }

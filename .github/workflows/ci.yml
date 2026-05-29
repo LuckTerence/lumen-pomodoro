@@ -27,5 +27,48 @@ jobs:
       - name: Format check
         run: dotnet format LumenPomodoro.sln --verify-no-changes
 
-      - name: Test
-        run: dotnet test LumenPomodoro.Tests --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      - name: Test with coverage
+        run: >
+          dotnet test LumenPomodoro.Tests
+          --configuration Release
+          --no-build
+          --verbosity normal
+          --settings LumenPomodoro.Tests/coverlet.runsettings
+          --collect:"XPlat Code Coverage"
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: >
+          reportgenerator
+          -reports:LumenPomodoro.Tests/TestResults/**/coverage.cobertura.xml
+          -targetdir:./coverage-report
+          -reporttypes:MarkdownSummaryGithub
+
+      - name: Check coverage threshold
+        shell: pwsh
+        run: |
+          $coverageFile = Get-ChildItem -Path LumenPomodoro.Tests/TestResults -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+          [xml]$xml = Get-Content $coverageFile.FullName
+          $lineRate = [double]$xml.coverage.'line-rate'
+          $branchRate = [double]$xml.coverage.'branch-rate'
+          $linePct = [math]::Round($lineRate * 100, 1)
+          $branchPct = [math]::Round($branchRate * 100, 1)
+          Write-Host "Line coverage: $linePct% (threshold: 35%)"
+          Write-Host "Branch coverage: $branchPct%"
+          # 阈值 35%（从 30% 上调），新增控制器+预设+导出测试后覆盖率提升至 35.3%
+          $threshold = 35
+          if ($linePct -lt $threshold) {
+            Write-Error "Line coverage $linePct% is below threshold of $threshold%"
+            exit 1
+          }
+          Write-Host ":-) Coverage threshold met."
+
+      - name: Post coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path coverage-report/SummaryGithub.md) {
+            Get-Content coverage-report/SummaryGithub.md >> $env:GITHUB_STEP_SUMMARY
+          }

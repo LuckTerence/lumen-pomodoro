@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+
+  <data name="App_Title" xml:space="preserve"><value>Lumen Pomodoro</value></data>
+  <data name="Focus_Complete" xml:space="preserve"><value>Focus Complete</value></data>
+  <data name="Break_Time" xml:space="preserve"><value>Time to rest!</value></data>
+  <data name="Focus_Start" xml:space="preserve"><value>Focus · {0}</value></data>
+  <data name="Break_Complete" xml:space="preserve"><value>Break complete!</value></data>
+  <data name="Break_Ready" xml:space="preserve"><value>Ready for the next round?</value></data>
+  <data name="Milestone_First" xml:space="preserve"><value>First pomodoro complete!</value></data>
+  <data name="Milestone_Daily" xml:space="preserve"><value>Daily goal achieved!</value></data>
+  <data name="Milestone_Target" xml:space="preserve"><value>Daily pomodoro target achieved!</value></data>
+  <data name="Settings_Sound" xml:space="preserve"><value>Sound</value></data>
+  <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Short_Break" xml:space="preserve"><value>Short Break</value></data>
+  <data name="Long_Break" xml:space="preserve"><value>Long Break</value></data>
+  <data name="Default_Task_Selection" xml:space="preserve"><value>Select Task</value></data>
+  <data name="Task_Math" xml:space="preserve"><value>Math</value></data>
+  <data name="Task_English" xml:space="preserve"><value>English</value></data>
+  <data name="Task_Politics" xml:space="preserve"><value>Politics</value></data>
+  <data name="Task_Major" xml:space="preserve"><value>Major</value></data>
+  <data name="Task_Review" xml:space="preserve"><value>Review</value></data>
+</root>

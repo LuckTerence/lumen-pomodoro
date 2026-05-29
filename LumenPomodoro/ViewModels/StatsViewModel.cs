@@ -40,6 +40,8 @@ public class StatsViewModel : INotifyPropertyChanged
     private bool _hasZeroCategory;
     private string _zeroCategoryWarning = string.Empty;
     private int _maxCategoryMinutes;
+    private List<AchievementItem> _achievements = [];
+    private bool _hasAchievements;
 
     // 过滤条件
     private DateTime? _filterDateFrom;
@@ -180,6 +182,14 @@ public class StatsViewModel : INotifyPropertyChanged
         get => _maxCategoryMinutes;
         set { if (_maxCategoryMinutes != value) { _maxCategoryMinutes = value; OnPropertyChanged(); } }
     }
+
+    public List<AchievementItem> Achievements
+    {
+        get => _achievements;
+        set { if (!ReferenceEquals(_achievements, value)) { _achievements = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasAchievements)); } }
+    }
+
+    public bool HasAchievements => Achievements.Count > 0;
 
     // 过滤属性
     public DateTime? FilterDateFrom
@@ -425,6 +435,31 @@ public class StatsViewModel : INotifyPropertyChanged
             HasZeroCategory = false;
             ZeroCategoryWarning = string.Empty;
         }
+
+        UpdateAchievements(filteredSessions);
+    }
+
+    private void UpdateAchievements(List<FocusSession> sessions)
+    {
+        var achievements = new List<AchievementItem>();
+        var completed = sessions.Where(s => s.Completed).ToList();
+        var totalPomodoros = completed.Count;
+        var totalMinutes = completed.Sum(s => s.FocusMinutes);
+
+        if (_streakDays >= 7)
+            achievements.Add(new AchievementItem { Icon = "🔥", Title = $"{_streakDays} 天连击", Subtitle = "连续专注" });
+        if (_streakDays >= 30)
+            achievements.Add(new AchievementItem { Icon = "💎", Title = "钻石连击", Subtitle = "30 天连续专注" });
+        if (_streakDays >= 100)
+            achievements.Add(new AchievementItem { Icon = "👑", Title = "王者连击", Subtitle = "100 天连续专注" });
+        if (totalPomodoros >= 10)
+            achievements.Add(new AchievementItem { Icon = "🍅", Title = $"{totalPomodoros} 个番茄", Subtitle = "累计番茄数" });
+        if (totalPomodoros >= 100)
+            achievements.Add(new AchievementItem { Icon = "⭐", Title = "百番达人", Subtitle = "100+ 个番茄" });
+        if (totalMinutes >= 1000)
+            achievements.Add(new AchievementItem { Icon = "⏱", Title = $"{totalMinutes / 60} 小时", Subtitle = "累计专注时长" });
+
+        Achievements = achievements;
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

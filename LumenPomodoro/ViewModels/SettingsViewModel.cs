@@ -344,7 +344,6 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         _storageService.SaveSettings(settings);
 
         UpdateAutoStart();
-        ApplyTheme(Theme);
 
         if (!CameraAlertEnabled && !SoundEnabled && !PopupEnabled && !SystemNotificationEnabled)
         {

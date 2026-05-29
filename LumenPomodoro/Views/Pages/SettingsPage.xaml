@@ -225,19 +225,6 @@
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="外观" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,16" />
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="主题" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="选择浅色、深色或跟随系统" FontSize="11" Foreground="#6B7280" />
-                        </StackPanel>
-                        <ComboBox Grid.Column="1" Width="180"
-                                  SelectedValue="{Binding Theme}" SelectedValuePath="Tag" VerticalAlignment="Center">
-                            <ComboBoxItem Content="跟随系统" Tag="system" Foreground="#B3FFFFFF" Background="#3327272A" />
-                            <ComboBoxItem Content="浅色" Tag="light" Foreground="#B3FFFFFF" Background="#3327272A" />
-                            <ComboBoxItem Content="深色" Tag="dark" Foreground="#B3FFFFFF" Background="#3327272A" />
-                        </ComboBox>
-                    </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
