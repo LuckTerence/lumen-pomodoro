@@ -30,26 +30,26 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="统计" FontSize="21" FontWeight="SemiBold"
                            Foreground="White" VerticalAlignment="Center" />
-                <Border Grid.Column="1" Background="#3327272A" CornerRadius="16" Padding="12,6" Margin="16,0,0,0"
+                <Border Grid.Column="1" Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="12,6" Margin="16,0,0,0"
                         VerticalAlignment="Center">
                     <ComboBox x:Name="PeriodCombo" SelectedIndex="0" MinWidth="50"
                               Background="Transparent" BorderThickness="0"
-                              Foreground="#B3FFFFFF" FontSize="13"
+                              Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"
                               SelectionChanged="PeriodCombo_SelectionChanged">
-                        <ComboBoxItem Content="日" Foreground="#B3FFFFFF" Background="#3327272A" />
-                        <ComboBoxItem Content="周" Foreground="#B3FFFFFF" Background="#3327272A" />
-                        <ComboBoxItem Content="月" Foreground="#B3FFFFFF" Background="#3327272A" />
+                        <ComboBoxItem Content="日" Foreground="{StaticResource TextSecondaryBrush}" Background="{StaticResource SurfaceRaisedBrush}" />
+                        <ComboBoxItem Content="周" Foreground="{StaticResource TextSecondaryBrush}" Background="{StaticResource SurfaceRaisedBrush}" />
+                        <ComboBoxItem Content="月" Foreground="{StaticResource TextSecondaryBrush}" Background="{StaticResource SurfaceRaisedBrush}" />
                     </ComboBox>
                 </Border>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Click="PrevDate_Click" Width="28" Height="28" Cursor="Hand"
                             Background="Transparent" BorderThickness="0">
-                        <TextBlock Text="◀" FontSize="10" Foreground="#6B7280" />
+                        <TextBlock Text="◀" FontSize="10" Foreground="{StaticResource TextTertiaryBrush}" />
                     </Button>
                     <Button Click="NextDate_Click" Width="28" Height="28" Cursor="Hand"
                             Background="Transparent" BorderThickness="0"
                             IsEnabled="{Binding CanGoNext}">
-                        <TextBlock Text="▶" FontSize="10" Foreground="#6B7280" />
+                        <TextBlock Text="▶" FontSize="10" Foreground="{StaticResource TextTertiaryBrush}" />
                     </Button>
                 </StackPanel>
             </Grid>
@@ -57,11 +57,11 @@
             <!-- ===== 过滤栏 ===== -->
             <!-- 过滤切换按钮 -->
             <Button Content="🔍 过滤" Click="ToggleFilter_Click"
-                    Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource TextTertiaryBrush}" Background="Transparent" BorderThickness="0"
                     FontSize="12" HorizontalAlignment="Right" Margin="0,0,0,8"
                     Cursor="Hand" />
 
-            <Border Background="#3327272A" CornerRadius="16" Padding="16" Margin="0,0,0,16"
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="16" Margin="0,0,0,16"
                     Visibility="{Binding IsFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                     <DatePicker SelectedDate="{Binding FilterDateFrom}" FontSize="12"
@@ -70,16 +70,16 @@
                                 Margin="0,0,0,8" />
                     <TextBox Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}"
                              FontSize="12"
-                             Background="#1AFFFFFF" Foreground="White" BorderThickness="0"
+                             Background="{StaticResource SurfaceOverlayBrush}" Foreground="White" BorderThickness="0"
                              Padding="8,6" Margin="0,0,0,8" />
                     <ComboBox ItemsSource="{Binding AvailableTasks}"
                               SelectedItem="{Binding SelectedFilterTask}"
                               DisplayMemberPath="Name"
                               FontSize="12" Margin="0,0,0,8"
-                              Background="#1AFFFFFF" Foreground="White" BorderThickness="0" />
+                              Background="{StaticResource SurfaceOverlayBrush}" Foreground="White" BorderThickness="0" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="重置" Click="ResetFilter_Click"
-                                Foreground="#6B7280" Background="Transparent" BorderThickness="0"
+                                Foreground="{StaticResource TextTertiaryBrush}" Background="Transparent" BorderThickness="0"
                                 FontSize="12" Cursor="Hand" Padding="8,4" />
                         <Button Content="应用" Click="ApplyFilter_Click"
                                 Foreground="{StaticResource TextOnAccentBrush}" Background="{StaticResource AccentBaseBrush}" BorderThickness="0"
@@ -101,7 +101,7 @@
             </StackPanel>
 
             <!-- ===== 概览卡片 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -113,38 +113,38 @@
                         <TextBlock Text="{Binding CompletedPomodoros, StringFormat='{}{0}'}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="番茄钟" FontSize="11" Foreground="#6B7280"
+                        <TextBlock Text="番茄钟" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding TotalFocusMinutes, StringFormat='{}{0}'}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="White"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="分钟" FontSize="11" Foreground="#6B7280"
+                        <TextBlock Text="分钟" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding AvgQualityScore, StringFormat='{}{0:F1}'}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="White"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="质量" FontSize="11" Foreground="#6B7280"
+                        <TextBlock Text="质量" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                     <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding StreakDays, StringFormat='{}{0}'}"
                                    FontSize="28" FontWeight="SemiBold" Foreground="White"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="连续" FontSize="11" Foreground="#6B7280"
+                        <TextBlock Text="连续" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- ===== 成就徽章 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16"
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16"
                     Visibility="{Binding HasAchievements, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
-                    <TextBlock Text="成就" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <TextBlock Text="成就" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding Achievements}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -157,7 +157,7 @@
                                         <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <StackPanel>
                                             <TextBlock Text="{Binding Title}" FontSize="13" Foreground="White" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="#6B7280" />
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="{StaticResource TextTertiaryBrush}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
@@ -168,16 +168,16 @@
             </Border>
 
             <!-- ===== 目标进度 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="目标进度" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <TextBlock Text="目标进度" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding GoalProgress}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Margin="0,0,0,12">
                                     <Grid Margin="0,0,0,6">
-                                        <TextBlock Text="{Binding Label}" FontSize="12" Foreground="#6B7280" />
-                                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="#6B7280">
+                                        <TextBlock Text="{Binding Label}" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" />
+                                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}">
                                             <Run Text="{Binding CurrentMinutes, Mode=OneWay}" />
                                             <Run Text=" / " />
                                             <Run Text="{Binding TargetMinutes, Mode=OneWay}" />
@@ -185,7 +185,7 @@
                                         </TextBlock>
                                     </Grid>
                                     <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}"
-                                                 Height="4" Foreground="{StaticResource AccentBaseBrush}" Background="#27272A" />
+                                                 Height="4" Foreground="{StaticResource AccentBaseBrush}" Background="{StaticResource SurfaceOverlayBrush}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -194,9 +194,9 @@
             </Border>
 
             <!-- ===== 科目均衡 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="科目均衡" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <TextBlock Text="科目均衡" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding CategoryBreakdown}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -206,14 +206,14 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="60" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Category}" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="0" Text="{Binding Category}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                     <Grid Grid.Column="1" Margin="8,0">
                                         <ProgressBar Minimum="0"
                                                      Maximum="{Binding DataContext.MaxCategoryMinutes, RelativeSource={RelativeSource AncestorType=Page}}"
                                                      Value="{Binding TotalMinutes}" Height="4"
-                                                     Foreground="{StaticResource AccentBaseBrush}" Background="#27272A" />
+                                                     Foreground="{StaticResource AccentBaseBrush}" Background="{StaticResource SurfaceOverlayBrush}" />
                                     </Grid>
-                                    <TextBlock Grid.Column="2" FontSize="12" Foreground="#6B7280"
+                                    <TextBlock Grid.Column="2" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Run Text="{Binding TotalMinutes, Mode=OneWay}" />
                                         <Run Text=" 分" />
@@ -222,7 +222,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <TextBlock Text="{Binding ZeroCategoryWarning}" Foreground="#EF4444" FontSize="12" Margin="0,8,0,0"
+                    <TextBlock Text="{Binding ZeroCategoryWarning}" Foreground="{StaticResource DangerBrush}" FontSize="12" Margin="0,8,0,0"
                                Visibility="{Binding HasZeroCategory, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <Button Click="AddMissingCategory_Click" Padding="12,6" Margin="0,4,0,0" Cursor="Hand"
                             HorizontalAlignment="Left"
@@ -241,41 +241,41 @@
             </Border>
 
             <!-- ===== 年度热力图 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="年度热力图" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
+                    <TextBlock Text="年度热力图" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
                     <controls:HeatmapCalendar HeatmapDays="{Binding HeatmapDays}" />
                 </StackPanel>
             </Border>
 
             <!-- ===== 时段分布 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="时段分布" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
+                    <TextBlock Text="时段分布" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
                     <controls:HourlyDistributionChart HourlyData="{Binding HourlyData}" />
                 </StackPanel>
             </Border>
 
             <!-- ===== 任务分布 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="任务分布" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
+                    <TextBlock Text="任务分布" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
                     <controls:TaskDonutChart TaskSlices="{Binding TaskBreakdown}" />
                 </StackPanel>
             </Border>
 
             <!-- ===== 周趋势 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="周趋势" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
+                    <TextBlock Text="周趋势" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
                     <controls:WeeklyTrendChart WeeklyData="{Binding WeeklyTrend}" />
                 </StackPanel>
             </Border>
 
             <!-- ===== 对比自己 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="对比自己" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <TextBlock Text="对比自己" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding Comparisons}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -285,8 +285,8 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,12,0">
+                                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0">
                                         <Run Text="{Binding CurrentValue, Mode=OneWay}" />
                                         <Run Text=" 分钟" />
                                     </TextBlock>
@@ -315,16 +315,16 @@
             </Border>
 
             <!-- ===== 智能洞察 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="智能洞察" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
+                    <TextBlock Text="智能洞察" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
                     <ItemsControl ItemsSource="{Binding Insights}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,8,0,0" Padding="12" Background="#1A27272A" CornerRadius="8">
+                                <Border Margin="0,8,0,0" Padding="12" Background="{StaticResource SurfaceOverlayBrush}" CornerRadius="8">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
-                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#6B7280"
+                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                                    Margin="0,4,0,0" TextWrapping="Wrap" />
                                         <TextBlock Text="{Binding ActionHint}" FontSize="11" Foreground="{StaticResource AccentBaseBrush}"
                                                    Margin="0,4,0,0" FontStyle="Italic" TextWrapping="Wrap"
@@ -338,12 +338,12 @@
             </Border>
 
             <!-- ===== 数据导出 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="数据导出" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,12" />
+                    <TextBlock Text="数据导出" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
                     <StackPanel Orientation="Horizontal">
                         <Button Click="ExportCsv_Click" Padding="16,8" Cursor="Hand"
-                                Background="#1A27272A" BorderBrush="#26FFFFFF" BorderThickness="1">
+                                Background="{StaticResource SurfaceOverlayBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}"
@@ -354,10 +354,10 @@
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
-                            <TextBlock Text="导出 CSV" FontSize="12" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="导出 CSV" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
                         </Button>
                         <Button Click="ExportJson_Click" Padding="16,8" Margin="8,0,0,0" Cursor="Hand"
-                                Background="#1A27272A" BorderBrush="#26FFFFFF" BorderThickness="1">
+                                Background="{StaticResource SurfaceOverlayBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}"
@@ -368,7 +368,7 @@
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
-                            <TextBlock Text="导出 JSON" FontSize="12" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="导出 JSON" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
                         </Button>
                     </StackPanel>
                 </StackPanel>
