@@ -51,3 +51,5 @@ V*_灵感卡.md
 Thumbs.db
 desktop.ini
 *.lnk
+coverage-report/
+**/TestResults/
