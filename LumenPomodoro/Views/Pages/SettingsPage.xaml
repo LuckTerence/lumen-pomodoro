@@ -309,23 +309,8 @@
             </Border>
 
             <!-- 保存按钮 -->
-            <Button Click="Save_Click" Padding="40,12" HorizontalAlignment="Right" Margin="0,8,0,0" Cursor="Hand">
-                <Button.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#059669" Offset="0" />
-                        <GradientStop Color="#34D399" Offset="1" />
-                    </LinearGradientBrush>
-                </Button.Background>
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="24"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Button.Template>
-                <TextBlock Text="保存" FontSize="14" FontWeight="SemiBold" Foreground="White" />
-            </Button>
+            <Button Click="Save_Click" Style="{StaticResource PrimaryButton}" Content="保存"
+                    HorizontalAlignment="Right" Margin="0,8,0,0" />
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -13,12 +13,6 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:NonEmptyToVisibleConverter x:Key="NonEmptyToVisibleConverter" />
-
-            <!-- 极光渐变 -->
-            <LinearGradientBrush x:Key="AuroraGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#2563EB" Offset="0" />
-                <GradientStop Color="#34D399" Offset="1" />
-            </LinearGradientBrush>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -117,7 +111,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding CompletedPomodoros, StringFormat='{}{0}'}"
-                                   FontSize="28" FontWeight="SemiBold" Foreground="#34D399"
+                                   FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="番茄钟" FontSize="11" Foreground="#6B7280"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
@@ -191,7 +185,7 @@
                                         </TextBlock>
                                     </Grid>
                                     <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}"
-                                                 Height="4" Foreground="#34D399" Background="#27272A" />
+                                                 Height="4" Foreground="{StaticResource AccentBaseBrush}" Background="#27272A" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -217,7 +211,7 @@
                                         <ProgressBar Minimum="0"
                                                      Maximum="{Binding DataContext.MaxCategoryMinutes, RelativeSource={RelativeSource AncestorType=Page}}"
                                                      Value="{Binding TotalMinutes}" Height="4"
-                                                     Foreground="#34D399" Background="#27272A" />
+                                                     Foreground="{StaticResource AccentBaseBrush}" Background="#27272A" />
                                     </Grid>
                                     <TextBlock Grid.Column="2" FontSize="12" Foreground="#6B7280"
                                                HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -299,7 +293,7 @@
                                     <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#34D399" />
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBaseBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsPositive}" Value="False">
                                                         <Setter Property="Foreground" Value="#EF4444" />
@@ -332,7 +326,7 @@
                                         <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="#B3FFFFFF" />
                                         <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#6B7280"
                                                    Margin="0,4,0,0" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding ActionHint}" FontSize="11" Foreground="#34D399"
+                                        <TextBlock Text="{Binding ActionHint}" FontSize="11" Foreground="{StaticResource AccentBaseBrush}"
                                                    Margin="0,4,0,0" FontStyle="Italic" TextWrapping="Wrap"
                                                    Visibility="{Binding ActionHint, Converter={StaticResource NonEmptyToVisibleConverter}}" />
                                     </StackPanel>

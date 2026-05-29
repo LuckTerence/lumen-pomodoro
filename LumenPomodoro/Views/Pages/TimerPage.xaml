@@ -39,7 +39,7 @@
             <StackPanel Orientation="Horizontal">
                 <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
                     <Ellipse.Fill>
-                        <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#34D399}" />
+                        <SolidColorBrush Color="{Binding SelectedTask.Color, FallbackValue=#6A6A6A}" />
                     </Ellipse.Fill>
                 </Ellipse>
                 <TextBlock FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center">
@@ -176,26 +176,10 @@
                     <StackPanel x:Name="PausedPanel"
                                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Click="ResumeButton_Click" Padding="32,12" Cursor="Hand">
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#059669" Offset="0" />
-                                    <GradientStop Color="#34D399" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="24"
-                                            Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="继续" FontSize="15" FontWeight="SemiBold" Foreground="White" />
-                        </Button>
+                        <Button Click="ResumeButton_Click" Style="{StaticResource PrimaryButton}" Content="继续" />
                         <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
                                 Background="Transparent" BorderThickness="0">
-                            <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
+                            <TextBlock Text="重置" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" />
                         </Button>
                     </StackPanel>
 
@@ -203,23 +187,7 @@
                     <StackPanel x:Name="BreakPanel"
                                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Break}"
                                 HorizontalAlignment="Center">
-                        <Button Click="EndBreakButton_Click" Padding="32,12" Cursor="Hand">
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#2563EB" Offset="0" />
-                                    <GradientStop Color="#34D399" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="24"
-                                            Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="结束休息" FontSize="15" FontWeight="SemiBold" Foreground="White" />
-                        </Button>
+                        <Button Click="EndBreakButton_Click" Style="{StaticResource PrimaryButton}" Content="结束休息" />
                     </StackPanel>
 
                     <!-- 专注完成：开始休息 -->
@@ -274,23 +242,8 @@
                         </Border>
 
                         <!-- 开始休息按钮 -->
-                        <Button x:Name="StartBreakButton" Click="StartShortBreakButton_Click" Padding="40,14" Cursor="Hand">
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#059669" Offset="0" />
-                                    <GradientStop Color="#34D399" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="28"
-                                            Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="开始休息" FontSize="16" FontWeight="SemiBold" Foreground="White" />
-                        </Button>
+                        <Button x:Name="StartBreakButton" Click="StartShortBreakButton_Click"
+                                Style="{StaticResource PrimaryButton}" Content="开始休息" Margin="0,0,0,8" />
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
                             <Button x:Name="LongBreakButton" Click="StartLongBreakButton_Click" Padding="16,8" Cursor="Hand"
@@ -358,14 +311,8 @@
                     <Grid Width="240" Margin="0,0,0,8">
                         <Border Background="#1A27272A" CornerRadius="2" Height="3">
                             <Border Width="{Binding TodayPomodoroBarWidth}"
-                                    HorizontalAlignment="Left" CornerRadius="2">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#059669" Offset="0" />
-                                        <GradientStop Color="#34D399" Offset="1" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
+                                    HorizontalAlignment="Left" CornerRadius="2"
+                                    Background="{StaticResource AccentBaseBrush}" />
                         </Border>
                     </Grid>
                     <TextBlock FontSize="11" Foreground="#4B5563"
@@ -398,7 +345,7 @@
                                Visibility="{Binding ExamCountdown, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Run Text="{Binding ExamName, Mode=OneWay}" />
                         <Run Text=" 倒计时 " />
-                        <Run Text="{Binding DaysUntilExam, Mode=OneWay}" FontWeight="SemiBold" Foreground="#34D399" />
+                        <Run Text="{Binding DaysUntilExam, Mode=OneWay}" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}" />
                         <Run Text=" 天" />
                     </TextBlock>
 

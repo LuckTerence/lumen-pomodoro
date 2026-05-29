@@ -50,15 +50,15 @@ public class ExportService : IExportService
         sb.AppendLine("<title>Lumen Pomodoro 报告</title>");
         sb.AppendLine("<style>");
         sb.AppendLine("body{font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e;background:#f5f5f5}");
-        sb.AppendLine("h1{color:#059669;border-bottom:2px solid #34D399;padding-bottom:8px}");
-        sb.AppendLine("h2{color:#2563EB;margin-top:24px}");
+        sb.AppendLine("h1{color:#1DB954;border-bottom:2px solid #1DB954;padding-bottom:8px}");
+        sb.AppendLine("h2{color:#1DB954;margin-top:24px}");
         sb.AppendLine(".card{background:#fff;border-radius:8px;padding:16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}");
         sb.AppendLine(".stat{display:inline-block;text-align:center;margin:8px 16px;min-width:80px}");
-        sb.AppendLine(".stat-val{font-size:28px;font-weight:700;color:#059669}");
+        sb.AppendLine(".stat-val{font-size:28px;font-weight:700;color:#1DB954}");
         sb.AppendLine(".stat-label{font-size:12px;color:#6b7280}");
         sb.AppendLine("table{width:100%;border-collapse:collapse}");
         sb.AppendLine("th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb}");
-        sb.AppendLine("th{background:#059669;color:#fff;font-weight:600}");
+        sb.AppendLine("th{background:#1DB954;color:#fff;font-weight:600}");
         sb.AppendLine("</style></head><body>");
 
         sb.AppendLine("<h1>Lumen Pomodoro 报告</h1>");
