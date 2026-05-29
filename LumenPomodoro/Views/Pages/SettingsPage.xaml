@@ -309,8 +309,22 @@
             </Border>
 
             <!-- 保存按钮 -->
-            <Button Click="Save_Click" Style="{StaticResource PrimaryButton}" Content="保存"
-                    HorizontalAlignment="Right" Margin="0,8,0,0" />
+            <Button Click="Save_Click" Padding="32,10" Cursor="Hand"
+                    Background="{StaticResource AccentBaseBrush}"
+                    BorderBrush="{StaticResource AccentBaseBrush}" BorderThickness="1"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="24" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+                <TextBlock Text="保存" FontSize="14" Foreground="{StaticResource TextOnAccentBrush}" />
+            </Button>
         </StackPanel>
     </ScrollViewer>
 </Page>
