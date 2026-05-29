@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using LumenPomodoro.Models;
@@ -28,6 +30,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
     private bool _presenceDetectionEnabled = true;
     private int _presenceDetectionSeconds = 5;
     private ObservableCollection<string> _availableCameras;
+
+    private bool _focusGuardEnabled = true;
+    private int _focusGuardIdleSeconds = 180;
+    private string _focusGuardBlocklistText = string.Empty;
+    private CameraAlertLevel _focusGuardAlertLevel = CameraAlertLevel.Medium;
 
     private bool _soundEnabled;
     private bool _popupEnabled;
@@ -202,6 +209,31 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         set { var v = Math.Clamp(value, 3, 30); if (_presenceDetectionSeconds != v) { _presenceDetectionSeconds = v; OnPropertyChanged(); } }
     }
 
+    public bool FocusGuardEnabled
+    {
+        get => _focusGuardEnabled;
+        set { if (_focusGuardEnabled != value) { _focusGuardEnabled = value; OnPropertyChanged(); } }
+    }
+
+    public int FocusGuardIdleSeconds
+    {
+        get => _focusGuardIdleSeconds;
+        set { var v = Math.Clamp(value, 10, 3600); if (_focusGuardIdleSeconds != v) { _focusGuardIdleSeconds = v; OnPropertyChanged(); } }
+    }
+
+    /// <summary>黑名单编辑文本，每行一个关键词（进程名或窗口标题片段）。</summary>
+    public string FocusGuardBlocklistText
+    {
+        get => _focusGuardBlocklistText;
+        set { if (_focusGuardBlocklistText != value) { _focusGuardBlocklistText = value; OnPropertyChanged(); } }
+    }
+
+    public CameraAlertLevel FocusGuardAlertLevel
+    {
+        get => _focusGuardAlertLevel;
+        set { if (_focusGuardAlertLevel != value) { _focusGuardAlertLevel = value; OnPropertyChanged(); } }
+    }
+
     public DateTime? ExamDate
     {
         get => _examDate;
@@ -280,6 +312,10 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         DailyTargetPomodoros = settings.DailyTargetPomodoros;
         PresenceDetectionEnabled = settings.PresenceDetectionEnabled;
         PresenceDetectionSeconds = settings.PresenceDetectionSeconds;
+        FocusGuardEnabled = settings.FocusGuardEnabled;
+        FocusGuardIdleSeconds = settings.FocusGuardIdleSeconds;
+        FocusGuardBlocklistText = string.Join(Environment.NewLine, settings.FocusGuardBlocklist ?? new List<string>());
+        FocusGuardAlertLevel = settings.FocusGuardAlertLevel;
         ExamDate = settings.ExamDate;
         ExamName = settings.ExamName;
         InsightsEnabled = settings.InsightsEnabled;
@@ -333,6 +369,11 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             DailyTargetPomodoros = DailyTargetPomodoros,
             PresenceDetectionEnabled = PresenceDetectionEnabled,
             PresenceDetectionSeconds = PresenceDetectionSeconds,
+            FocusGuardEnabled = FocusGuardEnabled,
+            FocusGuardIdleSeconds = FocusGuardIdleSeconds,
+            FocusGuardBlocklist = ParseBlocklist(FocusGuardBlocklistText),
+            FocusGuardPollSeconds = latestSettings.FocusGuardPollSeconds,
+            FocusGuardAlertLevel = FocusGuardAlertLevel,
             ExamDate = ExamDate,
             ExamName = ExamName,
             InsightsEnabled = InsightsEnabled,
@@ -351,6 +392,18 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+
+    private static List<string> ParseBlocklist(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return new List<string>();
+
+        return text
+            .Split(new[] { '\r', '\n', ',', '，' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
     private void UpdateAutoStart()
     {

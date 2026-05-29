@@ -60,7 +60,8 @@ public class ModelTests
         Assert.Equal(5, settings.ShortBreakMinutes);
         Assert.Equal(15, settings.LongBreakMinutes);
         Assert.Equal(4, settings.LongBreakInterval);
-        Assert.True(settings.CameraAlertEnabled);
+        Assert.False(settings.CameraAlertEnabled);
+        Assert.True(settings.FocusGuardEnabled);
         Assert.Equal(CameraAlertMode.UntilConfirm, settings.CameraAlertMode);
         Assert.Equal(180, settings.CameraFixedOnSeconds);
         Assert.True(settings.SoundEnabled);

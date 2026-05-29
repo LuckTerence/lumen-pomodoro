@@ -81,6 +81,7 @@ public partial class App : Application
         services.AddSingleton<IStorageService, StorageService>();
         services.AddSingleton<ITimerService, TimerService>();
         services.AddSingleton<ICameraService, CameraService>();
+        services.AddSingleton<IFocusGuardService, FocusGuardService>();
         services.AddSingleton<ISoundService, SoundService>();
         services.AddSingleton<IInsightEngine, InsightEngine>();
         services.AddSingleton<IExportService, ExportService>();

@@ -18,6 +18,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly TimerController _timerController;
     private readonly NotificationCoordinator _notifications;
     private readonly CameraAlertController _cameraAlert;
+    private readonly IFocusGuardService _focusGuard;
+    private int _focusGuardConsecutiveAlerts;
+    private const int MaxFocusGuardAlerts = 3;
 
     private TimerMode _currentStatus = TimerMode.Idle;
     private string _remainingTime = "25:00";
@@ -214,10 +217,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public MainViewModel(IStorageService storageService, ITimerService timerService,
-        ICameraService cameraService, ISoundService soundService)
+        ICameraService cameraService, ISoundService soundService,
+        IFocusGuardService? focusGuard = null)
     {
         _storageService = storageService;
         CameraService = cameraService;
+        _focusGuard = focusGuard ?? new FocusGuardService();
 
         _timerController = new TimerController(timerService);
         _notifications = new NotificationCoordinator(soundService);
@@ -242,6 +247,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _cameraAlert.ErrorOccurred += HandleCameraError;
         _cameraAlert.SystemNotificationRequested += OnCameraSystemNotification;
         _cameraAlert.WindowActivationRequested += OnCameraWindowActivation;
+
+        // FocusGuardService（防走神：前台窗口 + 键鼠空闲）
+        _focusGuard.DistractionDetected += OnFocusGuardDistraction;
+        _focusGuard.FocusRegained += OnFocusGuardRegained;
 
         LoadData();
 
@@ -296,6 +305,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _storageService.AddSession(session);
         _lastCompletedSessionId = session.Id;
         TodayStats = _storageService.GetTodayStats();
+
+        _focusGuard.Stop();
 
         Progress = 0;
         IsFocusCompleted = true;
@@ -378,6 +389,41 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    // ── FocusGuardService 事件处理（防走神） ──
+
+    private void OnFocusGuardDistraction(string reason)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher == null) return;
+
+        dispatcher.BeginInvoke(() =>
+        {
+            _focusGuardConsecutiveAlerts++;
+            if (_focusGuardConsecutiveAlerts > MaxFocusGuardAlerts) return;
+
+            // 防走神有独立开关与强度，提醒不受番茄钟完成提醒的全局开关（声音/系统通知）静音。
+            var level = AppSettings.FocusGuardAlertLevel;
+
+            _notifications.ShowSystem("走神提醒", reason, systemNotificationEnabled: true, IsWindowActive);
+
+            if (level >= CameraAlertLevel.Medium)
+            {
+                _notifications.PlaySound("FocusComplete", soundEnabled: true);
+            }
+
+            if (level == CameraAlertLevel.Severe &&
+                Application.Current?.MainWindow is Window mainWindow)
+            {
+                OnCameraWindowActivation(mainWindow);
+            }
+        });
+    }
+
+    private void OnFocusGuardRegained()
+    {
+        Application.Current?.Dispatcher?.BeginInvoke(() => _focusGuardConsecutiveAlerts = 0);
+    }
+
     // ── 公共方法（对外 API 不变） ──
 
     public void StartFocus()
@@ -396,6 +442,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _timerController.StartFocus(SelectedTask, AppSettings);
         _storageService.SaveSettings(AppSettings);
 
+        _focusGuardConsecutiveAlerts = 0;
+        _focusGuard.Start(AppSettings);
+
         IsFocusCompleted = false;
         IsBreakCompleted = false;
         IsPendingBreak = false;
@@ -403,12 +452,22 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _notifications.StartCountdown(string.Format(Properties.LocalizedStrings.Focus_Start, SelectedTask.Name), IsWindowTopmost, AppSettings.DynamicIslandEnabled);
     }
 
-    public void PauseFocus() => _timerController.PauseFocus();
+    public void PauseFocus()
+    {
+        _timerController.PauseFocus();
+        _focusGuard.Stop();
+    }
 
-    public void ResumeFocus() => _timerController.ResumeFocus();
+    public void ResumeFocus()
+    {
+        _timerController.ResumeFocus();
+        _focusGuardConsecutiveAlerts = 0;
+        _focusGuard.Start(AppSettings);
+    }
 
     public void ResetFocus()
     {
+        _focusGuard.Stop();
         _cameraAlert.ForceStop();
         _timerController.ResetFocus();
         IsFocusCompleted = false;
@@ -423,6 +482,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void StartBreak(bool isLongBreak = false)
     {
         SaveNotesToLastSession();
+        _focusGuard.Stop();
 
         if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && _cameraAlert.IsActive)
         {
@@ -613,6 +673,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _cameraAlert.ErrorOccurred -= HandleCameraError;
         _cameraAlert.SystemNotificationRequested -= OnCameraSystemNotification;
         _cameraAlert.WindowActivationRequested -= OnCameraWindowActivation;
+
+        // 解除 FocusGuardService 事件订阅并停止监控
+        _focusGuard.DistractionDetected -= OnFocusGuardDistraction;
+        _focusGuard.FocusRegained -= OnFocusGuardRegained;
+        _focusGuard.Stop();
 
         // 解除 TimerController 事件代理
         _timerController.TickUpdated -= OnTimerTickUpdated;

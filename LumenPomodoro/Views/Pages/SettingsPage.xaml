@@ -110,6 +110,49 @@
                 </StackPanel>
             </Border>
 
+            <!-- ===== 防走神 ===== -->
+            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="防走神" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,16" />
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="启用防走神检测" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="专注期间监控前台窗口与键鼠空闲，分心或离开时提醒" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding FocusGuardEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Visibility="{Binding FocusGuardEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="离开判定时长（秒）" FontSize="13" Foreground="#B3FFFFFF" />
+                                <TextBlock Text="键鼠无操作超过该时长判为离开" FontSize="11" Foreground="#6B7280" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding FocusGuardIdleSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="10" Maximum="3600" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="提醒强度" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" Width="180"
+                                      SelectedValue="{Binding FocusGuardAlertLevel}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="仅系统通知" Tag="{x:Static models:CameraAlertLevel.Light}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="系统通知 + 提示音" Tag="{x:Static models:CameraAlertLevel.Medium}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="系统通知 + 提示音 + 置顶" Tag="{x:Static models:CameraAlertLevel.Severe}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                            </ComboBox>
+                        </Grid>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Text="分心 App 黑名单" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="每行一个关键词，匹配前台进程名或窗口标题（如 bilibili、微信、Steam）" FontSize="11" Foreground="#6B7280" Margin="0,0,0,6" />
+                            <TextBox Text="{Binding FocusGuardBlocklistText, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" MaxHeight="160"
+                                     VerticalScrollBarVisibility="Auto" FontSize="12"
+                                     Foreground="#E6FFFFFF" Background="#22000000" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- ===== 摄像头 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
