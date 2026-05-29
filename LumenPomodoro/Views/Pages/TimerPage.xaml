@@ -152,24 +152,9 @@
                     <StackPanel x:Name="FocusPanel"
                                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Focus}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Click="PauseButton_Click" Padding="24,10" Cursor="Hand"
-                                Background="#3327272A" BorderBrush="#26FFFFFF" BorderThickness="1">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="24" Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="暂停" FontSize="14" Foreground="#B3FFFFFF" />
-                        </Button>
-                        <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
-                                Background="Transparent" BorderThickness="0">
-                            <TextBlock Text="重置" FontSize="14" Foreground="#6B7280" />
-                        </Button>
+                        <Button Click="PauseButton_Click" Style="{StaticResource PrimaryButton}" Content="暂停" />
+                        <Button Click="ResetButton_Click" Style="{StaticResource TextButton}" Content="重置"
+                                Margin="12,0,0,0" />
                     </StackPanel>
 
                     <!-- 暂停中：继续/重置 -->
@@ -177,10 +162,8 @@
                                 Visibility="{Binding CurrentStatus, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Paused}"
                                 Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button Click="ResumeButton_Click" Style="{StaticResource PrimaryButton}" Content="继续" />
-                        <Button Click="ResetButton_Click" Padding="24,10" Margin="12,0,0,0" Cursor="Hand"
-                                Background="Transparent" BorderThickness="0">
-                            <TextBlock Text="重置" FontSize="14" Foreground="{StaticResource TextTertiaryBrush}" />
-                        </Button>
+                        <Button Click="ResetButton_Click" Style="{StaticResource TextButton}" Content="重置"
+                                Margin="12,0,0,0" />
                     </StackPanel>
 
                     <!-- 休息中：结束休息 -->
