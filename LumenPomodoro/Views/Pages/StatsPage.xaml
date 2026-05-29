@@ -82,7 +82,7 @@
                                 Foreground="#6B7280" Background="Transparent" BorderThickness="0"
                                 FontSize="12" Cursor="Hand" Padding="8,4" />
                         <Button Content="应用" Click="ApplyFilter_Click"
-                                Foreground="White" Background="#3B82F6" BorderThickness="0"
+                                Foreground="{StaticResource TextOnAccentBrush}" Background="{StaticResource AccentBaseBrush}" BorderThickness="0"
                                 FontSize="12" Cursor="Hand" Padding="16,4" Margin="8,0,0,0" />
                     </StackPanel>
                 </StackPanel>
@@ -152,7 +152,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Margin="0,0,12,6" Padding="10,8" CornerRadius="8"
-                                        Background="#1A34D399">
+                                        Background="{StaticResource AccentSubtleBrush}">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <StackPanel>
@@ -229,13 +229,13 @@
                             Visibility="{Binding HasZeroCategory, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border Background="#1A3B82F6" BorderBrush="#333B82F6" BorderThickness="1"
+                                <Border Background="{StaticResource AccentSubtleBrush}" BorderBrush="{StaticResource AccentBaseBrush}" BorderThickness="1"
                                         CornerRadius="14" Padding="{TemplateBinding Padding}">
                                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </ControlTemplate>
                         </Button.Template>
-                        <TextBlock Text="+ 添加缺失科目的任务" FontSize="11" Foreground="#60A5FA" />
+                        <TextBlock Text="+ 添加缺失科目的任务" FontSize="11" Foreground="{StaticResource AccentBaseBrush}" />
                     </Button>
                 </StackPanel>
             </Border>

@@ -254,14 +254,14 @@
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SuggestLongBreak}" Value="True">
-                                                <Setter Property="Background" Value="#1AF59E0B" />
+                                                <Setter Property="Background" Value="{StaticResource WarningSubtleBrush}" />
                                                 <Setter Property="BorderThickness" Value="1" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                    <TextBlock FontSize="12" Foreground="#F59E0B" FontWeight="SemiBold"
+                                    <TextBlock FontSize="12" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold"
                                                Visibility="{Binding SuggestLongBreak, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Run Text="建议长休息（已完成 " />
                                         <Run Text="{Binding TodayCompletedCount}" />
@@ -274,7 +274,7 @@
                                                 <Setter Property="Foreground" Value="#6B7280" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding SuggestLongBreak}" Value="True">
-                                                        <Setter Property="Foreground" Value="#F59E0B" />
+                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
                                                         <Setter Property="FontWeight" Value="SemiBold" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -296,7 +296,7 @@
                     <!-- 摄像头提醒状态 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
                                 Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="{StaticResource WarningBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                         <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
                             <Run Text="摄像头提醒中" />
                         </TextBlock>

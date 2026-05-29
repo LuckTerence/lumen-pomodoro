@@ -64,6 +64,7 @@
     <SolidColorBrush x:Key="InfoBrush" Color="#4A90D9" />
     <SolidColorBrush x:Key="StarBrush" Color="#FBBF24" />
     <SolidColorBrush x:Key="DangerSubtleBrush" Color="#1AF15E6C" />
+    <SolidColorBrush x:Key="WarningSubtleBrush" Color="#1AF5A623" />
     <SolidColorBrush x:Key="FallbackTaskBrush" Color="#6A6A6A" />
     <SolidColorBrush x:Key="ArcBackgroundBrush" Color="#282828" />
 
