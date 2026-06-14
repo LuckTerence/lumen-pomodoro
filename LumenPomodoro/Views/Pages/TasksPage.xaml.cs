@@ -35,18 +35,30 @@ public partial class TasksPage : Page
         Loaded += TasksPage_Loaded;
         ColorComboBox.ItemTemplate = CreateColorTemplate();
         ColorComboBox.ItemsSource = _colorOptions;
-        CategoryComboBox.ItemsSource = TasksViewModel.AvailableCategories;
     }
 
     private static DataTemplate CreateColorTemplate()
     {
         var template = new DataTemplate();
-        var factory = new FrameworkElementFactory(typeof(Ellipse));
-        factory.SetValue(Ellipse.WidthProperty, 16.0);
-        factory.SetValue(Ellipse.HeightProperty, 16.0);
-        factory.SetValue(Ellipse.StrokeThicknessProperty, 0.0);
-        factory.SetBinding(Ellipse.FillProperty, new System.Windows.Data.Binding("Color") { Converter = new ColorToBrushConverter() });
-        template.VisualTree = factory;
+        var stackPanel = new FrameworkElementFactory(typeof(StackPanel));
+        stackPanel.SetValue(StackPanel.OrientationProperty, System.Windows.Controls.Orientation.Horizontal);
+
+        var ellipse = new FrameworkElementFactory(typeof(Ellipse));
+        ellipse.SetValue(Ellipse.WidthProperty, 14.0);
+        ellipse.SetValue(Ellipse.HeightProperty, 14.0);
+        ellipse.SetValue(Ellipse.VerticalAlignmentProperty, VerticalAlignment.Center);
+        ellipse.SetValue(Ellipse.StrokeThicknessProperty, 0.0);
+        ellipse.SetValue(Ellipse.MarginProperty, new Thickness(0, 0, 8, 0));
+        ellipse.SetBinding(Ellipse.FillProperty, new System.Windows.Data.Binding("Color") { Converter = new ColorToBrushConverter() });
+
+        var textBlock = new FrameworkElementFactory(typeof(TextBlock));
+        textBlock.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+        textBlock.SetValue(TextBlock.FontSizeProperty, 13.0);
+        textBlock.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("Name"));
+
+        stackPanel.AppendChild(ellipse);
+        stackPanel.AppendChild(textBlock);
+        template.VisualTree = stackPanel;
         return template;
     }
 
@@ -73,17 +85,12 @@ public partial class TasksPage : Page
     private void AddTask_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.NewTaskName = NewTaskNameBox.Text;
-        if (CategoryComboBox.SelectedItem is string category)
-        {
-            _viewModel.NewTaskCategory = category;
-        }
         if (ColorComboBox.SelectedItem is ColorOption colorOption)
         {
             _viewModel.SelectedColor = $"#{colorOption.Color.R:X2}{colorOption.Color.G:X2}{colorOption.Color.B:X2}";
         }
         _viewModel.AddTask();
         NewTaskNameBox.Text = string.Empty;
-        CategoryComboBox.SelectedIndex = 0;
         ColorComboBox.SelectedIndex = 0;
     }
 
@@ -148,7 +155,8 @@ public partial class TasksPage : Page
 
     private void RestoreDefaults_Click(object sender, RoutedEventArgs e)
     {
-        var result = MessageBox.Show(
+        var owner = Window.GetWindow(this);
+        var result = MessageBox.Show(owner,
             "将恢复所有考试科目默认预设任务。\n你的自建任务会保留，不会被删除。\n\n确定要恢复吗？",
             "恢复默认任务",
             MessageBoxButton.YesNo,
@@ -157,6 +165,7 @@ public partial class TasksPage : Page
         if (result == MessageBoxResult.Yes)
         {
             _viewModel.RestoreDefaults();
+            MessageBox.Show(owner, "默认任务已恢复", "完成", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

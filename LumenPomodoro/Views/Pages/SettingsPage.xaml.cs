@@ -27,6 +27,7 @@ public partial class SettingsPage : Page, IDisposable
     {
         _viewModel.SaveSettings();
         SettingsSaved?.Invoke();
+        MessageBox.Show(Window.GetWindow(this), "设置已保存", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

@@ -90,42 +90,42 @@ public partial class DailyReportDialog : Window
 
         if (total >= 240)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "🏆";
             AchievementTitle.Text = "专注大师";
             AchievementDesc.Text = "单日专注4小时+，了不起的自律！";
             AchievementBadge.Visibility = Visibility.Visible;
         }
         else if (streak >= 7)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "🔥";
             AchievementTitle.Text = "一周挑战完成";
             AchievementDesc.Text = $"连续专注 {streak} 天，习惯正在养成！";
             AchievementBadge.Visibility = Visibility.Visible;
         }
         else if (streak >= 3)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "⚡";
             AchievementTitle.Text = "三天连击";
             AchievementDesc.Text = $"连续 {streak} 天，好习惯正在形成！";
             AchievementBadge.Visibility = Visibility.Visible;
         }
         else if (pomodoros >= 8)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "🚀";
             AchievementTitle.Text = "高效达人";
             AchievementDesc.Text = $"完成 {pomodoros} 个番茄钟，今天收获满满！";
             AchievementBadge.Visibility = Visibility.Visible;
         }
         else if (total >= 180)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "⏱";
             AchievementTitle.Text = "三小时突破";
             AchievementDesc.Text = "专注3小时+，今天的你很棒！";
             AchievementBadge.Visibility = Visibility.Visible;
         }
         else if (report.UniqueTasksCount >= 3)
         {
-            AchievementIcon.Text = "[徽章]";
+            AchievementIcon.Text = "📚";
             AchievementTitle.Text = "全面发展";
             AchievementDesc.Text = $"今天学习了 {report.UniqueTasksCount} 个不同科目！";
             AchievementBadge.Visibility = Visibility.Visible;

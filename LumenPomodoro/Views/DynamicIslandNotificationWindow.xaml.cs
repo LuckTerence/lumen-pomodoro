@@ -14,6 +14,11 @@ public partial class DynamicIslandNotificationWindow : Window
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_APPWINDOW = 0x00040000;
 
+    private static readonly IntPtr HWND_TOPMOST = new(-1);
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOACTIVATE = 0x0010;
+
     private bool _forceClose;
     private DispatcherTimer? _autoHideTimer;
     private Storyboard? _activeStoryboard;
@@ -46,6 +51,10 @@ public partial class DynamicIslandNotificationWindow : Window
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
     private static extern IntPtr SetWindowLongPtr64(IntPtr hwnd, int index, IntPtr value);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
+
     private static IntPtr GetWindowLongPtr(IntPtr hwnd, int index)
     {
         return IntPtr.Size == 8
@@ -70,6 +79,17 @@ public partial class DynamicIslandNotificationWindow : Window
         exStyle |= WS_EX_TOOLWINDOW;
         exStyle &= ~WS_EX_APPWINDOW;
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
+    }
+
+    /// <summary>
+    /// 重新断言置顶。WPF 的 Topmost 在遇到其他置顶窗口或全屏应用后可能被抢占，
+    /// 因此在显示及倒计时刷新时主动用 SetWindowPos(HWND_TOPMOST) 强制置于顶层。
+    /// </summary>
+    private void ReassertTopmost()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }
 
     /// <summary>
@@ -137,6 +157,9 @@ public partial class DynamicIslandNotificationWindow : Window
         if (!_isCountdownMode) return;
 
         CountdownBlock.Text = remainingTime;
+
+        // 倒计时期间持续保持置顶，避免被其他置顶窗口抢占
+        ReassertTopmost();
 
         // 解析剩余秒数
         if (TryParseSeconds(remainingTime, out int seconds))
@@ -399,6 +422,8 @@ public partial class DynamicIslandNotificationWindow : Window
         CenterAtScreenTop();
 
         if (!IsVisible) Show();
+
+        ReassertTopmost();
     }
 
     private void CenterAtScreenTop()

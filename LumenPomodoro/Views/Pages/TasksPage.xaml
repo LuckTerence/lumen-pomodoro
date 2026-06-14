@@ -19,6 +19,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- 标题 -->
@@ -31,17 +32,7 @@
                 <ui:TextBox x:Name="NewTaskNameBox" PlaceholderText="任务名称"
                          Padding="12,8" FontSize="13"
                          Margin="0,0,0,12" />
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ComboBox x:Name="CategoryComboBox" Grid.Column="0" SelectedIndex="0"
-                              Background="{StaticResource SurfaceOverlayBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1"
-                              Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Padding="8,6" />
-                    <ComboBox x:Name="ColorComboBox" Grid.Column="2" SelectedIndex="0" />
-                </Grid>
+                <ComboBox x:Name="ColorComboBox" SelectedIndex="0" Margin="0,0,0,12" />
                 <Button Click="AddTask_Click" Padding="20,8" Cursor="Hand"
                         Background="{StaticResource AccentBaseBrush}">
                         <Button.Template>
