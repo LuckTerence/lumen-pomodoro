@@ -1,0 +1,13 @@
+# Normalize text to LF in repo; Windows checkout may convert via core.autocrlf
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.ico binary
+*.ttf binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.dll binary
+*.exe binary
+*.zip binary
+*.dmg binary

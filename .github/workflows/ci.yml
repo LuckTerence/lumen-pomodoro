@@ -26,18 +26,12 @@ jobs:
         run: dotnet build LumenPomodoro.sln --configuration Release --no-restore
 
       - name: Format check
-        shell: pwsh
         run: |
-          # 应用 whitespace 后用 git diff 显示差异，便于修 EOL/空白
-          dotnet format whitespace LumenPomodoro.sln --verbosity minimal
-          $changed = git status --porcelain
-          if ($changed) {
-            Write-Host "Format would change files:"
-            Write-Host $changed
-            git --no-pager diff | Select-Object -First 200
-            throw "whitespace format required; see diff above"
-          }
-          Write-Host "Format OK"
+          # EditorConfig: end_of_line=lf。仅校验空白/行尾。
+          if ! dotnet format whitespace LumenPomodoro.sln --verify-no-changes --verbosity minimal; then
+            echo "::error::whitespace format 未通过"
+            exit 1
+          fi
 
       - name: Test with coverage
         run: >
