@@ -68,13 +68,16 @@ public class CameraAlertController
             switch (settings.CameraAlertMode)
             {
                 case CameraAlertMode.FixedDuration:
-                    _ = FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraForDurationAsync(settings.CameraFixedOnSeconds)),
+                    // 直接启动 Task（勿再包 Task.Run，否则单测 Verify 与调用竞态）
+                    _ = FireAndForgetAsync(
+                        _cameraService.StartCameraForDurationAsync(settings.CameraFixedOnSeconds),
                         "摄像头固定时长提醒",
                         ex => HandleError($"摄像头启动失败: {ex.Message}"));
                     cameraStarted = true;
                     break;
                 case CameraAlertMode.UntilConfirm:
-                    _ = FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()),
+                    _ = FireAndForgetAsync(
+                        _cameraService.StartCameraAsync(),
                         "摄像头直到确认提醒",
                         ex => HandleError($"摄像头启动失败: {ex.Message}"));
                     cameraStarted = true;
@@ -104,7 +107,8 @@ public class CameraAlertController
             settings.CameraAlertEnabled &&
             settings.CameraFollowBreakEnabled)
         {
-            _ = FireAndForgetAsync(Task.Run(() => _cameraService.StartCameraAsync()),
+            _ = FireAndForgetAsync(
+                _cameraService.StartCameraAsync(),
                 "启动摄像头(跟随休息)",
                 ex => HandleError($"摄像头启动失败: {ex.Message}"));
             ShowIndicator(Color.FromRgb(0x10, 0xB9, 0x81));
@@ -128,7 +132,7 @@ public class CameraAlertController
     public void ForceStop()
     {
         _consecutivePresenceLostAlerts = 0;
-        _ = FireAndForgetAsync(Task.Run(() => _cameraService.StopCameraAsync()), "停止摄像头");
+        _ = FireAndForgetAsync(_cameraService.StopCameraAsync(), "停止摄像头");
         HideIndicator();
     }
 
