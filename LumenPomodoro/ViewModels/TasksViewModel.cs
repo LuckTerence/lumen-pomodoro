@@ -36,7 +36,10 @@ public partial class TasksViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Add()
+    private void Add() => AddTask();
+
+    /// <summary>供 code-behind 调用。</summary>
+    public void AddTask()
     {
         if (string.IsNullOrWhiteSpace(NewTaskName)) return;
 
@@ -55,7 +58,9 @@ public partial class TasksViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Delete(string taskId)
+    private void Delete(string taskId) => DeleteTask(taskId);
+
+    public void DeleteTask(string taskId)
     {
         var task = Tasks.FirstOrDefault(t => t.Id == taskId);
         if (task == null) return;
@@ -65,7 +70,9 @@ public partial class TasksViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Select(string taskId)
+    private void Select(string taskId) => SelectTask(taskId);
+
+    public void SelectTask(string taskId)
     {
         var task = Tasks.FirstOrDefault(t => t.Id == taskId);
         if (task != null)

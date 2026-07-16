@@ -134,14 +134,14 @@ public partial class StatsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleFilter()
+    public void ToggleFilter()
     {
         IsFilterVisible = !IsFilterVisible;
         if (IsFilterVisible) LoadAvailableTasks();
     }
 
     [RelayCommand]
-    private void ApplyFilter()
+    public void ApplyFilter()
     {
         HasActiveFilter = FilterDateFrom.HasValue || FilterDateTo.HasValue
             || !string.IsNullOrWhiteSpace(FilterKeyword) || SelectedFilterTask != null;
@@ -149,7 +149,7 @@ public partial class StatsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ResetFilter()
+    public void ResetFilter()
     {
         FilterDateFrom = null;
         FilterDateTo = null;

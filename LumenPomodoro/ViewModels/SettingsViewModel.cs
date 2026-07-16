@@ -431,6 +431,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         };
     }
 
+    /// <summary>供 code-behind 调用（与 SaveCommand 等价）。</summary>
+    public void SaveSettings() => Save();
+
     [RelayCommand]
     private void Save()
     {

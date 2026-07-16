@@ -241,7 +241,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     // ── RelayCommands（替代 View 代码后置中的方法调用） ──
 
     [RelayCommand]
-    private void StartFocus()
+    public void StartFocus()
     {
         CurrentNotes = string.Empty;
         UserRating = 0;
@@ -365,7 +365,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void EndBreak()
+    public void EndBreak()
     {
         if (!TryAllowEndBreakEarly()) return;
 
@@ -379,7 +379,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void SkipBreak()
+    public void SkipBreak()
     {
         if (!TryAllowEndBreakEarly()) return;
 
@@ -402,7 +402,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void ApplyPreset(PomodoroPreset preset)
+    public void ApplyPreset(PomodoroPreset preset)
     {
         if (preset.WorkMinutes <= 0) return;
 
@@ -423,7 +423,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void AdjustWorkMinutes(int delta)
+    public void AdjustWorkMinutes(int delta)
     {
         _timerController.AdjustWorkMinutes(delta, AppSettings);
         _storageService.SaveSettings(AppSettings);
