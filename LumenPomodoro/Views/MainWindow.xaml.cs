@@ -114,12 +114,31 @@ public partial class MainWindow : Window
     {
         EnableAcrylicBackdrop();
         NavView.Navigate(typeof(TimerPage));
+        ShowOnboardingIfNeeded();
         ShowDailyReportIfNeeded();
+    }
+
+    private void ShowOnboardingIfNeeded()
+    {
+        var settings = _viewModel.AppSettings;
+        if (settings.HasCompletedOnboarding) return;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            var win = new OnboardingWindow(settings) { Owner = this };
+            win.ShowDialog();
+            if (win.Completed)
+            {
+                _viewModel.StorageService.SaveSettings(settings);
+                _viewModel.ReloadSettings();
+            }
+        });
     }
 
     private void ShowDailyReportIfNeeded()
     {
         var settings = _viewModel.AppSettings;
+        if (!settings.HasCompletedOnboarding) return; // 首启先引导，日报下次再说
         if (!settings.DailyReportEnabled) return;
         if (settings.LastReportShownDate == DateTime.Today) return;
 

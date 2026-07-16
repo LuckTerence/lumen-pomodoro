@@ -290,45 +290,67 @@ public partial class SettingsViewModel : IDisposable
         }
     }
 
+    [RelayCommand]
+    private void ApplyLightFocusPreset() => ApplyScenePresetAndSave("light", "轻松");
+
+    [RelayCommand]
+    private void ApplyStandardFocusPreset() => ApplyScenePresetAndSave("standard", "标准");
+
     /// <summary>一键应用：严格模式 + 全屏休息 + 摄像头灯等。</summary>
     [RelayCommand]
-    private void ApplyStrictFocusPreset()
-    {
-        StrictModeEnabled = true;
-        FullscreenBreakEnabled = true;
-        CameraAlertEnabled = true;
-        CameraAlertMode = CameraAlertMode.UntilConfirm;
-        CameraAlertLevel = CameraAlertLevel.Severe;
-        CameraAlertCanManualClose = false;
-        CameraFollowBreakEnabled = true;
-        ConfirmExitWhileFocusing = true;
-        if (SessionEndPreNotifySeconds <= 0)
-            SessionEndPreNotifySeconds = 30;
-        SoundEnabled = true;
-        PopupEnabled = true;
-        SystemNotificationEnabled = true;
+    private void ApplyStrictFocusPreset() => ApplyScenePresetAndSave("strict", "严格专注");
 
-        // 立即落盘，避免只改 UI 未点保存
+    private void ApplyScenePresetAndSave(string scene, string displayName)
+    {
+        var draft = BuildSettingsFromUi(_storageService.LoadSettings());
+        draft.ApplyFocusScenePreset(scene);
+        LoadFromSettings(draft);
         Save();
+
         MessageBox.Show(
-            "已应用「严格专注」预设：\n\n• 严格模式\n• 全屏休息\n• 摄像头指示灯（Severe，不可手关，跟随休息）\n• 结束前预告与退出确认\n\n时长与任务配置未改动。",
-            "严格专注预设",
+            $"已应用「{displayName}」场景预设。\n\n时长、任务与黑名单未改动，可随时在设置中微调。",
+            "场景预设",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
 
-    [RelayCommand]
-    private void Save()
+    private void LoadFromSettings(Settings settings)
     {
-        var latestSettings = _storageService.LoadSettings();
+        WorkMinutes = settings.WorkMinutes;
+        ShortBreakMinutes = settings.ShortBreakMinutes;
+        LongBreakMinutes = settings.LongBreakMinutes;
+        LongBreakInterval = settings.LongBreakInterval;
+        CameraAlertEnabled = settings.CameraAlertEnabled;
+        CameraAlertMode = settings.CameraAlertMode;
+        CameraFixedOnSeconds = settings.CameraFixedOnSeconds;
+        CameraFollowBreakEnabled = settings.CameraFollowBreakEnabled;
+        CameraAlertCanManualClose = settings.CameraAlertCanManualClose;
+        CameraAlertLevel = settings.CameraAlertLevel;
+        SelectedCameraIndex = settings.CameraIndex;
+        SoundEnabled = settings.SoundEnabled;
+        PopupEnabled = settings.PopupEnabled;
+        SystemNotificationEnabled = settings.SystemNotificationEnabled;
+        FocusGuardEnabled = settings.FocusGuardEnabled;
+        FocusGuardIdleSeconds = settings.FocusGuardIdleSeconds;
+        FocusGuardBlocklistText = string.Join(Environment.NewLine, settings.FocusGuardBlocklist ?? new List<string>());
+        FocusGuardAlertLevel = settings.FocusGuardAlertLevel;
+        FocusGuardDebounceHits = settings.FocusGuardDebounceHits;
+        FocusGuardMaxAlertsPerSession = settings.FocusGuardMaxAlertsPerSession;
+        FocusGuardRespectDoNotDisturb = settings.FocusGuardRespectDoNotDisturb;
+        ConfirmExitWhileFocusing = settings.ConfirmExitWhileFocusing;
+        SessionEndPreNotifySeconds = settings.SessionEndPreNotifySeconds;
+        FullscreenBreakEnabled = settings.FullscreenBreakEnabled;
+        StrictModeEnabled = settings.StrictModeEnabled;
+    }
 
-        var settings = new Settings
+    private Settings BuildSettingsFromUi(Settings latestSettings)
+    {
+        return new Settings
         {
             WorkMinutes = WorkMinutes,
             ShortBreakMinutes = ShortBreakMinutes,
             LongBreakMinutes = LongBreakMinutes,
             LongBreakInterval = LongBreakInterval,
-
             CameraAlertEnabled = CameraAlertEnabled,
             CameraAlertMode = CameraAlertMode,
             CameraFixedOnSeconds = CameraFixedOnSeconds,
@@ -337,15 +359,13 @@ public partial class SettingsViewModel : IDisposable
             CameraAlertCanManualClose = CameraAlertCanManualClose,
             CameraAlertLevel = CameraAlertLevel,
             HasShownCameraPrivacyNotice = latestSettings.HasShownCameraPrivacyNotice,
-
+            HasCompletedOnboarding = latestSettings.HasCompletedOnboarding,
             SoundEnabled = SoundEnabled,
             PopupEnabled = PopupEnabled,
             SystemNotificationEnabled = SystemNotificationEnabled,
-
             TrayEnabled = TrayEnabled,
             CloseToTray = CloseToTray,
             AutoStartEnabled = AutoStartEnabled,
-
             Theme = Theme,
             AnimationEnabled = AnimationEnabled,
             DailyGoalMinutes = DailyGoalMinutes,
@@ -376,7 +396,13 @@ public partial class SettingsViewModel : IDisposable
             LastSelectedTaskId = latestSettings.LastSelectedTaskId,
             LastReportShownDate = latestSettings.LastReportShownDate
         };
+    }
 
+    [RelayCommand]
+    private void Save()
+    {
+        var latestSettings = _storageService.LoadSettings();
+        var settings = BuildSettingsFromUi(latestSettings);
         _storageService.SaveSettings(settings);
 
         UpdateAutoStart();

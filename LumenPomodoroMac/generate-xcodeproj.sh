@@ -42,6 +42,7 @@ cat > "$XCODEPROJ/project.pbxproj" <<'EOF'
 		A10000000000000000000023 /* DailyReportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* DailyReportSheet.swift */; };
 		A10000000000000000000024 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000026 /* Color+Hex.swift */; };
 		A10000000000000000000025 /* FullscreenBreakView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000027 /* FullscreenBreakView.swift */; };
+		A10000000000000000000026 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000028 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +73,7 @@ cat > "$XCODEPROJ/project.pbxproj" <<'EOF'
 		A20000000000000000000025 /* DailyReportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyReportSheet.swift; sourceTree = "<group>"; };
 		A20000000000000000000026 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		A20000000000000000000027 /* FullscreenBreakView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullscreenBreakView.swift; sourceTree = "<group>"; };
+		A20000000000000000000028 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* LumenPomodoroMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LumenPomodoroMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -162,6 +164,7 @@ cat > "$XCODEPROJ/project.pbxproj" <<'EOF'
 				A20000000000000000000013 /* SettingsView.swift */,
 				A20000000000000000000025 /* DailyReportSheet.swift */,
 				A20000000000000000000027 /* FullscreenBreakView.swift */,
+				A20000000000000000000028 /* OnboardingView.swift */,
 				A50000000000000000000008 /* Components */,
 			);
 			path = Views;
@@ -278,6 +281,7 @@ cat > "$XCODEPROJ/project.pbxproj" <<'EOF'
 				A10000000000000000000023 /* DailyReportSheet.swift in Sources */,
 				A10000000000000000000024 /* Color+Hex.swift in Sources */,
 				A10000000000000000000025 /* FullscreenBreakView.swift in Sources */,
+				A10000000000000000000026 /* OnboardingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

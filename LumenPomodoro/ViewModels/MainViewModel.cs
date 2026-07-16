@@ -90,6 +90,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public string CameraStatus => _cameraAlert.Status;
     public bool IsCameraAlertActive => _cameraAlert.IsActive;
+
+    /// <summary>计时页展示的可读摄像头状态（含关闭/待命/异常）。</summary>
+    public string CameraStatusDisplay => Models.CameraAlertStatusText.Describe(
+        AppSettings.CameraAlertEnabled,
+        IsCameraAlertActive,
+        CameraStatus,
+        AppSettings.EffectiveCameraAlertCanManualClose);
     public Settings AppSettings { get; private set; } = new();
     public bool ExamCountdown => AppSettings.ExamCountdownEnabled && AppSettings.ExamDate.HasValue && AppSettings.ExamDate.Value > DateTime.Today;
     public string ExamName => AppSettings.ExamName;
@@ -215,7 +222,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _timerController.ModeChanged += mode => CurrentStatus = mode;
 
         // CameraAlertController → handlers
-        _cameraAlert.StatusChanged += _ => { OnPropertyChanged(nameof(CameraStatus)); OnPropertyChanged(nameof(IsCameraAlertActive)); };
+        _cameraAlert.StatusChanged += _ =>
+        {
+            OnPropertyChanged(nameof(CameraStatus));
+            OnPropertyChanged(nameof(IsCameraAlertActive));
+            OnPropertyChanged(nameof(CameraStatusDisplay));
+        };
         _cameraAlert.ErrorOccurred += HandleCameraError;
         _cameraAlert.SystemNotificationRequested += (t, m) =>
             _notifications.ShowSystem(t, m, AppSettings.SystemNotificationEnabled, IsWindowActive);
@@ -627,6 +639,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(DaysUntilExam));
 
         _cameraAlert.Initialize(AppSettings);
+        OnPropertyChanged(nameof(CameraStatusDisplay));
+        OnPropertyChanged(nameof(IsInsightsEnabled));
+        OnPropertyChanged(nameof(IsDailyReportEnabled));
+        OnPropertyChanged(nameof(IsDynamicIslandEnabled));
     }
 
     public void UpdateTasks(List<TaskItem> tasks)

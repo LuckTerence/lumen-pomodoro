@@ -34,6 +34,9 @@ public class Settings
     public CameraAlertLevel CameraAlertLevel { get; set; } = CameraAlertLevel.Medium;
     public bool HasShownCameraPrivacyNotice { get; set; } = false;
 
+    /// <summary>是否完成首次产品引导（灯 / 隐私 / 场景预设）。</summary>
+    public bool HasCompletedOnboarding { get; set; } = false;
+
     public bool PresenceDetectionEnabled { get; set; } = true;
 
     [Range(1, 300)]
@@ -130,8 +133,43 @@ public class Settings
     /// <summary>休息中是否允许提前结束（严格模式强制否）。</summary>
     public bool EffectiveAllowEndBreakEarly => !StrictModeEnabled;
 
+    /// <summary>轻松：少打扰，主要靠声音/系统通知，不强制灯与全屏。</summary>
+    public void ApplyLightFocusPreset()
+    {
+        StrictModeEnabled = false;
+        FullscreenBreakEnabled = false;
+        CameraAlertEnabled = false;
+        CameraAlertCanManualClose = true;
+        FocusGuardEnabled = false;
+        ConfirmExitWhileFocusing = true;
+        SessionEndPreNotifySeconds = 30;
+        SoundEnabled = true;
+        PopupEnabled = true;
+        SystemNotificationEnabled = true;
+    }
+
+    /// <summary>标准：灯 + 中等强度 + 防走神，适合日常备考。</summary>
+    public void ApplyStandardFocusPreset()
+    {
+        StrictModeEnabled = false;
+        FullscreenBreakEnabled = false;
+        CameraAlertEnabled = true;
+        CameraAlertMode = CameraAlertMode.UntilConfirm;
+        CameraAlertLevel = CameraAlertLevel.Medium;
+        CameraAlertCanManualClose = true;
+        CameraFollowBreakEnabled = true;
+        FocusGuardEnabled = true;
+        FocusGuardAlertLevel = CameraAlertLevel.Medium;
+        ConfirmExitWhileFocusing = true;
+        if (SessionEndPreNotifySeconds <= 0)
+            SessionEndPreNotifySeconds = 30;
+        SoundEnabled = true;
+        PopupEnabled = true;
+        SystemNotificationEnabled = true;
+    }
+
     /// <summary>
-    /// 严格专注一键预设：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）。
+    /// 严格专注：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）。
     /// 不覆盖时长、任务、黑名单等个人配置。
     /// </summary>
     public void ApplyStrictFocusPreset()
@@ -143,12 +181,64 @@ public class Settings
         CameraAlertLevel = CameraAlertLevel.Severe;
         CameraAlertCanManualClose = false;
         CameraFollowBreakEnabled = true;
+        FocusGuardEnabled = true;
+        FocusGuardAlertLevel = CameraAlertLevel.Severe;
         ConfirmExitWhileFocusing = true;
         if (SessionEndPreNotifySeconds <= 0)
             SessionEndPreNotifySeconds = 30;
         SoundEnabled = true;
         PopupEnabled = true;
         SystemNotificationEnabled = true;
+    }
+
+    /// <summary>应用命名场景预设：light / standard / strict。</summary>
+    public void ApplyFocusScenePreset(string scene)
+    {
+        switch ((scene ?? "").Trim().ToLowerInvariant())
+        {
+            case "light":
+            case "轻松":
+                ApplyLightFocusPreset();
+                break;
+            case "strict":
+            case "严格":
+            case "严格专注":
+                ApplyStrictFocusPreset();
+                break;
+            default:
+                ApplyStandardFocusPreset();
+                break;
+        }
+    }
+}
+
+/// <summary>摄像头提醒状态的可读文案（UI / 引导用）。</summary>
+public static class CameraAlertStatusText
+{
+    public static string Describe(bool cameraEnabled, bool isActive, string? rawStatus, bool canManualClose)
+    {
+        if (!cameraEnabled)
+            return "摄像头灯：关闭（设置中可开启，仅作硬件提醒）";
+        if (isActive)
+        {
+            var baseText = string.IsNullOrWhiteSpace(rawStatus)
+                ? "摄像头灯：亮着 — 该休息了"
+                : $"摄像头灯：亮着 — {rawStatus}";
+            return canManualClose
+                ? baseText + "（可手动关闭）"
+                : baseText + "（严格模式不可手关）";
+        }
+
+        if (!string.IsNullOrWhiteSpace(rawStatus) &&
+            (rawStatus.Contains("失败", StringComparison.Ordinal) ||
+             rawStatus.Contains("错误", StringComparison.Ordinal) ||
+             rawStatus.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+             rawStatus.Contains("权限", StringComparison.Ordinal)))
+        {
+            return $"摄像头灯：异常 — {rawStatus}。请在系统设置中允许摄像头权限后重试。";
+        }
+
+        return "摄像头灯：待命（专注结束后点亮）";
     }
 }
 

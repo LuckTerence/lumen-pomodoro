@@ -126,6 +126,7 @@
 | `CameraAlertCanManualClose` | bool | true | 是否允许手动关灯 |
 | `CameraAlertLevel` | enum | `Medium` | Light / Medium / Severe |
 | `HasShownCameraPrivacyNotice` | bool | false | 隐私声明是否已确认 |
+| `HasCompletedOnboarding` | bool | false | 首次产品引导是否完成 |
 
 **CameraAlertMode 字符串（跨端统一 PascalCase）：**
 

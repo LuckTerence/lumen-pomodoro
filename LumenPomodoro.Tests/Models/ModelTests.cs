@@ -90,4 +90,31 @@ public class ModelTests
         Assert.True(settings.PopupEnabled);
         Assert.True(settings.SystemNotificationEnabled);
     }
+
+    [Fact]
+    public void Settings_ApplyLightAndStandardPresets()
+    {
+        var settings = new Settings { CameraAlertEnabled = true, FocusGuardEnabled = true };
+        settings.ApplyLightFocusPreset();
+        Assert.False(settings.CameraAlertEnabled);
+        Assert.False(settings.FocusGuardEnabled);
+        Assert.False(settings.StrictModeEnabled);
+
+        settings.ApplyStandardFocusPreset();
+        Assert.True(settings.CameraAlertEnabled);
+        Assert.True(settings.FocusGuardEnabled);
+        Assert.Equal(CameraAlertLevel.Medium, settings.CameraAlertLevel);
+        Assert.False(settings.StrictModeEnabled);
+    }
+
+    [Theory]
+    [InlineData(false, false, null, true, "关闭")]
+    [InlineData(true, true, "运行中", true, "亮着")]
+    [InlineData(true, false, null, true, "待命")]
+    public void CameraAlertStatusText_Describe_ContainsKeyword(
+        bool enabled, bool active, string? raw, bool canClose, string keyword)
+    {
+        var text = CameraAlertStatusText.Describe(enabled, active, raw, canClose);
+        Assert.Contains(keyword, text);
+    }
 }

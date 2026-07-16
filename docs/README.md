@@ -16,6 +16,7 @@
 | [cross-platform-contract.md](./cross-platform-contract.md) | Win/Mac 数据模型、状态机、事件与导出契约 |
 | [focus-guard-stretchly-alignment.md](./focus-guard-stretchly-alignment.md) | FocusGuard 与 Stretchly 规则对齐表 + backlog |
 | [packaging-winget-mac.md](./packaging-winget-mac.md) | winget 清单与 macOS DMG 打包 / 发版清单 |
+| [roadmap-v0.4-pm.md](./roadmap-v0.4-pm.md) | 产品路线图与验收清单 |
 
 ## 审查
 

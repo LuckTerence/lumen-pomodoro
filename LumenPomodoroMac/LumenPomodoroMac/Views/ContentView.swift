@@ -42,10 +42,17 @@ struct ContentView: View {
         } message: {
             Text(viewModel.cameraErrorMessage ?? "")
         }
+        .sheet(isPresented: $viewModel.showOnboarding) {
+            OnboardingView(viewModel: viewModel)
+                .interactiveDismissDisabled(true)
+        }
         .sheet(isPresented: $viewModel.showPrivacySheet) {
             PrivacyNoticeSheet(viewModel: viewModel)
         }
-        .sheet(isPresented: $viewModel.showDailyReport) {
+        .sheet(isPresented: Binding(
+            get: { viewModel.showDailyReport && viewModel.settings.hasCompletedOnboarding },
+            set: { viewModel.showDailyReport = $0 }
+        )) {
             if let report = viewModel.dailyReport {
                 DailyReportSheet(report: report) {
                     viewModel.dismissDailyReport()

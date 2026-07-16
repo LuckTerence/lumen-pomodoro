@@ -119,15 +119,17 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("严格专注一键预设")
+                    Text("专注场景预设")
                         .font(.subheadline.weight(.semibold))
-                    Text("一键开启：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）")
+                    Text("一键切换推荐组合；不改时长与任务。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Button("应用预设") {
-                        viewModel.applyStrictFocusPreset()
+                    HStack(spacing: 8) {
+                        Button("轻松") { viewModel.applyFocusScenePreset("light") }
+                        Button("标准") { viewModel.applyFocusScenePreset("standard") }
+                            .buttonStyle(.borderedProminent)
+                        Button("严格专注") { viewModel.applyFocusScenePreset("strict") }
                     }
-                    .buttonStyle(.borderedProminent)
                 }
                 .padding(.top, 4)
             }

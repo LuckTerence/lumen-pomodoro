@@ -363,47 +363,22 @@
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding StrictModeEnabled}" VerticalAlignment="Center" />
                     </Grid>
                     <Border Background="#22000000" CornerRadius="12" Padding="14" Margin="0,4,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                <TextBlock Text="严格专注一键预设" FontSize="13" FontWeight="SemiBold" Foreground="#E2E8F0" />
-                                <TextBlock Text="一键开启：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）"
-                                           FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="0,4,0,0" />
-                            </StackPanel>
-                            <Button Grid.Column="1"
-                                    Content="应用预设"
-                                    Command="{Binding ApplyStrictFocusPresetCommand}"
-                                    Padding="16,8"
-                                    Cursor="Hand"
-                                    VerticalAlignment="Center">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="#3B82F6" />
-                                        <Setter Property="Foreground" Value="White" />
-                                        <Setter Property="BorderThickness" Value="0" />
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="10"
-                                                            Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#2563EB" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </Grid>
+                        <StackPanel>
+                            <TextBlock Text="专注场景预设" FontSize="13" FontWeight="SemiBold" Foreground="#E2E8F0" />
+                            <TextBlock Text="一键切换推荐组合；不改时长与任务。之后仍可逐项微调。"
+                                       FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="0,4,0,12" />
+                            <UniformGrid Columns="3" Margin="0,0,0,0">
+                                <Button Content="轻松" Command="{Binding ApplyLightFocusPresetCommand}"
+                                        Margin="0,0,6,0" Padding="8,8" Cursor="Hand"
+                                        Background="#334155" Foreground="White" BorderThickness="0" />
+                                <Button Content="标准" Command="{Binding ApplyStandardFocusPresetCommand}"
+                                        Margin="3,0" Padding="8,8" Cursor="Hand"
+                                        Background="#3B82F6" Foreground="White" BorderThickness="0" />
+                                <Button Content="严格专注" Command="{Binding ApplyStrictFocusPresetCommand}"
+                                        Margin="6,0,0,0" Padding="8,8" Cursor="Hand"
+                                        Background="#7C3AED" Foreground="White" BorderThickness="0" />
+                            </UniformGrid>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>

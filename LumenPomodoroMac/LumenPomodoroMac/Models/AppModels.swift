@@ -42,6 +42,8 @@ struct Settings: Codable, Equatable {
     var cameraAlertCanManualClose: Bool = true
     var cameraAlertLevel: CameraAlertLevel = .medium
     var hasShownCameraPrivacyNotice: Bool = false
+    /// 是否完成首次产品引导
+    var hasCompletedOnboarding: Bool = false
     var focusGuardEnabled: Bool = true
     var focusGuardBlocklist: [String] = Settings.defaultBlocklist
     var focusGuardIdleSeconds: Int = 180
@@ -88,6 +90,38 @@ struct Settings: Codable, Equatable {
         !strictModeEnabled
     }
 
+    mutating func applyLightFocusPreset() {
+        strictModeEnabled = false
+        fullscreenBreakEnabled = false
+        cameraAlertEnabled = false
+        cameraAlertCanManualClose = true
+        focusGuardEnabled = false
+        confirmExitWhileFocusing = true
+        sessionEndPreNotifySeconds = 30
+        soundEnabled = true
+        popupEnabled = true
+        systemNotificationEnabled = true
+    }
+
+    mutating func applyStandardFocusPreset() {
+        strictModeEnabled = false
+        fullscreenBreakEnabled = false
+        cameraAlertEnabled = true
+        cameraAlertMode = .untilConfirm
+        cameraAlertLevel = .medium
+        cameraAlertCanManualClose = true
+        cameraFollowBreakEnabled = true
+        focusGuardEnabled = true
+        focusGuardAlertLevel = .medium
+        confirmExitWhileFocusing = true
+        if sessionEndPreNotifySeconds <= 0 {
+            sessionEndPreNotifySeconds = 30
+        }
+        soundEnabled = true
+        popupEnabled = true
+        systemNotificationEnabled = true
+    }
+
     /// 严格专注一键预设：严格 + 全屏休息 + 摄像头灯（不改时长/任务）
     mutating func applyStrictFocusPreset() {
         strictModeEnabled = true
@@ -97,6 +131,8 @@ struct Settings: Codable, Equatable {
         cameraAlertLevel = .severe
         cameraAlertCanManualClose = false
         cameraFollowBreakEnabled = true
+        focusGuardEnabled = true
+        focusGuardAlertLevel = .severe
         confirmExitWhileFocusing = true
         if sessionEndPreNotifySeconds <= 0 {
             sessionEndPreNotifySeconds = 30
@@ -104,6 +140,32 @@ struct Settings: Codable, Equatable {
         soundEnabled = true
         popupEnabled = true
         systemNotificationEnabled = true
+    }
+
+    mutating func applyFocusScenePreset(_ scene: String) {
+        switch scene.lowercased() {
+        case "light", "轻松":
+            applyLightFocusPreset()
+        case "strict", "严格", "严格专注":
+            applyStrictFocusPreset()
+        default:
+            applyStandardFocusPreset()
+        }
+    }
+
+    /// 摄像头灯可读状态
+    func cameraStatusDisplay(isActive: Bool, raw: String) -> String {
+        if !cameraAlertEnabled {
+            return "摄像头灯：关闭（设置中可开启，仅作硬件提醒）"
+        }
+        if isActive {
+            let base = raw.isEmpty ? "摄像头灯：亮着 — 该休息了" : "摄像头灯：亮着 — \(raw)"
+            return effectiveCameraAlertCanManualClose ? "\(base)（可手动关闭）" : "\(base)（严格模式不可手关）"
+        }
+        if raw.contains("失败") || raw.contains("错误") || raw.lowercased().contains("error") || raw.contains("权限") {
+            return "摄像头灯：异常 — \(raw)。请在系统设置中允许摄像头后重试。"
+        }
+        return "摄像头灯：待命（专注结束后点亮）"
     }
 
     static let defaultBlocklist = [
@@ -126,6 +188,7 @@ struct Settings: Codable, Equatable {
         case cameraAlertCanManualClose = "CameraAlertCanManualClose"
         case cameraAlertLevel = "CameraAlertLevel"
         case hasShownCameraPrivacyNotice = "HasShownCameraPrivacyNotice"
+        case hasCompletedOnboarding = "HasCompletedOnboarding"
         case focusGuardEnabled = "FocusGuardEnabled"
         case focusGuardBlocklist = "FocusGuardBlocklist"
         case focusGuardIdleSeconds = "FocusGuardIdleSeconds"
@@ -176,6 +239,7 @@ struct Settings: Codable, Equatable {
         cameraAlertCanManualClose = try c.decodeIfPresent(Bool.self, forKey: .cameraAlertCanManualClose) ?? true
         cameraAlertLevel = try c.decodeIfPresent(CameraAlertLevel.self, forKey: .cameraAlertLevel) ?? .medium
         hasShownCameraPrivacyNotice = try c.decodeIfPresent(Bool.self, forKey: .hasShownCameraPrivacyNotice) ?? false
+        hasCompletedOnboarding = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false
         focusGuardEnabled = try c.decodeIfPresent(Bool.self, forKey: .focusGuardEnabled) ?? true
         focusGuardBlocklist = try c.decodeIfPresent([String].self, forKey: .focusGuardBlocklist) ?? Settings.defaultBlocklist
         focusGuardIdleSeconds = try c.decodeIfPresent(Int.self, forKey: .focusGuardIdleSeconds) ?? 180
@@ -224,6 +288,7 @@ struct Settings: Codable, Equatable {
         try c.encode(cameraAlertCanManualClose, forKey: .cameraAlertCanManualClose)
         try c.encode(cameraAlertLevel, forKey: .cameraAlertLevel)
         try c.encode(hasShownCameraPrivacyNotice, forKey: .hasShownCameraPrivacyNotice)
+        try c.encode(hasCompletedOnboarding, forKey: .hasCompletedOnboarding)
         try c.encode(focusGuardEnabled, forKey: .focusGuardEnabled)
         try c.encode(focusGuardBlocklist, forKey: .focusGuardBlocklist)
         try c.encode(focusGuardIdleSeconds, forKey: .focusGuardIdleSeconds)

@@ -14,6 +14,7 @@ final class AppViewModel: ObservableObject {
     @Published var currentNotes = ""
     @Published var userRating = 0
     @Published var showPrivacySheet = false
+    @Published var showOnboarding = false
     @Published var cameraErrorMessage: String?
     @Published var lastCompletedSummary = ""
     @Published var dailyReport: DailyReport?
@@ -83,9 +84,51 @@ final class AppViewModel: ObservableObject {
         syncLaunchAtLoginFromSettings()
         prepareDailyReportIfNeeded()
 
-        if settings.cameraAlertEnabled && !settings.hasShownCameraPrivacyNotice {
+        if !settings.hasCompletedOnboarding {
+            showOnboarding = true
+        } else if settings.cameraAlertEnabled && !settings.hasShownCameraPrivacyNotice {
             showPrivacySheet = true
         }
+    }
+
+    var cameraStatusDisplay: String {
+        settings.cameraStatusDisplay(isActive: isCameraAlertActive, raw: cameraStatus)
+    }
+
+    func completeOnboarding(scene: String) {
+        var next = settings
+        next.applyFocusScenePreset(scene)
+        if next.cameraAlertEnabled {
+            next.hasShownCameraPrivacyNotice = true
+        }
+        next.hasCompletedOnboarding = true
+        settings = next
+        saveSettings()
+        showOnboarding = false
+    }
+
+    func applyFocusScenePreset(_ scene: String, announce: Bool = true) {
+        var next = settings
+        next.applyFocusScenePreset(scene)
+        if next.cameraAlertEnabled {
+            next.hasShownCameraPrivacyNotice = true
+        }
+        settings = next
+        saveSettings()
+
+        guard announce else { return }
+        let name: String
+        switch scene.lowercased() {
+        case "light", "轻松": name = "轻松"
+        case "strict", "严格", "严格专注": name = "严格专注"
+        default: name = "标准"
+        }
+        let alert = NSAlert()
+        alert.messageText = "场景预设"
+        alert.informativeText = "已应用「\(name)」场景。时长与任务未改动。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好")
+        alert.runModal()
     }
 
     func onAppBecameActive() {
@@ -124,27 +167,8 @@ final class AppViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    /// 一键应用严格专注预设并落盘
     func applyStrictFocusPreset() {
-        var next = settings
-        next.applyStrictFocusPreset()
-        settings = next
-        saveSettings()
-
-        let alert = NSAlert()
-        alert.messageText = "严格专注预设"
-        alert.informativeText = """
-        已开启：
-        • 严格模式
-        • 全屏休息
-        • 摄像头指示灯（Severe，不可手关，跟随休息）
-        • 结束前预告与退出确认
-
-        时长与任务配置未改动。
-        """
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "好")
-        alert.runModal()
+        applyFocusScenePreset("strict")
     }
 
     func syncLaunchAtLoginFromSettings() {
@@ -482,6 +506,7 @@ final class AppViewModel: ObservableObject {
     }
 
     private func prepareDailyReportIfNeeded() {
+        guard settings.hasCompletedOnboarding else { return }
         guard settings.dailyReportEnabled else { return }
         let today = Calendar.current.startOfDay(for: Date())
         if let last = settings.lastReportShownDate, Calendar.current.isDate(last, inSameDayAs: today) {

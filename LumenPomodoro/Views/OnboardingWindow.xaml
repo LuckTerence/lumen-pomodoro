@@ -1,0 +1,78 @@
+<Window x:Class="LumenPomodoro.Views.OnboardingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="欢迎使用 Lumen Pomodoro"
+        Width="520" Height="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#FF12141A"
+        WindowStyle="None"
+        AllowsTransparency="False">
+    <Border BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="0" Padding="28">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- 步骤 0：为什么是灯 -->
+            <StackPanel x:Name="StepWhy" Grid.Row="0">
+                <TextBlock Text="欢迎使用 Lumen Pomodoro" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
+                <TextBlock Text="第 1 / 3 步" FontSize="12" Foreground="#6B7280" Margin="0,0,0,20" />
+                <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="#CBD5E1" LineHeight="22"
+                           Text="传统番茄钟靠声音、弹窗、系统通知，备考时很容易被静音或淹没。"/>
+                <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="#CBD5E1" LineHeight="22" Margin="0,12,0,0"
+                           Text="多数笔记本在调用摄像头时会点亮硬件指示灯。Lumen 只借用这个物理信号：专注结束 → 灯亮 → 提醒你该休息。"/>
+                <TextBlock TextWrapping="Wrap" FontSize="13" Foreground="#94A3B8" LineHeight="20" Margin="0,20,0,0"
+                           Text="适合考研、写作、编程等需要长时间专注、又不想被手机打断的场景。"/>
+            </StackPanel>
+
+            <!-- 步骤 1：隐私 -->
+            <StackPanel x:Name="StepPrivacy" Grid.Row="0" Visibility="Collapsed">
+                <TextBlock Text="隐私承诺" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
+                <TextBlock Text="第 2 / 3 步" FontSize="12" Foreground="#6B7280" Margin="0,0,0,20" />
+                <TextBlock FontSize="14" Foreground="#CBD5E1" LineHeight="24" TextWrapping="Wrap"
+                           Text="摄像头只用来点亮指示灯，不是采集设备："/>
+                <TextBlock FontSize="14" Foreground="#E2E8F0" LineHeight="26" Margin="0,12,0,0">
+                    <Run Text="• 不保存照片"/><LineBreak/>
+                    <Run Text="• 不录制视频"/><LineBreak/>
+                    <Run Text="• 不上传摄像头数据"/><LineBreak/>
+                    <Run Text="• 不展示摄像头画面"/><LineBreak/>
+                    <Run Text="• 仅本机调用；超时自动释放"/>
+                </TextBlock>
+                <TextBlock FontSize="12" Foreground="#64748B" TextWrapping="Wrap" Margin="0,16,0,0"
+                           Text="数据全部保存在本机。不做账号，不做云同步。"/>
+            </StackPanel>
+
+            <!-- 步骤 2：场景预设 -->
+            <StackPanel x:Name="StepPreset" Grid.Row="0" Visibility="Collapsed">
+                <TextBlock Text="选择专注场景" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
+                <TextBlock Text="第 3 / 3 步 · 之后可在设置中更改" FontSize="12" Foreground="#6B7280" Margin="0,0,0,16" />
+
+                <RadioButton x:Name="PresetLight" GroupName="Scene" Margin="0,0,0,10" Foreground="#E2E8F0"
+                             FontSize="13" Content="轻松 — 声音/通知为主，不强制摄像头灯"/>
+                <RadioButton x:Name="PresetStandard" GroupName="Scene" IsChecked="True" Margin="0,0,0,10" Foreground="#E2E8F0"
+                             FontSize="13" Content="标准 — 推荐：灯 + 防走神，日常备考"/>
+                <RadioButton x:Name="PresetStrict" GroupName="Scene" Margin="0,0,0,10" Foreground="#E2E8F0"
+                             FontSize="13" Content="严格专注 — 灯 + 全屏休息 + 不可提前结束"/>
+            </StackPanel>
+
+            <Grid Grid.Row="1" Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="SkipButton" Grid.Column="0" Content="跳过引导" HorizontalAlignment="Left"
+                        Click="SkipButton_Click" Background="Transparent" BorderThickness="0"
+                        Foreground="#64748B" Cursor="Hand" Padding="0,8"/>
+                <Button x:Name="BackButton" Grid.Column="1" Content="上一步" Margin="0,0,12,0"
+                        Click="BackButton_Click" Padding="16,8" Visibility="Collapsed"
+                        Background="#334155" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                <Button x:Name="NextButton" Grid.Column="2" Content="下一步"
+                        Click="NextButton_Click" Padding="20,8"
+                        Background="#3B82F6" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

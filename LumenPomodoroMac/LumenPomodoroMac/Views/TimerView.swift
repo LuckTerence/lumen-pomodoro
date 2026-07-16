@@ -120,19 +120,21 @@ struct TimerView: View {
 
     @ViewBuilder
     private var cameraStatusSection: some View {
-        if viewModel.isCameraAlertActive {
-            HStack(spacing: 8) {
-                Circle().fill(.orange).frame(width: 6, height: 6)
-                Text("摄像头提醒中")
+        HStack(spacing: 8) {
+            Circle()
+                .fill(viewModel.isCameraAlertActive ? Color.orange : Color.secondary.opacity(0.5))
+                .frame(width: 6, height: 6)
+            Text(viewModel.cameraStatusDisplay)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+            if viewModel.isCameraAlertActive && viewModel.settings.effectiveCameraAlertCanManualClose {
+                Button("关闭") { viewModel.stopCameraAlert() }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                if viewModel.settings.cameraAlertCanManualClose {
-                    Button("关闭") { viewModel.stopCameraAlert() }
-                        .font(.caption)
-                        .buttonStyle(.plain)
-                }
+                    .buttonStyle(.plain)
             }
         }
+        .frame(maxWidth: 280)
     }
 
     private var statsFooter: some View {

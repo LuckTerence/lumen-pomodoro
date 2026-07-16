@@ -304,15 +304,25 @@
 
                 <!-- ===== 底部统计信息 ===== -->
                     <StackPanel Width="240" Margin="0,24,0,0" HorizontalAlignment="Center">
-                    <!-- 摄像头提醒状态 -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12"
-                                Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Fill="{StaticResource WarningBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
-                        <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
-                            <Run Text="摄像头提醒中" />
-                        </TextBlock>
+                    <!-- 摄像头灯可读状态（始终展示简短说明） -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12" MaxWidth="280">
+                        <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#4B5563" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCameraAlertActive}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"
+                                   Text="{Binding CameraStatusDisplay}" TextWrapping="Wrap" MaxWidth="220" />
                         <Button Click="StopCameraButton_Click" Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
-                                Background="Transparent" BorderThickness="0">
+                                Background="Transparent" BorderThickness="0"
+                                Visibility="{Binding IsCameraAlertActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="关闭" FontSize="11" Foreground="#4B5563" />
                         </Button>
                     </StackPanel>
