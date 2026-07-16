@@ -26,13 +26,18 @@ jobs:
         run: dotnet build LumenPomodoro.sln --configuration Release --no-restore
 
       - name: Format check
+        shell: pwsh
         run: |
-          # 只校验空白/行尾（EditorConfig end_of_line=crlf）。
-          # 完整 style analyzer 在跨平台编辑时噪声过大，不作为硬门禁。
-          if ! dotnet format whitespace LumenPomodoro.sln --verify-no-changes --verbosity diagnostic; then
-            echo "::error::whitespace/EOL format 未通过（仓库要求 CRLF）。"
-            exit 1
-          fi
+          # 应用 whitespace 后用 git diff 显示差异，便于修 EOL/空白
+          dotnet format whitespace LumenPomodoro.sln --verbosity minimal
+          $changed = git status --porcelain
+          if ($changed) {
+            Write-Host "Format would change files:"
+            Write-Host $changed
+            git --no-pager diff | Select-Object -First 200
+            throw "whitespace format required; see diff above"
+          }
+          Write-Host "Format OK"
 
       - name: Test with coverage
         run: >
