@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
@@ -12,150 +12,116 @@ using Serilog;
 
 namespace LumenPomodoro.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged, IDisposable
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IStorageService _storageService;
     private readonly TimerController _timerController;
     private readonly NotificationCoordinator _notifications;
     private readonly CameraAlertController _cameraAlert;
     private readonly IFocusGuardService _focusGuard;
-    private int _focusGuardConsecutiveAlerts;
-    private const int MaxFocusGuardAlerts = 3;
-
-    private TimerMode _currentStatus = TimerMode.Idle;
-    private string _remainingTime = "25:00";
-    private int _progress = 100;
-    private TaskItem? _selectedTask;
-    private List<TaskItem> _tasks = new();
-    private DailyStats _todayStats = new();
-    private bool _isFocusCompleted;
-    private bool _isBreakCompleted;
-    private bool _isPendingBreak;
-    private bool _isWindowActive;
+    private string? _lastCompletedSessionId;
     private bool _disposed;
+    /// <summary>本轮计时是否已发过结束前预告。</summary>
+    private bool _sessionEndPreNotifySent;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    // ── Bindable Properties ──
 
-    public bool IsWindowActive
-    {
-        get => _isWindowActive;
-        set { if (_isWindowActive != value) { _isWindowActive = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private TimerMode _currentStatus = TimerMode.Idle;
 
-    public TimerMode CurrentStatus
-    {
-        get => _currentStatus;
-        set { if (_currentStatus != value) { _currentStatus = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private string _remainingTime = "25:00";
 
-    public string RemainingTime
-    {
-        get => _remainingTime;
-        set { if (_remainingTime != value) { _remainingTime = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private int _progress = 100;
 
-    public int Progress
-    {
-        get => _progress;
-        set { if (_progress != value) { _progress = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private TaskItem? _selectedTask;
 
-    public TaskItem? SelectedTask
-    {
-        get => _selectedTask;
-        set { if (!ReferenceEquals(_selectedTask, value)) { _selectedTask = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private List<TaskItem> _tasks = new();
 
-    public List<TaskItem> Tasks
-    {
-        get => _tasks;
-        set { if (!ReferenceEquals(_tasks, value)) { _tasks = value; OnPropertyChanged(); } }
-    }
+    [ObservableProperty]
+    private DailyStats _todayStats = new();
 
-    public DailyStats TodayStats
-    {
-        get => _todayStats;
-        set { if (!ReferenceEquals(_todayStats, value)) { _todayStats = value; OnPropertyChanged(); OnPropertyChanged(nameof(TodayPomodoroProgress)); OnPropertyChanged(nameof(TodayPomodoroBarWidth)); } }
-    }
+    [ObservableProperty]
+    private bool _isFocusCompleted;
+
+    [ObservableProperty]
+    private bool _isBreakCompleted;
+
+    [ObservableProperty]
+    private bool _isPendingBreak;
+
+    [ObservableProperty]
+    private bool _isWindowActive;
+
+    [ObservableProperty]
+    private string _currentNotes = string.Empty;
+
+    [ObservableProperty]
+    private int _userRating;
+
+    [ObservableProperty]
+    private string _ratingStars = string.Empty;
+
+    [ObservableProperty]
+    private string _lastCompletedTaskName = string.Empty;
+
+    [ObservableProperty]
+    private int _lastCompletedFocusMinutes;
+
+    [ObservableProperty]
+    private int _streakDays;
+
+    [ObservableProperty]
+    private bool _showStreakEncouragement;
+
+    [ObservableProperty]
+    private bool _suggestLongBreak;
+
+    [ObservableProperty]
+    private int _todayCompletedCount;
+
+    [ObservableProperty]
+    private bool _isWindowTopmost;
+
+    // ── Computed / Forwarded Properties ──
 
     public string CameraStatus => _cameraAlert.Status;
-
     public bool IsCameraAlertActive => _cameraAlert.IsActive;
-
-    public bool IsFocusCompleted
-    {
-        get => _isFocusCompleted;
-        set { if (_isFocusCompleted != value) { _isFocusCompleted = value; OnPropertyChanged(); } }
-    }
-
-    public bool IsBreakCompleted
-    {
-        get => _isBreakCompleted;
-        set { if (_isBreakCompleted != value) { _isBreakCompleted = value; OnPropertyChanged(); } }
-    }
-
-    public bool IsPendingBreak
-    {
-        get => _isPendingBreak;
-        set { if (_isPendingBreak != value) { _isPendingBreak = value; OnPropertyChanged(); } }
-    }
-
     public Settings AppSettings { get; private set; } = new();
-
     public bool ExamCountdown => AppSettings.ExamCountdownEnabled && AppSettings.ExamDate.HasValue && AppSettings.ExamDate.Value > DateTime.Today;
     public string ExamName => AppSettings.ExamName;
     public int DaysUntilExam => ExamCountdown ? (AppSettings.ExamDate!.Value - DateTime.Today).Days : 0;
-
     public int LongBreakInterval => AppSettings.LongBreakInterval;
     public bool IsInsightsEnabled => AppSettings.InsightsEnabled;
     public bool IsDailyReportEnabled => AppSettings.DailyReportEnabled;
     public bool IsDynamicIslandEnabled => AppSettings.DynamicIslandEnabled;
-
     public ICameraService CameraService { get; }
     public IStorageService StorageService => _storageService;
 
-    private string? _lastCompletedSessionId;
+    /// <summary>专注、休息或暂停中，关闭应用前宜二次确认。</summary>
+    public bool IsSessionActive =>
+        CurrentStatus is TimerMode.Focus or TimerMode.Break or TimerMode.Paused;
 
-    // 专注笔记
-    private string _currentNotes = string.Empty;
-    public string CurrentNotes
+    /// <summary>
+    /// 若正在计时且开启确认，弹出对话框；返回 true 表示允许退出。
+    /// </summary>
+    public bool ConfirmExitIfNeeded(Window? owner = null)
     {
-        get => _currentNotes;
-        set { if (_currentNotes != value) { _currentNotes = value; OnPropertyChanged(); } }
-    }
+        if (!AppSettings.ConfirmExitWhileFocusing || !IsSessionActive)
+            return true;
 
-    // 手动评分 (1-5 星)
-    private int _userRating;
-    private string _ratingStars = string.Empty;
-    public int UserRating
-    {
-        get => _userRating;
-        set
-        {
-            if (_userRating != value)
-            {
-                _userRating = value;
-                _ratingStars = SessionScoringController.GetRatingStars(value);
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(RatingStars));
-            }
-        }
-    }
-    public string RatingStars => _ratingStars;
+        var result = MessageBox.Show(
+            owner,
+            Properties.LocalizedStrings.ConfirmExitWhileFocusing_Message,
+            Properties.LocalizedStrings.ConfirmExitWhileFocusing_Title,
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question,
+            MessageBoxResult.No);
 
-    // 最近完成的专注摘要
-    private string _lastCompletedTaskName = string.Empty;
-    public string LastCompletedTaskName
-    {
-        get => _lastCompletedTaskName;
-        set { if (_lastCompletedTaskName != value) { _lastCompletedTaskName = value; OnPropertyChanged(); OnPropertyChanged(nameof(LastCompletedSummary)); } }
-    }
-
-    private int _lastCompletedFocusMinutes;
-    public int LastCompletedFocusMinutes
-    {
-        get => _lastCompletedFocusMinutes;
-        set { if (_lastCompletedFocusMinutes != value) { _lastCompletedFocusMinutes = value; OnPropertyChanged(); OnPropertyChanged(nameof(LastCompletedSummary)); } }
+        return result == MessageBoxResult.Yes;
     }
 
     public string LastCompletedSummary =>
@@ -171,36 +137,31 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ? Math.Min(240.0, 240.0 * TodayStats.CompletedPomodoros / AppSettings.DailyTargetPomodoros)
             : 0;
 
-    // Streak 显示
-    private int _streakDays;
-    public int StreakDays
+    // ── Side-effect hooks for [ObservableProperty] ──
+
+    partial void OnTodayStatsChanged(DailyStats value)
     {
-        get => _streakDays;
-        set { if (_streakDays != value) { _streakDays = value; OnPropertyChanged(); } }
+        OnPropertyChanged(nameof(TodayPomodoroProgress));
+        OnPropertyChanged(nameof(TodayPomodoroBarWidth));
     }
 
-    private bool _showStreakEncouragement;
-    public bool ShowStreakEncouragement
+    partial void OnUserRatingChanged(int value)
     {
-        get => _showStreakEncouragement;
-        set { if (_showStreakEncouragement != value) { _showStreakEncouragement = value; OnPropertyChanged(); } }
+        RatingStars = SessionScoringController.GetRatingStars(value);
     }
 
-    private bool _suggestLongBreak;
-    public bool SuggestLongBreak
+    partial void OnLastCompletedTaskNameChanged(string value)
     {
-        get => _suggestLongBreak;
-        set { if (_suggestLongBreak != value) { _suggestLongBreak = value; OnPropertyChanged(); } }
+        OnPropertyChanged(nameof(LastCompletedSummary));
     }
 
-    private int _todayCompletedCount;
-    public int TodayCompletedCount
+    partial void OnLastCompletedFocusMinutesChanged(int value)
     {
-        get => _todayCompletedCount;
-        set { if (_todayCompletedCount != value) { _todayCompletedCount = value; OnPropertyChanged(); } }
+        OnPropertyChanged(nameof(LastCompletedSummary));
     }
 
-    // 事件（View 订阅）
+    // ── Events (View 订阅) ──
+
     public event Action? TrayMenuNeedsUpdate;
     public event Action<string, string>? NotificationRequested;
     public event Action<string, string>? InAppNotificationRequested;
@@ -209,12 +170,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public event Action? CountdownStopRequested;
 
     internal const double TopmostDurationSeconds = 3;
-    private bool _isWindowTopmost;
-    public bool IsWindowTopmost
-    {
-        get => _isWindowTopmost;
-        set { if (_isWindowTopmost != value) { _isWindowTopmost = value; OnPropertyChanged(); } }
-    }
+
+    // ── Constructor ──
 
     public MainViewModel(IStorageService storageService, ITimerService timerService,
         ICameraService cameraService, ISoundService soundService,
@@ -226,8 +183,24 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _timerController = new TimerController(timerService);
         _notifications = new NotificationCoordinator(soundService);
+        _cameraAlert = new CameraAlertController(cameraService);
 
-        // 代理 NotificationCoordinator 事件到 MainViewModel 事件
+        WireEvents();
+        LoadData();
+
+        _cameraAlert.Initialize(AppSettings);
+
+        if (AppSettings.TrayEnabled)
+            _notifications.StartTrayTimer();
+
+        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        CurrentStatus = TimerMode.Idle;
+        Progress = 100;
+    }
+
+    private void WireEvents()
+    {
+        // NotificationCoordinator → MainViewModel events
         _notifications.TrayMenuNeedsUpdate += () => TrayMenuNeedsUpdate?.Invoke();
         _notifications.NotificationRequested += (t, m) => NotificationRequested?.Invoke(t, m);
         _notifications.InAppNotificationRequested += (t, m) => InAppNotificationRequested?.Invoke(t, m);
@@ -235,66 +208,253 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _notifications.CountdownUpdateRequested += m => CountdownUpdateRequested?.Invoke(m);
         _notifications.CountdownStopRequested += () => CountdownStopRequested?.Invoke();
 
-        // 代理 TimerController 事件
+        // TimerController → handlers
         _timerController.TickUpdated += OnTimerTickUpdated;
         _timerController.FocusCompleted += OnFocusCompleted;
         _timerController.BreakCompleted += OnBreakCompleted;
         _timerController.ModeChanged += mode => CurrentStatus = mode;
 
-        // CameraAlertController
-        _cameraAlert = new CameraAlertController(cameraService);
-        _cameraAlert.StatusChanged += OnCameraStatusChanged;
+        // CameraAlertController → handlers
+        _cameraAlert.StatusChanged += _ => { OnPropertyChanged(nameof(CameraStatus)); OnPropertyChanged(nameof(IsCameraAlertActive)); };
         _cameraAlert.ErrorOccurred += HandleCameraError;
-        _cameraAlert.SystemNotificationRequested += OnCameraSystemNotification;
-        _cameraAlert.WindowActivationRequested += OnCameraWindowActivation;
+        _cameraAlert.SystemNotificationRequested += (t, m) =>
+            _notifications.ShowSystem(t, m, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        _cameraAlert.WindowActivationRequested += OnWindowActivation;
 
-        // FocusGuardService（防走神：前台窗口 + 键鼠空闲）
+        // FocusGuard
         _focusGuard.DistractionDetected += OnFocusGuardDistraction;
         _focusGuard.FocusRegained += OnFocusGuardRegained;
-
-        LoadData();
-
-        _cameraAlert.Initialize(AppSettings);
-
-        if (AppSettings.TrayEnabled)
-        {
-            _notifications.StartTrayTimer();
-        }
-
-        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        CurrentStatus = TimerMode.Idle;
-        Progress = 100;
     }
 
-    private void LoadData()
+    // ── RelayCommands（替代 View 代码后置中的方法调用） ──
+
+    [RelayCommand]
+    private void StartFocus()
     {
-        AppSettings = _storageService.LoadSettings();
-        Tasks = _storageService.LoadTasks();
-        TodayStats = _storageService.GetTodayStats();
+        CurrentNotes = string.Empty;
+        UserRating = 0;
+        _lastCompletedSessionId = null;
+        SuggestLongBreak = false;
 
-        if (Tasks.Any())
+        if (SelectedTask == null)
         {
-            var lastId = AppSettings.LastSelectedTaskId;
-            SelectedTask = lastId != null
-                ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.FirstOrDefault()
-                : Tasks.FirstOrDefault();
+            MessageBox.Show(Properties.LocalizedStrings.NoTaskSelected, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
         }
 
-        RefreshStreak();
+        _timerController.StartFocus(SelectedTask, AppSettings);
+        _storageService.SaveSettings(AppSettings);
+        _sessionEndPreNotifySent = false;
+
+        // 告警计数/防抖在 FocusGuardService 会话内管理（Start 时 ResetSession）
+        _focusGuard.Start(AppSettings);
+
+        IsFocusCompleted = false;
+        IsBreakCompleted = false;
+        IsPendingBreak = false;
+
+        _notifications.StartCountdown(
+            string.Format(Properties.LocalizedStrings.Focus_Start, SelectedTask.Name),
+            IsWindowTopmost, AppSettings.DynamicIslandEnabled);
     }
 
-    // ── TimerController 事件处理 ──
+    [RelayCommand]
+    private void Pause()
+    {
+        _timerController.PauseFocus();
+        _focusGuard.Stop();
+    }
+
+    [RelayCommand]
+    private void Resume()
+    {
+        _timerController.ResumeFocus();
+        // 暂停后恢复：保留本会话告警计数
+        _focusGuard.Start(AppSettings, resetSessionCounters: false);
+    }
+
+    [RelayCommand]
+    private void Reset()
+    {
+        _focusGuard.Stop();
+        _cameraAlert.ForceStop();
+        _timerController.ResetFocus();
+        _sessionEndPreNotifySent = false;
+        IsFocusCompleted = false;
+        IsBreakCompleted = false;
+        IsPendingBreak = false;
+        SuggestLongBreak = false;
+        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        Progress = 100;
+        _notifications.StopCountdown();
+        FullscreenBreakHideRequested?.Invoke();
+    }
+
+    /// <summary>严格模式下禁止提前结束休息。</summary>
+    private bool TryAllowEndBreakEarly()
+    {
+        if (AppSettings.EffectiveAllowEndBreakEarly) return true;
+        if (CurrentStatus != TimerMode.Break) return true;
+
+        MessageBox.Show(
+            Properties.LocalizedStrings.StrictMode_EndBreakBlocked,
+            "严格模式",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+        return false;
+    }
+
+    [RelayCommand]
+    private void StartShortBreak() => StartBreakCore(isLong: false);
+
+    [RelayCommand]
+    private void StartLongBreak() => StartBreakCore(isLong: true);
+
+    /// <summary>保留公共 API 以兼容 View 代码后置和 TimerPage。</summary>
+    public void StartBreak(bool isLongBreak = false) => StartBreakCore(isLong: isLongBreak);
+
+    // 保留旧方法名作为公共 API 以兼容 TimerPage.xaml.cs
+    public void PauseFocus() => Pause();
+    public void ResumeFocus() => Resume();
+    public void ResetFocus() => Reset();
+
+    private void StartBreakCore(bool isLong)
+    {
+        SaveNotesToLastSession();
+        _focusGuard.Stop();
+        _sessionEndPreNotifySent = false;
+
+        if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && _cameraAlert.IsActive)
+            _cameraAlert.ForceStop();
+
+        _timerController.StartBreak(isLong, AppSettings);
+        _cameraAlert.StartForBreak(AppSettings);
+
+        IsFocusCompleted = false;
+        IsBreakCompleted = false;
+        IsPendingBreak = false;
+
+        var breakMinutes = isLong ? AppSettings.LongBreakMinutes : AppSettings.ShortBreakMinutes;
+        RemainingTime = FormatTime(breakMinutes * 60);
+        Progress = 100;
+
+        var breakTitle = isLong
+            ? Properties.LocalizedStrings.FullscreenBreak_Long
+            : Properties.LocalizedStrings.FullscreenBreak_Short;
+        _notifications.StartCountdown(breakTitle, IsWindowTopmost, AppSettings.DynamicIslandEnabled);
+
+        if (AppSettings.FullscreenBreakEnabled)
+        {
+            FullscreenBreakShowRequested?.Invoke(
+                breakTitle,
+                RemainingTime,
+                AppSettings.EffectiveAllowEndBreakEarly);
+        }
+    }
+
+    [RelayCommand]
+    private void EndBreak()
+    {
+        if (!TryAllowEndBreakEarly()) return;
+
+        _cameraAlert.ForceStop();
+        _timerController.EndBreak();
+        IsBreakCompleted = true;
+        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        Progress = 100;
+        _notifications.StopCountdown();
+        FullscreenBreakHideRequested?.Invoke();
+    }
+
+    [RelayCommand]
+    private void SkipBreak()
+    {
+        if (!TryAllowEndBreakEarly()) return;
+
+        SaveNotesToLastSession();
+
+        _cameraAlert.ForceStop();
+        _timerController.SkipBreak();
+        IsBreakCompleted = false;
+        IsFocusCompleted = false;
+        IsPendingBreak = false;
+        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+        Progress = 100;
+        FullscreenBreakHideRequested?.Invoke();
+        _notifications.StopCountdown();
+    }
+
+    public void StopCameraAlert()
+    {
+        _cameraAlert.TryStop(AppSettings);
+    }
+
+    [RelayCommand]
+    private void ApplyPreset(PomodoroPreset preset)
+    {
+        if (preset.WorkMinutes <= 0) return;
+
+        AppSettings.WorkMinutes = preset.WorkMinutes;
+        AppSettings.ShortBreakMinutes = preset.ShortBreakMinutes;
+        AppSettings.LongBreakMinutes = preset.LongBreakMinutes;
+        AppSettings.LongBreakInterval = preset.LongBreakInterval;
+        _storageService.SaveSettings(AppSettings);
+
+        if (CurrentStatus == TimerMode.Idle)
+            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+    }
+
+    public void SetRating(int stars)
+    {
+        UserRating = stars;
+        SessionScoringController.SaveRating(_storageService, _lastCompletedSessionId, stars);
+    }
+
+    [RelayCommand]
+    private void AdjustWorkMinutes(int delta)
+    {
+        _timerController.AdjustWorkMinutes(delta, AppSettings);
+        _storageService.SaveSettings(AppSettings);
+
+        if (CurrentStatus == TimerMode.Idle)
+            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
+    }
+
+    /// <summary>全屏休息：title, remainingTime, allowEndEarly</summary>
+    public event Action<string, string, bool>? FullscreenBreakShowRequested;
+    public event Action<string>? FullscreenBreakUpdateRequested;
+    public event Action? FullscreenBreakHideRequested;
+
+    // ── Timer Handlers ──
 
     private void OnTimerTickUpdated(int remainingSeconds, int totalSeconds)
     {
         RemainingTime = FormatTime(remainingSeconds);
-
         if (totalSeconds > 0)
-        {
             Progress = (int)((double)remainingSeconds / totalSeconds * 100);
-        }
 
         _notifications.UpdateCountdown(RemainingTime, IsWindowTopmost, AppSettings.DynamicIslandEnabled);
+        if (CurrentStatus == TimerMode.Break && AppSettings.FullscreenBreakEnabled)
+            FullscreenBreakUpdateRequested?.Invoke(RemainingTime);
+        MaybeSendSessionEndPreNotify(remainingSeconds);
+    }
+
+    private void MaybeSendSessionEndPreNotify(int remainingSeconds)
+    {
+        var threshold = AppSettings.SessionEndPreNotifySeconds;
+        if (threshold <= 0 || _sessionEndPreNotifySent) return;
+        // 仅在专注/休息倒计时中预告（暂停不报）
+        if (CurrentStatus is not (TimerMode.Focus or TimerMode.Break)) return;
+        if (remainingSeconds > threshold || remainingSeconds <= 0) return;
+
+        _sessionEndPreNotifySent = true;
+        var title = Properties.LocalizedStrings.SessionEndSoon_Title;
+        var message = string.Format(Properties.LocalizedStrings.SessionEndSoon_Message, remainingSeconds);
+        // 预告应尽量送达：窗口在前台时也弹应用内提示；系统通知在后台
+        _notifications.ShowInApp(title, message, AppSettings.PopupEnabled);
+        _notifications.ShowSystem(title, message, AppSettings.SystemNotificationEnabled, isWindowActive: false);
+        if (AppSettings.SoundEnabled)
+            _notifications.PlaySound("FocusComplete", soundEnabled: true);
     }
 
     private void OnFocusCompleted(FocusSession session)
@@ -331,24 +491,42 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         IsBreakCompleted = true;
         _cameraAlert.ForceStop();
         _notifications.PlaySound("BreakComplete", AppSettings.SoundEnabled);
-        _notifications.ShowSystem(Properties.LocalizedStrings.Break_Complete, Properties.LocalizedStrings.Break_Ready, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        _notifications.ShowSystem(Properties.LocalizedStrings.Break_Complete, Properties.LocalizedStrings.Break_Ready,
+            AppSettings.SystemNotificationEnabled, IsWindowActive);
         _notifications.StopCountdown();
+        FullscreenBreakHideRequested?.Invoke();
     }
 
-    // ── CameraAlertController 事件处理 ──
+    // ── Focus Guard ──
 
-    private void OnCameraStatusChanged(string _)
+    private void OnFocusGuardDistraction(string reason)
     {
-        OnPropertyChanged(nameof(CameraStatus));
-        OnPropertyChanged(nameof(IsCameraAlertActive));
+        // 次数上限已在 FocusGuardEngine 内执行；此处只做 UI 反馈
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher == null) return;
+
+        dispatcher.BeginInvoke(() =>
+        {
+            var level = AppSettings.FocusGuardAlertLevel;
+            _notifications.ShowSystem(Properties.LocalizedStrings.DistractionAlert, reason, systemNotificationEnabled: true, IsWindowActive);
+
+            if (level >= CameraAlertLevel.Medium)
+                _notifications.PlaySound("FocusComplete", soundEnabled: true);
+
+            if (level == CameraAlertLevel.Severe &&
+                Application.Current?.MainWindow is Window mainWindow)
+                OnWindowActivation(mainWindow);
+        });
     }
 
-    private void OnCameraSystemNotification(string title, string message)
+    private void OnFocusGuardRegained()
     {
-        _notifications.ShowSystem(title, message, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        // 有意留空：恢复专注不重置告警计数（防反复进出刷通知）
     }
 
-    private void OnCameraWindowActivation(Window window)
+    // ── Window Activation ──
+
+    private static void OnWindowActivation(Window window)
     {
         window.Activate();
         window.Topmost = true;
@@ -360,205 +538,42 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void HandleCameraError(string error)
     {
         _notifications.PlaySound("FocusComplete", AppSettings.SoundEnabled);
-        _notifications.ShowSystem("摄像头提醒失败", error, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        _notifications.ShowSystem(Properties.LocalizedStrings.CameraError, error, AppSettings.SystemNotificationEnabled, IsWindowActive);
 
-        if (error.Contains("保护释放"))
-        {
+        if (error.Contains(Properties.LocalizedStrings.CameraProtectedRelease))
             IsFocusCompleted = true;
-        }
 
         if (AppSettings.PopupEnabled)
         {
             MessageBox.Show(
                 $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
-                "摄像头错误",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                Properties.LocalizedStrings.CameraErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
 
             if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
             {
-                try
-                {
-                    System.Diagnostics.Process.Start("ms-settings:privacy-webcam");
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "打开摄像头隐私设置失败");
-                }
+                try { System.Diagnostics.Process.Start("ms-settings:privacy-webcam"); }
+                catch (Exception ex) { Log.Warning(ex, "打开摄像头隐私设置失败"); }
             }
         }
     }
 
-    // ── FocusGuardService 事件处理（防走神） ──
+    // ── Data & Streak ──
 
-    private void OnFocusGuardDistraction(string reason)
+    private void LoadData()
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher == null) return;
+        AppSettings = _storageService.LoadSettings();
+        Tasks = _storageService.LoadTasks();
+        TodayStats = _storageService.GetTodayStats();
 
-        dispatcher.BeginInvoke(() =>
+        if (Tasks.Any())
         {
-            _focusGuardConsecutiveAlerts++;
-            if (_focusGuardConsecutiveAlerts > MaxFocusGuardAlerts) return;
-
-            // 防走神有独立开关与强度，提醒不受番茄钟完成提醒的全局开关（声音/系统通知）静音。
-            var level = AppSettings.FocusGuardAlertLevel;
-
-            _notifications.ShowSystem("走神提醒", reason, systemNotificationEnabled: true, IsWindowActive);
-
-            if (level >= CameraAlertLevel.Medium)
-            {
-                _notifications.PlaySound("FocusComplete", soundEnabled: true);
-            }
-
-            if (level == CameraAlertLevel.Severe &&
-                Application.Current?.MainWindow is Window mainWindow)
-            {
-                OnCameraWindowActivation(mainWindow);
-            }
-        });
-    }
-
-    private void OnFocusGuardRegained()
-    {
-        Application.Current?.Dispatcher?.BeginInvoke(() => _focusGuardConsecutiveAlerts = 0);
-    }
-
-    // ── 公共方法（对外 API 不变） ──
-
-    public void StartFocus()
-    {
-        CurrentNotes = string.Empty;
-        UserRating = 0;
-        _lastCompletedSessionId = null;
-        SuggestLongBreak = false;
-
-        if (SelectedTask == null)
-        {
-            MessageBox.Show("请先选择一个任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
+            var lastId = AppSettings.LastSelectedTaskId;
+            SelectedTask = lastId != null
+                ? Tasks.FirstOrDefault(t => t.Id == lastId) ?? Tasks.FirstOrDefault()
+                : Tasks.FirstOrDefault();
         }
 
-        _timerController.StartFocus(SelectedTask, AppSettings);
-        _storageService.SaveSettings(AppSettings);
-
-        _focusGuardConsecutiveAlerts = 0;
-        _focusGuard.Start(AppSettings);
-
-        IsFocusCompleted = false;
-        IsBreakCompleted = false;
-        IsPendingBreak = false;
-
-        _notifications.StartCountdown(string.Format(Properties.LocalizedStrings.Focus_Start, SelectedTask.Name), IsWindowTopmost, AppSettings.DynamicIslandEnabled);
-    }
-
-    public void PauseFocus()
-    {
-        _timerController.PauseFocus();
-        _focusGuard.Stop();
-    }
-
-    public void ResumeFocus()
-    {
-        _timerController.ResumeFocus();
-        _focusGuardConsecutiveAlerts = 0;
-        _focusGuard.Start(AppSettings);
-    }
-
-    public void ResetFocus()
-    {
-        _focusGuard.Stop();
-        _cameraAlert.ForceStop();
-        _timerController.ResetFocus();
-        IsFocusCompleted = false;
-        IsBreakCompleted = false;
-        IsPendingBreak = false;
-        SuggestLongBreak = false;
-        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        Progress = 100;
-        _notifications.StopCountdown();
-    }
-
-    public void StartBreak(bool isLongBreak = false)
-    {
-        SaveNotesToLastSession();
-        _focusGuard.Stop();
-
-        if (AppSettings.CameraAlertMode == CameraAlertMode.UntilConfirm && _cameraAlert.IsActive)
-        {
-            _cameraAlert.ForceStop();
-        }
-
-        _timerController.StartBreak(isLongBreak, AppSettings);
-
-        _cameraAlert.StartForBreak(AppSettings);
-
-        IsFocusCompleted = false;
-        IsBreakCompleted = false;
-        IsPendingBreak = false;
-
-        _notifications.StartCountdown(
-            isLongBreak ? Properties.LocalizedStrings.Long_Break : Properties.LocalizedStrings.Short_Break,
-            IsWindowTopmost,
-            AppSettings.DynamicIslandEnabled);
-    }
-
-    public void EndBreak()
-    {
-        _cameraAlert.ForceStop();
-        _timerController.EndBreak();
-        IsBreakCompleted = true;
-        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        Progress = 100;
-        _notifications.StopCountdown();
-    }
-
-    public void SkipBreak()
-    {
-        SaveNotesToLastSession();
-
-        _cameraAlert.ForceStop();
-        _timerController.SkipBreak();
-        IsBreakCompleted = false;
-        IsFocusCompleted = false;
-        IsPendingBreak = false;
-        RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        Progress = 100;
-        _notifications.StopCountdown();
-    }
-
-    public void StopCameraAlert()
-    {
-        _cameraAlert.TryStop(AppSettings);
-    }
-
-    public void ApplyPreset(PomodoroPreset preset)
-    {
-        if (preset.WorkMinutes <= 0) return; // 自定义预设不覆盖当前值
-
-        AppSettings.WorkMinutes = preset.WorkMinutes;
-        AppSettings.ShortBreakMinutes = preset.ShortBreakMinutes;
-        AppSettings.LongBreakMinutes = preset.LongBreakMinutes;
-        AppSettings.LongBreakInterval = preset.LongBreakInterval;
-        _storageService.SaveSettings(AppSettings);
-
-        if (CurrentStatus == TimerMode.Idle)
-        {
-            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        }
-    }
-
-    private void SaveNotesToLastSession()
-    {
-        SessionScoringController.SaveNotes(_storageService, _lastCompletedSessionId, CurrentNotes);
-        CurrentNotes = string.Empty;
-        _lastCompletedSessionId = null;
-    }
-
-    public void SetRating(int stars)
-    {
-        UserRating = stars;
-        SessionScoringController.SaveRating(_storageService, _lastCompletedSessionId, stars);
+        RefreshStreak();
     }
 
     private void RefreshStreak()
@@ -570,15 +585,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         ShowStreakEncouragement = SessionScoringController.ShouldShowStreakEncouragement(sessions);
     }
 
-    public DailyReport? GetYesterdayReport()
+    private void SaveNotesToLastSession()
     {
-        return SessionScoringController.GetYesterdayReport(_storageService);
+        SessionScoringController.SaveNotes(_storageService, _lastCompletedSessionId, CurrentNotes);
+        CurrentNotes = string.Empty;
+        _lastCompletedSessionId = null;
     }
 
-    public void RefreshStats()
-    {
-        TodayStats = _storageService.GetTodayStats();
-    }
+    public DailyReport? GetYesterdayReport() => SessionScoringController.GetYesterdayReport(_storageService);
+    public void RefreshStats() => TodayStats = _storageService.GetTodayStats();
 
     public void RefreshTimerOnWake()
     {
@@ -586,25 +601,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         RefreshStats();
     }
 
-    public void AdjustWorkMinutes(int delta)
-    {
-        _timerController.AdjustWorkMinutes(delta, AppSettings);
-        _storageService.SaveSettings(AppSettings);
-
-        if (CurrentStatus == TimerMode.Idle)
-        {
-            RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        }
-    }
-
     public void UpdateSettings(Settings settings)
     {
         AppSettings = settings;
 
         if (CurrentStatus == TimerMode.Idle)
-        {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        }
 
         OnPropertyChanged(nameof(TodayPomodoroProgress));
         OnPropertyChanged(nameof(TodayPomodoroBarWidth));
@@ -617,9 +619,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         AppSettings = _storageService.LoadSettings();
 
         if (CurrentStatus == TimerMode.Idle)
-        {
             RemainingTime = FormatTime(AppSettings.WorkMinutes * 60);
-        }
 
         OnPropertyChanged(nameof(TodayPomodoroProgress));
         OnPropertyChanged(nameof(TodayPomodoroBarWidth));
@@ -632,22 +632,18 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void UpdateTasks(List<TaskItem> tasks)
     {
         Tasks = tasks;
-
         if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
-        {
             SelectedTask = Tasks.Any() ? Tasks.First() : null;
-        }
     }
 
     public void ReloadTasks()
     {
         Tasks = _storageService.LoadTasks();
-
         if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
-        {
             SelectedTask = Tasks.Any() ? Tasks.First() : null;
-        }
     }
+
+    // ── Formatting ──
 
     private static string FormatTime(int seconds)
     {
@@ -656,43 +652,33 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         return $"{mins:D2}:{secs:D2}";
     }
 
+    // ── Dispose ──
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
-        // 保存未完成的 session
         var abandonedSession = _timerController.AbandonIncompleteSession();
         if (abandonedSession != null)
-        {
             _storageService.AddSession(abandonedSession);
-        }
 
-        // 显式取消 CameraAlertController 事件订阅
-        _cameraAlert.StatusChanged -= OnCameraStatusChanged;
+        _cameraAlert.StatusChanged -= _ => { };
         _cameraAlert.ErrorOccurred -= HandleCameraError;
-        _cameraAlert.SystemNotificationRequested -= OnCameraSystemNotification;
-        _cameraAlert.WindowActivationRequested -= OnCameraWindowActivation;
+        _cameraAlert.SystemNotificationRequested -= (t, m) => { };
+        _cameraAlert.WindowActivationRequested -= OnWindowActivation;
 
-        // 解除 FocusGuardService 事件订阅并停止监控
         _focusGuard.DistractionDetected -= OnFocusGuardDistraction;
         _focusGuard.FocusRegained -= OnFocusGuardRegained;
         _focusGuard.Stop();
 
-        // 解除 TimerController 事件代理
         _timerController.TickUpdated -= OnTimerTickUpdated;
         _timerController.FocusCompleted -= OnFocusCompleted;
         _timerController.BreakCompleted -= OnBreakCompleted;
-        _timerController.ModeChanged -= mode => CurrentStatus = mode;
 
         _timerController.Dispose();
         _notifications.Dispose();
 
         CameraAlertController.FireAndForgetAsync(_cameraAlert.StopCameraAsync(), "Dispose 停止摄像头");
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

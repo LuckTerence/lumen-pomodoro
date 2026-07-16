@@ -1,88 +1,42 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
 
 namespace LumenPomodoro.ViewModels;
 
-public class TasksViewModel : INotifyPropertyChanged
+public partial class TasksViewModel : ObservableObject
 {
     private readonly IStorageService _storageService;
 
+    [ObservableProperty]
     private ObservableCollection<TaskItem> _tasks = new();
+
+    [ObservableProperty]
     private string _newTaskName = string.Empty;
-    private string _selectedColor = "#3B82F6";
+
+    [ObservableProperty]
     private string _newTaskCategory = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedColor = "#3B82F6";
+
+    [ObservableProperty]
     private string? _editingTaskId;
 
     public static readonly string[] AvailableCategories = ["数学", "英语", "政治", "专业课", "其他", "行测", "申论", "教资", "法考", "CPA", "编程"];
 
-    public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? TasksChanged;
     public event Action<TaskItem>? TaskSelected;
-
-    public ObservableCollection<TaskItem> Tasks
-    {
-        get => _tasks;
-        set { if (!ReferenceEquals(_tasks, value)) { _tasks = value; OnPropertyChanged(); } }
-    }
-
-    public string NewTaskName
-    {
-        get => _newTaskName;
-        set { if (_newTaskName != value) { _newTaskName = value; OnPropertyChanged(); } }
-    }
-
-    public string NewTaskCategory
-    {
-        get => _newTaskCategory;
-        set { if (_newTaskCategory != value) { _newTaskCategory = value; OnPropertyChanged(); } }
-    }
-
-    public string SelectedColor
-    {
-        get => _selectedColor;
-        set
-        {
-            if (_selectedColor != value)
-            {
-                _selectedColor = ValidateColor(value);
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    private static string ValidateColor(string? color)
-    {
-        if (string.IsNullOrWhiteSpace(color)) return "#6B7280";
-        if (!color.StartsWith("#")) color = "#" + color;
-        if (color.Length == 4)
-        {
-            color = $"#{color[1]}{color[1]}{color[2]}{color[2]}{color[3]}{color[3]}";
-        }
-        if (color.Length != 7) return "#6B7280";
-        return color.ToUpperInvariant();
-    }
-
-    public string? EditingTaskId
-    {
-        get => _editingTaskId;
-        set { if (_editingTaskId != value) { _editingTaskId = value; OnPropertyChanged(); } }
-    }
 
     public TasksViewModel(IStorageService storageService)
     {
         _storageService = storageService;
     }
 
-    public void LoadTasks()
-    {
-        var tasks = _storageService.LoadTasks();
-        Tasks = new ObservableCollection<TaskItem>(tasks);
-    }
-
-    public void AddTask()
+    [RelayCommand]
+    private void Add()
     {
         if (string.IsNullOrWhiteSpace(NewTaskName)) return;
 
@@ -100,7 +54,8 @@ public class TasksViewModel : INotifyPropertyChanged
         NewTaskCategory = string.Empty;
     }
 
-    public void DeleteTask(string taskId)
+    [RelayCommand]
+    private void Delete(string taskId)
     {
         var task = Tasks.FirstOrDefault(t => t.Id == taskId);
         if (task == null) return;
@@ -109,11 +64,18 @@ public class TasksViewModel : INotifyPropertyChanged
         SaveAndNotify();
     }
 
-    public void SelectTask(string taskId)
+    [RelayCommand]
+    private void Select(string taskId)
     {
         var task = Tasks.FirstOrDefault(t => t.Id == taskId);
         if (task != null)
             TaskSelected?.Invoke(task);
+    }
+
+    public void LoadTasks()
+    {
+        var tasks = _storageService.LoadTasks();
+        Tasks = new ObservableCollection<TaskItem>(tasks);
     }
 
     public void StartEdit(TaskItem task)
@@ -139,23 +101,37 @@ public class TasksViewModel : INotifyPropertyChanged
         EditingTaskId = null;
     }
 
-    /// <summary>
-    /// 恢复默认预设任务。保留用户自建任务，替换/新增所有考试科目预设。
-    /// </summary>
     public void RestoreDefaults()
     {
         _storageService.RestoreDefaultTasks();
         LoadTasks();
     }
 
+    partial void OnSelectedColorChanged(string value)
+    {
+        var validated = ValidateColor(value);
+        if (validated != _selectedColor)
+        {
+            _selectedColor = validated;
+            OnPropertyChanged(nameof(SelectedColor));
+        }
+    }
+
+    private static string ValidateColor(string? color)
+    {
+        if (string.IsNullOrWhiteSpace(color)) return "#6B7280";
+        if (!color.StartsWith("#")) color = "#" + color;
+        if (color.Length == 4)
+        {
+            color = $"#{color[1]}{color[1]}{color[2]}{color[2]}{color[3]}{color[3]}";
+        }
+        if (color.Length != 7) return "#6B7280";
+        return color.ToUpperInvariant();
+    }
+
     private void SaveAndNotify()
     {
         _storageService.SaveTasks(Tasks.ToList());
         TasksChanged?.Invoke();
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

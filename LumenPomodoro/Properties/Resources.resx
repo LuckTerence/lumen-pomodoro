@@ -118,4 +118,64 @@
   <data name="Task_Review" xml:space="preserve">
     <value>复盘与整理</value>
   </data>
+  <data name="NoTaskSelected" xml:space="preserve">
+    <value>请先选择一个任务</value>
+  </data>
+  <data name="DistractionAlert" xml:space="preserve">
+    <value>走神提醒</value>
+  </data>
+  <data name="DistractionMessage" xml:space="preserve">
+    <value>检测到你已离开，请回到专注状态。</value>
+  </data>
+  <data name="CameraError" xml:space="preserve">
+    <value>摄像头提醒失败</value>
+  </data>
+  <data name="CameraErrorTitle" xml:space="preserve">
+    <value>摄像头错误</value>
+  </data>
+  <data name="CameraProtectedRelease" xml:space="preserve">
+    <value>保护释放</value>
+  </data>
+  <data name="CameraManualCloseNotAllowed" xml:space="preserve">
+    <value>当前设置不允许手动关闭摄像头提醒，请在设置中开启。</value>
+  </data>
+  <data name="AllAlertsDisabled" xml:space="preserve">
+    <value>警告：所有提醒方式已关闭，到点可能无法感知！</value>
+  </data>
+  <data name="RegistryAccessDenied" xml:space="preserve">
+    <value>无法访问系统自启动注册表，请以管理员权限运行。</value>
+  </data>
+  <data name="RegistryWriteDenied" xml:space="preserve">
+    <value>无权修改注册表，请以管理员权限运行。</value>
+  </data>
+  <data name="AutoStartFailed" xml:space="preserve">
+    <value>设置开机自启失败</value>
+  </data>
+  <data name="ConfirmExitWhileFocusing_Title" xml:space="preserve">
+    <value>确认退出</value>
+  </data>
+  <data name="ConfirmExitWhileFocusing_Message" xml:space="preserve">
+    <value>计时仍在进行中，确定要退出吗？未完成的本轮进度将不会保存为完成番茄。</value>
+  </data>
+  <data name="SessionEndSoon_Title" xml:space="preserve">
+    <value>即将结束</value>
+  </data>
+  <data name="SessionEndSoon_Message" xml:space="preserve">
+    <value>还剩 {0} 秒</value>
+  </data>
+  <data name="StrictMode_CameraCloseBlocked" xml:space="preserve">
+    <value>严格模式已开启，不能手动关闭摄像头提醒。</value>
+  </data>
+  <data name="StrictMode_EndBreakBlocked" xml:space="preserve">
+    <value>严格模式已开启，请等待休息自然结束。</value>
+  </data>
+  <data name="FullscreenBreak_Short" xml:space="preserve">
+    <value>短休息</value>
+  </data>
+  <data name="FullscreenBreak_Long" xml:space="preserve">
+    <value>长休息</value>
+  </data>
+  <data name="FullscreenBreak_Hint" xml:space="preserve">
+    <value>站起来走走，看看远处</value>
+  </data>
 </root>

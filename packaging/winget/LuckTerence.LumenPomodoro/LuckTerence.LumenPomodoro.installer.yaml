@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+#
+# 发布前必须替换：
+#   1) PackageVersion
+#   2) InstallerUrl（GitHub Release 上 LumenPomodoro.zip 直链）
+#   3) InstallerSha256（对 zip 计算 sha256）
+#
+# 计算 SHA256（PowerShell）:
+#   Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256
+#
+PackageIdentifier: LuckTerence.LumenPomodoro
+PackageVersion: 0.4.0
+Platform:
+  - Windows.Desktop
+MinimumOSVersion: 10.0.17763.0
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: LumenPomodoro.exe
+    PortableCommandAlias: lumen-pomodoro
+  # zip 内 app\ 目录会与根目录启动器一并解压（portable zip 布局）
+InstallModes:
+  - silent
+UpgradeBehavior: install
+ReleaseDate: 2026-07-17
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/LuckTerence/lumen-pomodoro/releases/download/v0.4.0/LumenPomodoro.zip
+    InstallerSha256: REPLACE_WITH_SHA256_OF_LumenPomodoro.zip
+    Dependencies:
+      PackageDependencies:
+        # 启动器也会引导安装；声明依赖便于 winget 预装运行时
+        - PackageIdentifier: Microsoft.DotNet.DesktopRuntime.8
+ManifestType: installer
+ManifestVersion: 1.6.0

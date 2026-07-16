@@ -1,5 +1,5 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
@@ -13,241 +13,143 @@ public enum StatsPeriod
     Month
 }
 
-public class StatsViewModel : INotifyPropertyChanged
+public partial class StatsViewModel : ObservableObject
 {
     private readonly IStorageService _storageService;
     private readonly IInsightEngine _insightEngine;
-
-    private int _completedPomodoros;
-    private int _totalFocusMinutes;
-    private double _avgQualityScore;
-    private int _streakDays;
     private DateTime _currentDate = DateTime.Today;
     private StatsPeriod _currentPeriod = StatsPeriod.Day;
+
+    [ObservableProperty]
+    private int _completedPomodoros;
+
+    [ObservableProperty]
+    private int _totalFocusMinutes;
+
+    [ObservableProperty]
+    private double _avgQualityScore;
+
+    [ObservableProperty]
+    private int _streakDays;
+
+    [ObservableProperty]
     private string _statsDateLabel = "今日统计";
+
+    [ObservableProperty]
     private bool _canGoNext;
+
+    [ObservableProperty]
     private string _periodSelection = "Day";
 
+    [ObservableProperty]
     private List<HeatmapDay> _heatmapDays = [];
+
+    [ObservableProperty]
     private List<HourlyDataPoint> _hourlyData = [];
+
+    [ObservableProperty]
     private List<TaskSlice> _taskBreakdown = [];
+
+    [ObservableProperty]
     private List<WeeklyDataPoint> _weeklyTrend = [];
+
+    [ObservableProperty]
     private List<Insight> _insights = [];
+
+    [ObservableProperty]
     private List<GoalProgress> _goalProgress = [];
+
+    [ObservableProperty]
     private List<ComparisonData> _comparisons = [];
+
+    [ObservableProperty]
     private List<EfficiencyDataPoint> _efficiencyTrend = [];
+
+    [ObservableProperty]
     private List<CategoryStats> _categoryBreakdown = [];
+
+    [ObservableProperty]
     private bool _hasZeroCategory;
+
+    [ObservableProperty]
     private string _zeroCategoryWarning = string.Empty;
+
+    [ObservableProperty]
     private int _maxCategoryMinutes;
+
+    [ObservableProperty]
     private List<AchievementItem> _achievements = [];
-    private bool _hasAchievements;
-
-    // 过滤条件
-    private DateTime? _filterDateFrom;
-    private DateTime? _filterDateTo;
-    private string _filterKeyword = string.Empty;
-    private TaskItem? _selectedFilterTask;
-    private List<TaskItem> _availableTasks = [];
-    private bool _isFilterVisible;
-    private bool _hasActiveFilter;
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public int CompletedPomodoros
-    {
-        get => _completedPomodoros;
-        set { if (_completedPomodoros != value) { _completedPomodoros = value; OnPropertyChanged(); } }
-    }
-
-    public int TotalFocusMinutes
-    {
-        get => _totalFocusMinutes;
-        set { if (_totalFocusMinutes != value) { _totalFocusMinutes = value; OnPropertyChanged(); } }
-    }
-
-    public double AvgQualityScore
-    {
-        get => _avgQualityScore;
-        set { if (_avgQualityScore != value) { _avgQualityScore = value; OnPropertyChanged(); } }
-    }
-
-    public int StreakDays
-    {
-        get => _streakDays;
-        set { if (_streakDays != value) { _streakDays = value; OnPropertyChanged(); } }
-    }
-
-    public string StatsDateLabel
-    {
-        get => _statsDateLabel;
-        set { if (_statsDateLabel != value) { _statsDateLabel = value; OnPropertyChanged(); } }
-    }
-
-    public bool CanGoNext
-    {
-        get => _canGoNext;
-        set { if (_canGoNext != value) { _canGoNext = value; OnPropertyChanged(); } }
-    }
-
-    public string PeriodSelection
-    {
-        get => _periodSelection;
-        set
-        {
-            if (_periodSelection != value)
-            {
-                _periodSelection = value;
-                _currentPeriod = value switch
-                {
-                    "Week" => StatsPeriod.Week,
-                    "Month" => StatsPeriod.Month,
-                    _ => StatsPeriod.Day
-                };
-                _currentDate = DateTime.Today;
-                OnPropertyChanged();
-                LoadStatsForCurrentPeriod();
-            }
-        }
-    }
-
-    public List<HeatmapDay> HeatmapDays
-    {
-        get => _heatmapDays;
-        set { if (_heatmapDays != value) { _heatmapDays = value; OnPropertyChanged(); } }
-    }
-
-    public List<HourlyDataPoint> HourlyData
-    {
-        get => _hourlyData;
-        set { if (_hourlyData != value) { _hourlyData = value; OnPropertyChanged(); } }
-    }
-
-    public List<TaskSlice> TaskBreakdown
-    {
-        get => _taskBreakdown;
-        set { if (_taskBreakdown != value) { _taskBreakdown = value; OnPropertyChanged(); } }
-    }
-
-    public List<WeeklyDataPoint> WeeklyTrend
-    {
-        get => _weeklyTrend;
-        set { if (_weeklyTrend != value) { _weeklyTrend = value; OnPropertyChanged(); } }
-    }
-
-    public List<Insight> Insights
-    {
-        get => _insights;
-        set { if (_insights != value) { _insights = value; OnPropertyChanged(); } }
-    }
-
-    public List<GoalProgress> GoalProgress
-    {
-        get => _goalProgress;
-        set { if (_goalProgress != value) { _goalProgress = value; OnPropertyChanged(); } }
-    }
-
-    public List<ComparisonData> Comparisons
-    {
-        get => _comparisons;
-        set { if (_comparisons != value) { _comparisons = value; OnPropertyChanged(); } }
-    }
-
-    public List<EfficiencyDataPoint> EfficiencyTrend
-    {
-        get => _efficiencyTrend;
-        set { if (_efficiencyTrend != value) { _efficiencyTrend = value; OnPropertyChanged(); } }
-    }
-
-    public List<CategoryStats> CategoryBreakdown
-    {
-        get => _categoryBreakdown;
-        set { if (_categoryBreakdown != value) { _categoryBreakdown = value; OnPropertyChanged(); } }
-    }
-
-    public bool HasZeroCategory
-    {
-        get => _hasZeroCategory;
-        set { if (_hasZeroCategory != value) { _hasZeroCategory = value; OnPropertyChanged(); } }
-    }
-
-    public string ZeroCategoryWarning
-    {
-        get => _zeroCategoryWarning;
-        set { if (_zeroCategoryWarning != value) { _zeroCategoryWarning = value; OnPropertyChanged(); } }
-    }
-
-    public int MaxCategoryMinutes
-    {
-        get => _maxCategoryMinutes;
-        set { if (_maxCategoryMinutes != value) { _maxCategoryMinutes = value; OnPropertyChanged(); } }
-    }
-
-    public List<AchievementItem> Achievements
-    {
-        get => _achievements;
-        set { if (!ReferenceEquals(_achievements, value)) { _achievements = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasAchievements)); } }
-    }
 
     public bool HasAchievements => Achievements.Count > 0;
 
-    // 过滤属性
-    public DateTime? FilterDateFrom
+    // 过滤条件
+    [ObservableProperty]
+    private DateTime? _filterDateFrom;
+
+    [ObservableProperty]
+    private DateTime? _filterDateTo;
+
+    [ObservableProperty]
+    private string _filterKeyword = string.Empty;
+
+    [ObservableProperty]
+    private TaskItem? _selectedFilterTask;
+
+    [ObservableProperty]
+    private List<TaskItem> _availableTasks = [];
+
+    [ObservableProperty]
+    private bool _isFilterVisible;
+
+    [ObservableProperty]
+    private bool _hasActiveFilter;
+
+    public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
     {
-        get => _filterDateFrom;
-        set { if (_filterDateFrom != value) { _filterDateFrom = value; OnPropertyChanged(); } }
+        _storageService = storageService;
+        _insightEngine = insightEngine;
     }
 
-    public DateTime? FilterDateTo
+    public void Refresh()
     {
-        get => _filterDateTo;
-        set { if (_filterDateTo != value) { _filterDateTo = value; OnPropertyChanged(); } }
+        LoadStatsForCurrentPeriod();
     }
 
-    public string FilterKeyword
+    partial void OnPeriodSelectionChanged(string value)
     {
-        get => _filterKeyword;
-        set { if (_filterKeyword != value) { _filterKeyword = value; OnPropertyChanged(); } }
+        _currentPeriod = value switch
+        {
+            "Week" => StatsPeriod.Week,
+            "Month" => StatsPeriod.Month,
+            _ => StatsPeriod.Day
+        };
+        _currentDate = DateTime.Today;
+        LoadStatsForCurrentPeriod();
     }
 
-    public TaskItem? SelectedFilterTask
+    partial void OnAchievementsChanged(List<AchievementItem> value)
     {
-        get => _selectedFilterTask;
-        set { if (_selectedFilterTask != value) { _selectedFilterTask = value; OnPropertyChanged(); } }
+        // 触发 HasAchievements 的变更通知
+        OnPropertyChanged(nameof(HasAchievements));
     }
 
-    public List<TaskItem> AvailableTasks
-    {
-        get => _availableTasks;
-        set { if (_availableTasks != value) { _availableTasks = value; OnPropertyChanged(); } }
-    }
-
-    public bool IsFilterVisible
-    {
-        get => _isFilterVisible;
-        set { if (_isFilterVisible != value) { _isFilterVisible = value; OnPropertyChanged(); } }
-    }
-
-    public bool HasActiveFilter
-    {
-        get => _hasActiveFilter;
-        set { if (_hasActiveFilter != value) { _hasActiveFilter = value; OnPropertyChanged(); } }
-    }
-
-    public void ToggleFilter()
+    [RelayCommand]
+    private void ToggleFilter()
     {
         IsFilterVisible = !IsFilterVisible;
         if (IsFilterVisible) LoadAvailableTasks();
     }
 
-    public void ApplyFilter()
+    [RelayCommand]
+    private void ApplyFilter()
     {
         HasActiveFilter = FilterDateFrom.HasValue || FilterDateTo.HasValue
             || !string.IsNullOrWhiteSpace(FilterKeyword) || SelectedFilterTask != null;
         LoadStatsForCurrentPeriod();
     }
 
-    public void ResetFilter()
+    [RelayCommand]
+    private void ResetFilter()
     {
         FilterDateFrom = null;
         FilterDateTo = null;
@@ -261,17 +163,6 @@ public class StatsViewModel : INotifyPropertyChanged
     private void LoadAvailableTasks()
     {
         AvailableTasks = _storageService.LoadTasks();
-    }
-
-    public StatsViewModel(IStorageService storageService, IInsightEngine insightEngine)
-    {
-        _storageService = storageService;
-        _insightEngine = insightEngine;
-    }
-
-    public void Refresh()
-    {
-        LoadStatsForCurrentPeriod();
     }
 
     public void ShiftDate(int direction)
@@ -303,11 +194,9 @@ public class StatsViewModel : INotifyPropertyChanged
 
     private void LoadStatsForCurrentPeriod()
     {
-        // 只加载一次 sessions，分发给所有 InsightEngine 方法，避免重复 JSON 反序列化
         var sessions = _storageService.LoadSessions();
         var tasks = _storageService.LoadTasks();
 
-        // 按当前周期过滤
         DateTime periodStart, periodEnd;
         List<FocusSession> filteredSessions;
         switch (_currentPeriod)
@@ -345,7 +234,6 @@ public class StatsViewModel : INotifyPropertyChanged
                 break;
         }
 
-        // 应用自定义日期范围（覆盖周期选择）
         if (_filterDateFrom.HasValue && _filterDateTo.HasValue)
         {
             periodStart = _filterDateFrom.Value.Date;
@@ -354,7 +242,6 @@ public class StatsViewModel : INotifyPropertyChanged
             CanGoNext = false;
         }
 
-        // 构建为单次 .ToList() 的复合过滤，避免中间 List 分配
         var taskFilterId = SelectedFilterTask?.Id;
         var keyword = string.IsNullOrWhiteSpace(FilterKeyword) ? null : FilterKeyword.Trim();
         var fromDate = periodStart;
@@ -377,11 +264,9 @@ public class StatsViewModel : INotifyPropertyChanged
             ? scoredSessions.Average(s => s.QualityScore)
             : 0;
 
-        // 预过滤已完成 sessions，避免各 InsightEngine 方法重复 .Where(s => s.Completed)
         var completedSessions = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
         StreakDays = InsightEngine.CalculateStreak(completedSessions);
 
-        // 图表数据 — 传入已预过滤的 completedSessions
         HeatmapDays = _insightEngine.GetHeatmapData(completedSessions);
         HourlyData = _insightEngine.GetHourlyDistribution(completedSessions, periodStart, periodEnd);
         TaskBreakdown = _insightEngine.GetTaskBreakdown(completedSessions, periodStart, periodEnd, tasks);
@@ -394,7 +279,7 @@ public class StatsViewModel : INotifyPropertyChanged
         {
             GoalProgress = _insightEngine.GetGoalProgress(completedSessions, settings.DailyGoalMinutes, settings.WeeklyGoalMinutes);
             Comparisons = _insightEngine.GetComparisons(completedSessions);
-            EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions); // 需要全量 sessions 计算完成率
+            EfficiencyTrend = _insightEngine.GetEfficiencyTrend(sessions);
         }
         else
         {
@@ -403,7 +288,6 @@ public class StatsViewModel : INotifyPropertyChanged
             EfficiencyTrend = [];
         }
 
-        // 科目均衡分析
         var taskDict = tasks.ToDictionary(t => t.Id, t => t);
         var categoryGroups = filteredSessions
             .Where(s => taskDict.ContainsKey(s.TaskId))
@@ -421,7 +305,6 @@ public class StatsViewModel : INotifyPropertyChanged
         CategoryBreakdown = categoryGroups;
         MaxCategoryMinutes = categoryGroups.Any() ? categoryGroups.Max(c => c.TotalMinutes) : 0;
 
-        // 检查是否有科目 0 分钟（仅在周视图下检查）
         if (_currentPeriod == StatsPeriod.Week && categoryGroups.Any())
         {
             var zeroCategories = categoryGroups.Where(c => c.TotalMinutes == 0).ToList();
@@ -460,10 +343,5 @@ public class StatsViewModel : INotifyPropertyChanged
             achievements.Add(new AchievementItem { Icon = "⏱", Title = $"{totalMinutes / 60} 小时", Subtitle = "累计专注时长" });
 
         Achievements = achievements;
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

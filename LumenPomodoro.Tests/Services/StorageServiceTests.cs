@@ -258,4 +258,41 @@ public class StorageServiceTests : IDisposable
         Assert.True(stats4.CompletedPomodoros <= stats3.CompletedPomodoros,
             "SaveSessions 覆盖后应只保留 seq_1");
     }
+
+    [Fact]
+    public void GetTodayStats_WithNoSessions_ReturnsZeros()
+    {
+        // Use fresh storage with empty data
+        var cleanPath = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "empty_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var storage = new StorageService(cleanPath);
+            var stats = storage.GetTodayStats();
+            Assert.Equal(0, stats.CompletedPomodoros);
+            Assert.Equal(0, stats.TotalFocusMinutes);
+            Assert.Equal(0, stats.CurrentStreak);
+        }
+        finally
+        {
+            if (Directory.Exists(cleanPath)) Directory.Delete(cleanPath, true);
+        }
+    }
+
+    [Fact]
+    public void LoadSettings_ReturnsDefaultsWhenFileMissing()
+    {
+        var cleanPath = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "defaults_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var storage = new StorageService(cleanPath);
+            var settings = storage.LoadSettings();
+            Assert.Equal(25, settings.WorkMinutes);
+            Assert.Equal(5, settings.ShortBreakMinutes);
+            Assert.Equal(15, settings.LongBreakMinutes);
+        }
+        finally
+        {
+            if (Directory.Exists(cleanPath)) Directory.Delete(cleanPath, true);
+        }
+    }
 }

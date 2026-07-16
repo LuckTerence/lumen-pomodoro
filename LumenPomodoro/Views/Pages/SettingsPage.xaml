@@ -141,6 +141,30 @@
                                 <ComboBoxItem Content="系统通知 + 提示音 + 置顶" Tag="{x:Static models:CameraAlertLevel.Severe}" Foreground="#B3FFFFFF" Background="#3327272A" />
                             </ComboBox>
                         </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="防抖次数" FontSize="13" Foreground="#B3FFFFFF" />
+                                <TextBlock Text="连续命中几次后才提醒，减少误报" FontSize="11" Foreground="#6B7280" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding FocusGuardDebounceHits, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="10" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="每轮最多提醒" FontSize="13" Foreground="#B3FFFFFF" />
+                                <TextBlock Text="单次专注会话内走神通知次数上限" FontSize="11" Foreground="#6B7280" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding FocusGuardMaxAlertsPerSession, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="20" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="遵从系统勿扰" FontSize="13" Foreground="#B3FFFFFF" />
+                                <TextBlock Text="锁屏或通知关闭时不弹走神提醒（仍做检测）" FontSize="11" Foreground="#6B7280" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding FocusGuardRespectDoNotDisturb}" VerticalAlignment="Center" />
+                        </Grid>
                         <StackPanel Margin="0,0,0,4">
                             <TextBlock Text="分心 App 黑名单" FontSize="13" Foreground="#B3FFFFFF" />
                             <TextBlock Text="每行一个关键词，匹配前台进程名或窗口标题（如 bilibili、微信、Steam）" FontSize="11" Foreground="#6B7280" Margin="0,0,0,6" />
@@ -299,13 +323,88 @@
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CloseToTray}" VerticalAlignment="Center" />
                     </Grid>
-                    <Grid>
+                    <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="开机自启" FontSize="13" Foreground="#B3FFFFFF" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoStartEnabled}" />
                     </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="计时中退出需确认" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="专注或休息进行中关闭应用时弹出确认" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding ConfirmExitWhileFocusing}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="结束前提醒（秒）" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="倒计时剩余该秒数时提醒一次；0 为关闭" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:NumberBox Grid.Column="1" Value="{Binding SessionEndPreNotifySeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="0" Maximum="300" />
+                    </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="全屏休息" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="开始休息时覆盖全屏倒计时，减少继续工作的诱惑" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding FullscreenBreakEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="严格模式" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="禁止手动关摄像头灯、禁止提前结束休息；完成时强制置顶" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding StrictModeEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border Background="#22000000" CornerRadius="12" Padding="14" Margin="0,4,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                <TextBlock Text="严格专注一键预设" FontSize="13" FontWeight="SemiBold" Foreground="#E2E8F0" />
+                                <TextBlock Text="一键开启：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）"
+                                           FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="应用预设"
+                                    Command="{Binding ApplyStrictFocusPresetCommand}"
+                                    Padding="16,8"
+                                    Cursor="Hand"
+                                    VerticalAlignment="Center">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#3B82F6" />
+                                        <Setter Property="Foreground" Value="White" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="10"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#2563EB" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 

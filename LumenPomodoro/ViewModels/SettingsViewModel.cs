@@ -1,283 +1,232 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
 
 namespace LumenPomodoro.ViewModels;
 
-public class SettingsViewModel : INotifyPropertyChanged, IDisposable
+public partial class SettingsViewModel : IDisposable
 {
     private readonly IStorageService _storageService;
     private readonly ICameraService _cameraService;
 
+    [ObservableProperty]
     private int _workMinutes;
+
+    [ObservableProperty]
     private int _shortBreakMinutes;
+
+    [ObservableProperty]
     private int _longBreakMinutes;
+
+    [ObservableProperty]
     private int _longBreakInterval;
 
+    [ObservableProperty]
     private bool _cameraAlertEnabled;
-    private CameraAlertMode _cameraAlertMode;
-    private int _cameraFixedOnSeconds;
-    private bool _cameraFollowBreakEnabled;
-    private int _selectedCameraIndex;
-    private bool _cameraAlertCanManualClose;
-    private CameraAlertLevel _cameraAlertLevel = CameraAlertLevel.Medium;
-    private bool _presenceDetectionEnabled = true;
-    private int _presenceDetectionSeconds = 5;
-    private ObservableCollection<string> _availableCameras;
 
+    [ObservableProperty]
+    private CameraAlertMode _cameraAlertMode;
+
+    [ObservableProperty]
+    private int _cameraFixedOnSeconds;
+
+    [ObservableProperty]
+    private bool _cameraFollowBreakEnabled;
+
+    [ObservableProperty]
+    private int _selectedCameraIndex;
+
+    [ObservableProperty]
+    private bool _cameraAlertCanManualClose;
+
+    [ObservableProperty]
+    private CameraAlertLevel _cameraAlertLevel = CameraAlertLevel.Medium;
+
+    [ObservableProperty]
+    private bool _presenceDetectionEnabled = true;
+
+    [ObservableProperty]
+    private int _presenceDetectionSeconds = 5;
+
+    [ObservableProperty]
+    private ObservableCollection<string> _availableCameras = new();
+
+    [ObservableProperty]
     private bool _focusGuardEnabled = true;
+
+    [ObservableProperty]
     private int _focusGuardIdleSeconds = 180;
+
+    [ObservableProperty]
     private string _focusGuardBlocklistText = string.Empty;
+
+    [ObservableProperty]
     private CameraAlertLevel _focusGuardAlertLevel = CameraAlertLevel.Medium;
 
+    [ObservableProperty]
+    private int _focusGuardDebounceHits = 2;
+
+    [ObservableProperty]
+    private int _focusGuardMaxAlertsPerSession = 3;
+
+    [ObservableProperty]
+    private bool _focusGuardRespectDoNotDisturb = true;
+
+    [ObservableProperty]
     private bool _soundEnabled;
+
+    [ObservableProperty]
     private bool _popupEnabled;
+
+    [ObservableProperty]
     private bool _systemNotificationEnabled;
 
+    [ObservableProperty]
     private bool _trayEnabled;
+
+    [ObservableProperty]
     private bool _closeToTray;
+
+    [ObservableProperty]
     private bool _autoStartEnabled;
 
+    [ObservableProperty]
     private string _theme = "system";
+
+    [ObservableProperty]
     private bool _animationEnabled;
+
+    [ObservableProperty]
     private int _dailyGoalMinutes = 120;
+
+    [ObservableProperty]
     private int _weeklyGoalMinutes = 600;
+
+    [ObservableProperty]
     private int _dailyTargetPomodoros = 8;
+
+    [ObservableProperty]
     private DateTime? _examDate;
+
+    [ObservableProperty]
     private string _examName = "考研";
 
+    [ObservableProperty]
     private bool _insightsEnabled = true;
+
+    [ObservableProperty]
     private bool _dailyReportEnabled = true;
+
+    [ObservableProperty]
     private bool _examCountdownEnabled = true;
+
+    [ObservableProperty]
     private bool _dynamicIslandEnabled = true;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    [ObservableProperty]
+    private bool _confirmExitWhileFocusing = true;
 
-    public int WorkMinutes
+    [ObservableProperty]
+    private int _sessionEndPreNotifySeconds = 30;
+
+    [ObservableProperty]
+    private bool _fullscreenBreakEnabled;
+
+    [ObservableProperty]
+    private bool _strictModeEnabled;
+
+    // ── 属性边界修正（在 OnChanged 中后置 clamp） ──
+
+    partial void OnWorkMinutesChanged(int value)
     {
-        get => _workMinutes;
-        set { var v = Math.Clamp(value, 1, 120); if (_workMinutes != v) { _workMinutes = v; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 120);
+        if (clamped != value) { _workMinutes = clamped; OnPropertyChanged(nameof(WorkMinutes)); }
     }
 
-    public int ShortBreakMinutes
+    partial void OnShortBreakMinutesChanged(int value)
     {
-        get => _shortBreakMinutes;
-        set { var v = Math.Clamp(value, 1, 60); if (_shortBreakMinutes != v) { _shortBreakMinutes = v; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 60);
+        if (clamped != value) { _shortBreakMinutes = clamped; OnPropertyChanged(nameof(ShortBreakMinutes)); }
     }
 
-    public int LongBreakMinutes
+    partial void OnLongBreakMinutesChanged(int value)
     {
-        get => _longBreakMinutes;
-        set { var v = Math.Clamp(value, 1, 60); if (_longBreakMinutes != v) { _longBreakMinutes = v; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 60);
+        if (clamped != value) { _longBreakMinutes = clamped; OnPropertyChanged(nameof(LongBreakMinutes)); }
     }
 
-    public int LongBreakInterval
+    partial void OnLongBreakIntervalChanged(int value)
     {
-        get => _longBreakInterval;
-        set { var v = Math.Clamp(value, 2, 10); if (_longBreakInterval != v) { _longBreakInterval = v; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 2, 10);
+        if (clamped != value) { _longBreakInterval = clamped; OnPropertyChanged(nameof(LongBreakInterval)); }
     }
 
-    public bool CameraAlertEnabled
+    partial void OnCameraFixedOnSecondsChanged(int value)
     {
-        get => _cameraAlertEnabled;
-        set { if (_cameraAlertEnabled != value) { _cameraAlertEnabled = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 300);
+        if (clamped != value) { _cameraFixedOnSeconds = clamped; OnPropertyChanged(nameof(CameraFixedOnSeconds)); }
     }
 
-    public CameraAlertMode CameraAlertMode
+    partial void OnPresenceDetectionSecondsChanged(int value)
     {
-        get => _cameraAlertMode;
-        set { if (_cameraAlertMode != value) { _cameraAlertMode = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 3, 30);
+        if (clamped != value) { _presenceDetectionSeconds = clamped; OnPropertyChanged(nameof(PresenceDetectionSeconds)); }
     }
 
-    public int CameraFixedOnSeconds
+    partial void OnFocusGuardIdleSecondsChanged(int value)
     {
-        get => _cameraFixedOnSeconds;
-        set { var v = Math.Clamp(value, 1, 300); if (_cameraFixedOnSeconds != v) { _cameraFixedOnSeconds = v; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 10, 3600);
+        if (clamped != value) { _focusGuardIdleSeconds = clamped; OnPropertyChanged(nameof(FocusGuardIdleSeconds)); }
     }
 
-    public bool CameraFollowBreakEnabled
+    partial void OnFocusGuardDebounceHitsChanged(int value)
     {
-        get => _cameraFollowBreakEnabled;
-        set { if (_cameraFollowBreakEnabled != value) { _cameraFollowBreakEnabled = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 10);
+        if (clamped != value) { _focusGuardDebounceHits = clamped; OnPropertyChanged(nameof(FocusGuardDebounceHits)); }
     }
 
-    public bool CameraAlertCanManualClose
+    partial void OnFocusGuardMaxAlertsPerSessionChanged(int value)
     {
-        get => _cameraAlertCanManualClose;
-        set { if (_cameraAlertCanManualClose != value) { _cameraAlertCanManualClose = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 1, 20);
+        if (clamped != value) { _focusGuardMaxAlertsPerSession = clamped; OnPropertyChanged(nameof(FocusGuardMaxAlertsPerSession)); }
     }
 
-    public CameraAlertLevel CameraAlertLevel
+    partial void OnDailyGoalMinutesChanged(int value)
     {
-        get => _cameraAlertLevel;
-        set { if (_cameraAlertLevel != value) { _cameraAlertLevel = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 0, 1440);
+        if (clamped != value) { _dailyGoalMinutes = clamped; OnPropertyChanged(nameof(DailyGoalMinutes)); }
     }
 
-    public int SelectedCameraIndex
+    partial void OnWeeklyGoalMinutesChanged(int value)
     {
-        get => _selectedCameraIndex;
-        set { if (_selectedCameraIndex != value) { _selectedCameraIndex = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 0, 10080);
+        if (clamped != value) { _weeklyGoalMinutes = clamped; OnPropertyChanged(nameof(WeeklyGoalMinutes)); }
     }
 
-    public ObservableCollection<string> AvailableCameras
+    partial void OnSessionEndPreNotifySecondsChanged(int value)
     {
-        get => _availableCameras;
-        set { if (!ReferenceEquals(_availableCameras, value)) { _availableCameras = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 0, 300);
+        if (clamped != value) { _sessionEndPreNotifySeconds = clamped; OnPropertyChanged(nameof(SessionEndPreNotifySeconds)); }
     }
 
-    public bool SoundEnabled
+    partial void OnDailyTargetPomodorosChanged(int value)
     {
-        get => _soundEnabled;
-        set { if (_soundEnabled != value) { _soundEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool PopupEnabled
-    {
-        get => _popupEnabled;
-        set { if (_popupEnabled != value) { _popupEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool SystemNotificationEnabled
-    {
-        get => _systemNotificationEnabled;
-        set { if (_systemNotificationEnabled != value) { _systemNotificationEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool TrayEnabled
-    {
-        get => _trayEnabled;
-        set { if (_trayEnabled != value) { _trayEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool CloseToTray
-    {
-        get => _closeToTray;
-        set { if (_closeToTray != value) { _closeToTray = value; OnPropertyChanged(); } }
-    }
-
-    public bool AutoStartEnabled
-    {
-        get => _autoStartEnabled;
-        set { if (_autoStartEnabled != value) { _autoStartEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public string Theme
-    {
-        get => _theme;
-        set { if (_theme != value) { _theme = value; OnPropertyChanged(); } }
-    }
-
-    public bool AnimationEnabled
-    {
-        get => _animationEnabled;
-        set { if (_animationEnabled != value) { _animationEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public int DailyGoalMinutes
-    {
-        get => _dailyGoalMinutes;
-        set { var v = Math.Clamp(value, 0, 1440); if (_dailyGoalMinutes != v) { _dailyGoalMinutes = v; OnPropertyChanged(); } }
-    }
-
-    public int WeeklyGoalMinutes
-    {
-        get => _weeklyGoalMinutes;
-        set { var v = Math.Clamp(value, 0, 10080); if (_weeklyGoalMinutes != v) { _weeklyGoalMinutes = v; OnPropertyChanged(); } }
-    }
-
-    public int DailyTargetPomodoros
-    {
-        get => _dailyTargetPomodoros;
-        set { var v = Math.Clamp(value, 0, 50); if (_dailyTargetPomodoros != v) { _dailyTargetPomodoros = v; OnPropertyChanged(); } }
-    }
-
-    public bool PresenceDetectionEnabled
-    {
-        get => _presenceDetectionEnabled;
-        set { if (_presenceDetectionEnabled != value) { _presenceDetectionEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public int PresenceDetectionSeconds
-    {
-        get => _presenceDetectionSeconds;
-        set { var v = Math.Clamp(value, 3, 30); if (_presenceDetectionSeconds != v) { _presenceDetectionSeconds = v; OnPropertyChanged(); } }
-    }
-
-    public bool FocusGuardEnabled
-    {
-        get => _focusGuardEnabled;
-        set { if (_focusGuardEnabled != value) { _focusGuardEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public int FocusGuardIdleSeconds
-    {
-        get => _focusGuardIdleSeconds;
-        set { var v = Math.Clamp(value, 10, 3600); if (_focusGuardIdleSeconds != v) { _focusGuardIdleSeconds = v; OnPropertyChanged(); } }
-    }
-
-    /// <summary>黑名单编辑文本，每行一个关键词（进程名或窗口标题片段）。</summary>
-    public string FocusGuardBlocklistText
-    {
-        get => _focusGuardBlocklistText;
-        set { if (_focusGuardBlocklistText != value) { _focusGuardBlocklistText = value; OnPropertyChanged(); } }
-    }
-
-    public CameraAlertLevel FocusGuardAlertLevel
-    {
-        get => _focusGuardAlertLevel;
-        set { if (_focusGuardAlertLevel != value) { _focusGuardAlertLevel = value; OnPropertyChanged(); } }
-    }
-
-    public DateTime? ExamDate
-    {
-        get => _examDate;
-        set { if (_examDate != value) { _examDate = value; OnPropertyChanged(); } }
-    }
-
-    public string ExamName
-    {
-        get => _examName;
-        set { if (_examName != value) { _examName = value; OnPropertyChanged(); } }
-    }
-
-    public bool InsightsEnabled
-    {
-        get => _insightsEnabled;
-        set { if (_insightsEnabled != value) { _insightsEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool DailyReportEnabled
-    {
-        get => _dailyReportEnabled;
-        set { if (_dailyReportEnabled != value) { _dailyReportEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool ExamCountdownEnabled
-    {
-        get => _examCountdownEnabled;
-        set { if (_examCountdownEnabled != value) { _examCountdownEnabled = value; OnPropertyChanged(); } }
-    }
-
-    public bool DynamicIslandEnabled
-    {
-        get => _dynamicIslandEnabled;
-        set { if (_dynamicIslandEnabled != value) { _dynamicIslandEnabled = value; OnPropertyChanged(); } }
+        var clamped = Math.Clamp(value, 0, 50);
+        if (clamped != value) { _dailyTargetPomodoros = clamped; OnPropertyChanged(nameof(DailyTargetPomodoros)); }
     }
 
     public SettingsViewModel(IStorageService storageService, ICameraService cameraService)
     {
         _storageService = storageService;
         _cameraService = cameraService;
-        _availableCameras = new ObservableCollection<string>();
 
         LoadSettings();
-        LoadAvailableCamerasAsync().ConfigureAwait(false);
+        _ = LoadAvailableCamerasAsync(); // fire-and-forget, error swallowed intentionally
     }
 
     private void LoadSettings()
@@ -316,17 +265,24 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         FocusGuardIdleSeconds = settings.FocusGuardIdleSeconds;
         FocusGuardBlocklistText = string.Join(Environment.NewLine, settings.FocusGuardBlocklist ?? new List<string>());
         FocusGuardAlertLevel = settings.FocusGuardAlertLevel;
+        FocusGuardDebounceHits = settings.FocusGuardDebounceHits;
+        FocusGuardMaxAlertsPerSession = settings.FocusGuardMaxAlertsPerSession;
+        FocusGuardRespectDoNotDisturb = settings.FocusGuardRespectDoNotDisturb;
         ExamDate = settings.ExamDate;
         ExamName = settings.ExamName;
         InsightsEnabled = settings.InsightsEnabled;
         DailyReportEnabled = settings.DailyReportEnabled;
         ExamCountdownEnabled = settings.ExamCountdownEnabled;
         DynamicIslandEnabled = settings.DynamicIslandEnabled;
+        ConfirmExitWhileFocusing = settings.ConfirmExitWhileFocusing;
+        SessionEndPreNotifySeconds = settings.SessionEndPreNotifySeconds;
+        FullscreenBreakEnabled = settings.FullscreenBreakEnabled;
+        StrictModeEnabled = settings.StrictModeEnabled;
     }
 
     private async Task LoadAvailableCamerasAsync()
     {
-        var cameras = await _cameraService.GetAvailableCamerasAsync().ConfigureAwait(false);
+        var cameras = await _cameraService.GetAvailableCamerasAsync().ConfigureAwait(true);
         AvailableCameras.Clear();
         foreach (var camera in cameras)
         {
@@ -334,7 +290,35 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public void SaveSettings()
+    /// <summary>一键应用：严格模式 + 全屏休息 + 摄像头灯等。</summary>
+    [RelayCommand]
+    private void ApplyStrictFocusPreset()
+    {
+        StrictModeEnabled = true;
+        FullscreenBreakEnabled = true;
+        CameraAlertEnabled = true;
+        CameraAlertMode = CameraAlertMode.UntilConfirm;
+        CameraAlertLevel = CameraAlertLevel.Severe;
+        CameraAlertCanManualClose = false;
+        CameraFollowBreakEnabled = true;
+        ConfirmExitWhileFocusing = true;
+        if (SessionEndPreNotifySeconds <= 0)
+            SessionEndPreNotifySeconds = 30;
+        SoundEnabled = true;
+        PopupEnabled = true;
+        SystemNotificationEnabled = true;
+
+        // 立即落盘，避免只改 UI 未点保存
+        Save();
+        MessageBox.Show(
+            "已应用「严格专注」预设：\n\n• 严格模式\n• 全屏休息\n• 摄像头指示灯（Severe，不可手关，跟随休息）\n• 结束前预告与退出确认\n\n时长与任务配置未改动。",
+            "严格专注预设",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    [RelayCommand]
+    private void Save()
     {
         var latestSettings = _storageService.LoadSettings();
 
@@ -373,25 +357,36 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             FocusGuardIdleSeconds = FocusGuardIdleSeconds,
             FocusGuardBlocklist = ParseBlocklist(FocusGuardBlocklistText),
             FocusGuardPollSeconds = latestSettings.FocusGuardPollSeconds,
+            FocusGuardDebounceHits = FocusGuardDebounceHits,
+            FocusGuardMaxAlertsPerSession = FocusGuardMaxAlertsPerSession,
+            FocusGuardRespectDoNotDisturb = FocusGuardRespectDoNotDisturb,
             FocusGuardAlertLevel = FocusGuardAlertLevel,
             ExamDate = ExamDate,
             ExamName = ExamName,
             InsightsEnabled = InsightsEnabled,
             DailyReportEnabled = DailyReportEnabled,
             ExamCountdownEnabled = ExamCountdownEnabled,
-            DynamicIslandEnabled = DynamicIslandEnabled
+            DynamicIslandEnabled = DynamicIslandEnabled,
+            ConfirmExitWhileFocusing = ConfirmExitWhileFocusing,
+            SessionEndPreNotifySeconds = SessionEndPreNotifySeconds,
+            FullscreenBreakEnabled = FullscreenBreakEnabled,
+            StrictModeEnabled = StrictModeEnabled,
+            Language = latestSettings.Language,
+            SchemaVersion = latestSettings.SchemaVersion,
+            LastSelectedTaskId = latestSettings.LastSelectedTaskId,
+            LastReportShownDate = latestSettings.LastReportShownDate
         };
 
         _storageService.SaveSettings(settings);
 
         UpdateAutoStart();
+        ApplyTheme();
 
         if (!CameraAlertEnabled && !SoundEnabled && !PopupEnabled && !SystemNotificationEnabled)
         {
-            MessageBox.Show("警告：所有提醒方式已关闭，到点可能无法感知！", "提醒设置", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Properties.LocalizedStrings.AllAlertsDisabled, "提醒设置", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
-
 
     private static List<string> ParseBlocklist(string text)
     {
@@ -414,7 +409,7 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
             {
                 if (key == null)
                 {
-                    MessageBox.Show("无法访问系统自启动注册表，请以管理员权限运行。", "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(Properties.LocalizedStrings.RegistryAccessDenied, "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -434,22 +429,22 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (UnauthorizedAccessException)
         {
-            MessageBox.Show("无权修改注册表，请以管理员权限运行。", "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Properties.LocalizedStrings.RegistryWriteDenied, "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"设置开机自启失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"{Properties.LocalizedStrings.AutoStartFailed}：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             Log.Error(ex, "更新自启动失败");
         }
     }
 
-    private void ApplyTheme(string theme)
+    private void ApplyTheme()
     {
         try
         {
             if (Application.Current is App app)
             {
-                app.ApplyTheme(theme);
+                app.ApplyTheme(Theme);
             }
         }
         catch (Exception ex)
@@ -460,10 +455,5 @@ public class SettingsViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

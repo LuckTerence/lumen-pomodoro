@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LumenPomodoro.Models;
+using LumenPomodoro.Properties;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.Views;
 using Serilog;
@@ -112,10 +113,12 @@ public class CameraAlertController
 
     public bool TryStop(Settings settings)
     {
-        if (!settings.CameraAlertCanManualClose)
+        if (!settings.EffectiveCameraAlertCanManualClose)
         {
-            MessageBox.Show("当前设置不允许手动关闭摄像头提醒，请在设置中开启。", "提示",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var msg = settings.StrictModeEnabled
+                ? Properties.LocalizedStrings.StrictMode_CameraCloseBlocked
+                : Properties.LocalizedStrings.CameraManualCloseNotAllowed;
+            MessageBox.Show(msg, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             return false;
         }
         ForceStop();
@@ -152,7 +155,7 @@ public class CameraAlertController
             _consecutivePresenceLostAlerts++;
             if (_consecutivePresenceLostAlerts > MaxPresenceLostAlerts) return;
 
-            SystemNotificationRequested?.Invoke("走神提醒", "检测到你已离开，请回到专注状态。");
+            SystemNotificationRequested?.Invoke(Properties.LocalizedStrings.DistractionAlert, Properties.LocalizedStrings.DistractionMessage);
         });
     }
 
@@ -188,8 +191,9 @@ public class CameraAlertController
 
     private static void ApplyAlertLevel(Settings settings)
     {
-        // Light 和 Medium 级别仅通过 LED 和指示灯窗口提醒，Severe 额外强制窗口置顶
-        if (settings.CameraAlertLevel != CameraAlertLevel.Severe) return;
+        // Light/Medium：灯 + 指示窗；Severe 或严格模式：额外主窗置顶
+        var severe = settings.CameraAlertLevel == CameraAlertLevel.Severe || settings.StrictModeEnabled;
+        if (!severe) return;
 
         if (Application.Current?.Dispatcher == null) return;
         Application.Current.Dispatcher.BeginInvoke(() =>

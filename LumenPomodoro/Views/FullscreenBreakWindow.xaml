@@ -1,0 +1,79 @@
+<Window x:Class="LumenPomodoro.Views.FullscreenBreakWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="休息中"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowState="Maximized"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Background="#E6101018"
+        KeyDown="Window_KeyDown">
+    <Grid>
+        <Border Background="#CC0F172A" />
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="520">
+            <TextBlock x:Name="TitleBlock"
+                       Text="休息时间"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       Foreground="#E2E8F0"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,12" />
+            <TextBlock x:Name="SubtitleBlock"
+                       Text="站起来走走，看看远处"
+                       FontSize="15"
+                       Foreground="#94A3B8"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,32" />
+            <TextBlock x:Name="CountdownBlock"
+                       Text="05:00"
+                       FontSize="72"
+                       FontWeight="Light"
+                       FontFamily="Inter, Segoe UI"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,40" />
+            <Button x:Name="EndBreakButton"
+                    Content="结束休息"
+                    HorizontalAlignment="Center"
+                    Padding="28,12"
+                    FontSize="14"
+                    Cursor="Hand"
+                    Click="EndBreakButton_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#334155" />
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="12"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#475569" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <TextBlock x:Name="StrictHintBlock"
+                       Text="严格模式：请等待休息自然结束"
+                       FontSize="12"
+                       Foreground="#64748B"
+                       HorizontalAlignment="Center"
+                       Margin="0,16,0,0"
+                       Visibility="Collapsed" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -56,6 +56,17 @@ public class Settings
     [Range(1, 60)]
     public int FocusGuardPollSeconds { get; set; } = 5;
 
+    /// <summary>连续多少次 poll 命中后才告警（防抖）。默认 2。</summary>
+    [Range(1, 10)]
+    public int FocusGuardDebounceHits { get; set; } = 2;
+
+    /// <summary>单次专注会话最多发出几次走神通知。默认 3。</summary>
+    [Range(1, 20)]
+    public int FocusGuardMaxAlertsPerSession { get; set; } = 3;
+
+    /// <summary>系统勿扰开启时降级通知（预留；实现按端推进）。</summary>
+    public bool FocusGuardRespectDoNotDisturb { get; set; } = true;
+
     public CameraAlertLevel FocusGuardAlertLevel { get; set; } = CameraAlertLevel.Severe;
 
     [Range(0, 1440)]
@@ -91,8 +102,54 @@ public class Settings
     public bool ExamCountdownEnabled { get; set; } = true;
     public bool DynamicIslandEnabled { get; set; } = true;
 
+    /// <summary>专注/休息计时进行中关闭应用时弹出确认。默认 true。</summary>
+    public bool ConfirmExitWhileFocusing { get; set; } = true;
+
+    /// <summary>
+    /// 计时结束前多少秒发一次预告通知；0 = 关闭。建议 15–120。
+    /// </summary>
+    [Range(0, 300)]
+    public int SessionEndPreNotifySeconds { get; set; } = 30;
+
+    /// <summary>休息时显示全屏遮罩倒计时。默认 false。</summary>
+    public bool FullscreenBreakEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 严格模式：禁止手动关摄像头灯、禁止提前结束休息；
+    /// 完成专注时按 Severe 强度置顶。默认 false。
+    /// </summary>
+    public bool StrictModeEnabled { get; set; } = false;
+
     /// <summary>界面语言: "system" / "zh" / "en"</summary>
     public string Language { get; set; } = "system";
+
+    /// <summary>是否允许用户手动关闭摄像头提醒（严格模式强制否）。</summary>
+    public bool EffectiveCameraAlertCanManualClose =>
+        !StrictModeEnabled && CameraAlertCanManualClose;
+
+    /// <summary>休息中是否允许提前结束（严格模式强制否）。</summary>
+    public bool EffectiveAllowEndBreakEarly => !StrictModeEnabled;
+
+    /// <summary>
+    /// 严格专注一键预设：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）。
+    /// 不覆盖时长、任务、黑名单等个人配置。
+    /// </summary>
+    public void ApplyStrictFocusPreset()
+    {
+        StrictModeEnabled = true;
+        FullscreenBreakEnabled = true;
+        CameraAlertEnabled = true;
+        CameraAlertMode = CameraAlertMode.UntilConfirm;
+        CameraAlertLevel = CameraAlertLevel.Severe;
+        CameraAlertCanManualClose = false;
+        CameraFollowBreakEnabled = true;
+        ConfirmExitWhileFocusing = true;
+        if (SessionEndPreNotifySeconds <= 0)
+            SessionEndPreNotifySeconds = 30;
+        SoundEnabled = true;
+        PopupEnabled = true;
+        SystemNotificationEnabled = true;
+    }
 }
 
 public enum CameraAlertMode

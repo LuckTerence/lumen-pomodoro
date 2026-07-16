@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -20,9 +19,11 @@ namespace LumenPomodoro.Views;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private readonly IServiceProvider _serviceProvider;
     private ITrayService? _trayService;
     private readonly PageProvider _pageProvider;
     private DynamicIslandNotificationWindow? _dynamicIslandWindow;
+    private FullscreenBreakWindow? _fullscreenBreakWindow;
 
     #region DWM 原生亚克力
 
@@ -39,23 +40,22 @@ public partial class MainWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd == IntPtr.Zero) return;
 
-        // 启用深色模式
         int darkMode = 1;
         DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
 
-        // 激活亚克力背景
         int backdropType = DWMSBT_TRANSLUCENTSELECTBACKDROP;
         DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
     }
 
     #endregion
 
-    public MainWindow()
+    public MainWindow(MainViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
 
-        _viewModel = App.GetRequiredService<MainViewModel>();
-        _pageProvider = new PageProvider(_viewModel);
+        _viewModel = viewModel;
+        _serviceProvider = serviceProvider;
+        _pageProvider = new PageProvider(_viewModel, _serviceProvider);
         DataContext = _viewModel;
 
         _viewModel.InAppNotificationRequested += (title, message) =>
@@ -68,9 +68,16 @@ public partial class MainWindow : Window
         _viewModel.CountdownStopRequested += () =>
             Dispatcher.BeginInvoke(() => StopCountdown());
 
+        _viewModel.FullscreenBreakShowRequested += (title, remaining, allowEnd) =>
+            Dispatcher.BeginInvoke(() => ShowFullscreenBreak(title, remaining, allowEnd));
+        _viewModel.FullscreenBreakUpdateRequested += (remaining) =>
+            Dispatcher.BeginInvoke(() => _fullscreenBreakWindow?.UpdateCountdown(remaining));
+        _viewModel.FullscreenBreakHideRequested += () =>
+            Dispatcher.BeginInvoke(HideFullscreenBreak);
+
         if (_viewModel.AppSettings.TrayEnabled)
         {
-            _trayService = App.GetRequiredService<ITrayService>();
+            _trayService = _serviceProvider.GetRequiredService<ITrayService>();
             _trayService.AttachToWindow(this);
 
             _viewModel.TrayMenuNeedsUpdate += () =>
@@ -87,7 +94,6 @@ public partial class MainWindow : Window
         Deactivated += MainWindow_Deactivated;
         KeyDown += MainWindow_KeyDown;
 
-        // 监听 Topmost 属性变化
         DependencyPropertyDescriptor.FromProperty(TopmostProperty, typeof(Window))
             .AddValueChanged(this, OnTopmostChanged);
     }
@@ -95,22 +101,18 @@ public partial class MainWindow : Window
     private void MainWindow_Activated(object? sender, EventArgs e)
     {
         _viewModel.IsWindowActive = true;
-        // 激活时增强亚克力效果
         GlassBorder.Opacity = 1.0;
     }
 
     private void MainWindow_Deactivated(object? sender, EventArgs e)
     {
         _viewModel.IsWindowActive = false;
-        // 失焦时降低透明度
         GlassBorder.Opacity = 0.85;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        // 激活 DWM 原生亚克力
         EnableAcrylicBackdrop();
-
         NavView.Navigate(typeof(TimerPage));
         ShowDailyReportIfNeeded();
     }
@@ -195,7 +197,7 @@ public partial class MainWindow : Window
         }
 
         try { DragMove(); }
-        catch (InvalidOperationException) { /* 鼠标未按下时 DragMove 无效，忽略 */ }
+        catch (InvalidOperationException) { /* 鼠标未按下时 DragMove 无效 */ }
     }
 
     private static bool IsFromInteractiveElement(DependencyObject? source)
@@ -207,13 +209,10 @@ public partial class MainWindow : Window
                 source is ComboBox ||
                 source is Slider ||
                 source is NavigationViewItem)
-            {
                 return true;
-            }
 
             source = GetParentObject(source);
         }
-
         return false;
     }
 
@@ -221,13 +220,10 @@ public partial class MainWindow : Window
     {
         if (source is Visual or Visual3D)
             return VisualTreeHelper.GetParent(source);
-
         if (source is FrameworkContentElement frameworkContentElement)
             return frameworkContentElement.Parent;
-
         if (source is ContentElement contentElement)
             return ContentOperations.GetParent(contentElement);
-
         return null;
     }
 
@@ -235,9 +231,7 @@ public partial class MainWindow : Window
 
     private void MaximizeButton_Click(object sender, RoutedEventArgs e)
     {
-        WindowState = WindowState == WindowState.Maximized
-            ? WindowState.Normal
-            : WindowState.Maximized;
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -270,9 +264,34 @@ public partial class MainWindow : Window
         _dynamicIslandWindow?.HideCountdown();
     }
 
+    private void ShowFullscreenBreak(string title, string remaining, bool allowEndEarly)
+    {
+        _fullscreenBreakWindow ??= new FullscreenBreakWindow();
+        _fullscreenBreakWindow.EndBreakRequested -= OnFullscreenBreakEndRequested;
+        _fullscreenBreakWindow.EndBreakRequested += OnFullscreenBreakEndRequested;
+        _fullscreenBreakWindow.ShowBreak(title, remaining, allowEndEarly);
+    }
+
+    private void HideFullscreenBreak()
+    {
+        if (_fullscreenBreakWindow == null) return;
+        _fullscreenBreakWindow.EndBreakRequested -= OnFullscreenBreakEndRequested;
+        _fullscreenBreakWindow.ForceClose();
+        _fullscreenBreakWindow = null;
+    }
+
+    private void OnFullscreenBreakEndRequested()
+    {
+        // 与主界面「结束休息」一致
+        if (_viewModel.EndBreakCommand.CanExecute(null))
+            _viewModel.EndBreakCommand.Execute(null);
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         var settings = _viewModel.AppSettings;
+
+        // 关到托盘不算退出，不弹确认
         if (settings.TrayEnabled && settings.CloseToTray && _trayService != null)
         {
             e.Cancel = true;
@@ -280,16 +299,23 @@ public partial class MainWindow : Window
             _trayService.ShowNotification("Lumen Pomodoro", "已最小化到托盘");
             return;
         }
+
+        if (!_viewModel.ConfirmExitIfNeeded(this))
+        {
+            e.Cancel = true;
+            return;
+        }
+
         base.OnClosing(e);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        // 清理 DependencyPropertyDescriptor 事件（否则阻止 GC）
         DependencyPropertyDescriptor.FromProperty(TopmostProperty, typeof(Window))
             .RemoveValueChanged(this, OnTopmostChanged);
 
         _dynamicIslandWindow?.ForceClose();
+        HideFullscreenBreak();
         _viewModel.Dispose();
         _trayService?.Dispose();
         _pageProvider.Dispose();
@@ -299,13 +325,18 @@ public partial class MainWindow : Window
     private sealed class PageProvider : INavigationViewPageProvider, IDisposable
     {
         private readonly MainViewModel _viewModel;
+        private readonly IServiceProvider _serviceProvider;
         private TimerPage? _timerPage;
         private TasksPage? _tasksPage;
         private StatsPage? _statsPage;
         private SettingsPage? _settingsPage;
         private SettingsViewModel? _settingsViewModel;
 
-        public PageProvider(MainViewModel viewModel) => _viewModel = viewModel;
+        public PageProvider(MainViewModel viewModel, IServiceProvider serviceProvider)
+        {
+            _viewModel = viewModel;
+            _serviceProvider = serviceProvider;
+        }
 
         public object? GetPage(Type pageType)
         {
@@ -337,7 +368,7 @@ public partial class MainWindow : Window
 
         private TasksPage CreateTasksPage()
         {
-            var tasksVM = App.GetRequiredService<TasksViewModel>();
+            var tasksVM = _serviceProvider.GetRequiredService<TasksViewModel>();
             tasksVM.TasksChanged += () => _viewModel.ReloadTasks();
             tasksVM.TaskSelected += (task) =>
             {
@@ -350,7 +381,9 @@ public partial class MainWindow : Window
 
         private StatsPage CreateStatsPage()
         {
-            var page = new StatsPage(App.GetRequiredService<StatsViewModel>(), App.GetRequiredService<IExportService>());
+            var statsVM = _serviceProvider.GetRequiredService<StatsViewModel>();
+            var exportSvc = _serviceProvider.GetRequiredService<IExportService>();
+            var page = new StatsPage(statsVM, exportSvc);
             var mainWindow = (MainWindow?)Application.Current.MainWindow;
             page.RequestNavigateToTasks += () => mainWindow?.NavigateToPage(typeof(TasksPage));
             return page;
@@ -358,7 +391,7 @@ public partial class MainWindow : Window
 
         private SettingsPage CreateSettingsPage()
         {
-            _settingsViewModel = App.GetRequiredService<SettingsViewModel>();
+            _settingsViewModel = _serviceProvider.GetRequiredService<SettingsViewModel>();
             var page = new SettingsPage(_settingsViewModel);
             page.SettingsSaved += () =>
             {

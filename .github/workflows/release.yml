@@ -8,18 +8,17 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
 
-      - name: Publish
+      - name: Publish Windows package
         shell: pwsh
         run: |
           dotnet publish LumenPomodoro\LumenPomodoro.csproj `
@@ -41,31 +40,74 @@ jobs:
             --output publish
 
           Compress-Archive -Path publish\LumenPomodoro.exe,publish\app -DestinationPath LumenPomodoro.zip -Force
+          $hash = (Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256).Hash.ToLower()
+          Set-Content -Path winget-sha256.txt -Value $hash
+          Write-Host "SHA256=$hash"
 
-      - name: Create Release
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: |
+            LumenPomodoro.zip
+            winget-sha256.txt
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DMG
+        run: |
+          chmod +x LumenPomodoroMac/build-mac.sh LumenPomodoroMac/package-dmg.sh LumenPomodoroMac/generate-xcodeproj.sh
+          VERSION="${GITHUB_REF_NAME#v}"
+          export VERSION
+          ./LumenPomodoroMac/package-dmg.sh
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: LumenPomodoroMac/dist/*.dmg
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p dist
+          cp artifacts/windows-package/LumenPomodoro.zip dist/
+          cp artifacts/windows-package/winget-sha256.txt dist/ || true
+          cp artifacts/macos-package/*.dmg dist/ || true
+          ls -la dist
+          SHA=$(cat dist/winget-sha256.txt 2>/dev/null || echo "see artifact")
+          echo "WINGET_SHA256=$SHA" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: LumenPomodoro.zip
+          files: dist/*
           generate_release_notes: true
           body: |
             ## Lumen Pomodoro ${{ github.ref_name }}
 
-            这一版采用小体积 zip 发布包，保留摄像头硬件指示灯提醒。
+            ### Windows
+            - 下载 `LumenPomodoro.zip`，解压后运行根目录 `LumenPomodoro.exe`
+            - 需要 .NET 8 Desktop Runtime（启动器可引导安装）
+            - winget SHA256: `${{ env.WINGET_SHA256 }}`
+            - 清单模板：`packaging/winget/LuckTerence.LumenPomodoro/`
 
-            ### 下载方式
+            ### macOS
+            - 下载 `LumenPomodoro-mac-*.dmg`，拖到「应用程序」
+            - 未签名时请右键 → 打开
 
-            下载 `LumenPomodoro.zip`，解压后双击根目录的 `LumenPomodoro.exe`。
-
-            ### 运行环境
-
-            - Windows x64
-            - 发布包约 16MB
-            - 首次运行会检测 .NET 9 Desktop Runtime
-            - 如果本机没有安装运行时，启动器会提示并自动下载安装
-
-            ### 主要说明
-
-            - 根目录 `LumenPomodoro.exe` 是原生启动器
-            - `app/LumenPomodoro.exe` 是 WPF 主程序
-            - 摄像头仅在本地调用
-            - 不保存照片，不录制视频，不上传摄像头数据
+            ### 隐私
+            - 摄像头仅本机亮灯；不拍照、不录像、不上传

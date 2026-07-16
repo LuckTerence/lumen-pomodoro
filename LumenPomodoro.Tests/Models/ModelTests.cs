@@ -5,63 +5,48 @@ namespace LumenPomodoro.Tests.Models;
 public class ModelTests
 {
     [Fact]
-    public void FocusSession_Model_ShouldHaveCorrectProperties()
+    public void TaskItem_Model_ShouldHaveDefaultValues()
     {
-        // Arrange
-        var session = new FocusSession
-        {
-            Id = "test_1",
-            TaskId = "task_1",
-            TaskName = "Test",
-            StartTime = DateTime.Now,
-            EndTime = DateTime.Now.AddMinutes(25),
-            Completed = true,
-            FocusMinutes = 25
-        };
+        var task = new TaskItem();
 
-        // Assert
-        Assert.Equal("test_1", session.Id);
-        Assert.Equal("task_1", session.TaskId);
-        Assert.Equal("Test", session.TaskName);
-        Assert.True(session.Completed);
-        Assert.Equal(25, session.FocusMinutes);
-        Assert.NotNull(session.EndTime);
+        Assert.False(string.IsNullOrEmpty(task.Id));
+        Assert.Equal(string.Empty, task.Name);
+        Assert.Equal(string.Empty, task.Category);
+        Assert.Equal("#3B82F6", task.Color);
     }
 
     [Fact]
-    public void TaskItem_Model_ShouldHaveCorrectProperties()
+    public void FocusSession_Model_ShouldHaveDefaultValues()
     {
-        // Arrange
-        var task = new TaskItem
-        {
-            Id = "task_1",
-            Name = "Test Task",
-            Category = "Math",
-            Color = "#FF0000",
-            CreatedAt = DateTime.Now
-        };
+        var session = new FocusSession();
 
-        // Assert
-        Assert.Equal("task_1", task.Id);
-        Assert.Equal("Test Task", task.Name);
-        Assert.Equal("Math", task.Category);
-        Assert.Equal("#FF0000", task.Color);
-        Assert.True(task.CreatedAt > DateTime.MinValue);
+        Assert.False(string.IsNullOrEmpty(session.Id));
+        Assert.Equal(25, session.FocusMinutes);
+        Assert.False(session.Completed);
+        Assert.Equal(0, session.QualityScore);
+        Assert.Null(session.EndTime);
     }
 
     [Fact]
     public void Settings_Model_ShouldHaveDefaultValues()
     {
-        // Arrange
         var settings = new Settings();
 
-        // Assert
         Assert.Equal(25, settings.WorkMinutes);
         Assert.Equal(5, settings.ShortBreakMinutes);
         Assert.Equal(15, settings.LongBreakMinutes);
         Assert.Equal(4, settings.LongBreakInterval);
         Assert.False(settings.CameraAlertEnabled);
         Assert.True(settings.FocusGuardEnabled);
+        Assert.Equal(2, settings.FocusGuardDebounceHits);
+        Assert.Equal(3, settings.FocusGuardMaxAlertsPerSession);
+        Assert.True(settings.FocusGuardRespectDoNotDisturb);
+        Assert.True(settings.ConfirmExitWhileFocusing);
+        Assert.Equal(30, settings.SessionEndPreNotifySeconds);
+        Assert.False(settings.FullscreenBreakEnabled);
+        Assert.False(settings.StrictModeEnabled);
+        Assert.True(settings.EffectiveCameraAlertCanManualClose);
+        Assert.True(settings.EffectiveAllowEndBreakEarly);
         Assert.Equal(CameraAlertMode.UntilConfirm, settings.CameraAlertMode);
         Assert.Equal(180, settings.CameraFixedOnSeconds);
         Assert.True(settings.SoundEnabled);
@@ -72,5 +57,37 @@ public class ModelTests
         Assert.False(settings.AutoStartEnabled);
         Assert.Equal("system", settings.Theme);
         Assert.True(settings.AnimationEnabled);
+
+        settings.StrictModeEnabled = true;
+        Assert.False(settings.EffectiveCameraAlertCanManualClose);
+        Assert.False(settings.EffectiveAllowEndBreakEarly);
+    }
+
+    [Fact]
+    public void Settings_ApplyStrictFocusPreset_EnablesCompanionOptions()
+    {
+        var settings = new Settings
+        {
+            StrictModeEnabled = false,
+            FullscreenBreakEnabled = false,
+            CameraAlertEnabled = false,
+            CameraAlertCanManualClose = true,
+            SessionEndPreNotifySeconds = 0
+        };
+
+        settings.ApplyStrictFocusPreset();
+
+        Assert.True(settings.StrictModeEnabled);
+        Assert.True(settings.FullscreenBreakEnabled);
+        Assert.True(settings.CameraAlertEnabled);
+        Assert.Equal(CameraAlertLevel.Severe, settings.CameraAlertLevel);
+        Assert.False(settings.CameraAlertCanManualClose);
+        Assert.True(settings.CameraFollowBreakEnabled);
+        Assert.True(settings.ConfirmExitWhileFocusing);
+        Assert.Equal(30, settings.SessionEndPreNotifySeconds);
+        Assert.False(settings.EffectiveCameraAlertCanManualClose);
+        Assert.True(settings.SoundEnabled);
+        Assert.True(settings.PopupEnabled);
+        Assert.True(settings.SystemNotificationEnabled);
     }
 }

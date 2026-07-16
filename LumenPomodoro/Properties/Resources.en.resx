@@ -25,4 +25,13 @@
   <data name="Task_Politics" xml:space="preserve"><value>Politics</value></data>
   <data name="Task_Major" xml:space="preserve"><value>Major</value></data>
   <data name="Task_Review" xml:space="preserve"><value>Review</value></data>
+  <data name="ConfirmExitWhileFocusing_Title" xml:space="preserve"><value>Confirm Exit</value></data>
+  <data name="ConfirmExitWhileFocusing_Message" xml:space="preserve"><value>A timer is still running. Exit anyway? The current session will not count as completed.</value></data>
+  <data name="SessionEndSoon_Title" xml:space="preserve"><value>Almost done</value></data>
+  <data name="SessionEndSoon_Message" xml:space="preserve"><value>{0} seconds remaining</value></data>
+  <data name="StrictMode_CameraCloseBlocked" xml:space="preserve"><value>Strict mode is on. Camera alert cannot be closed manually.</value></data>
+  <data name="StrictMode_EndBreakBlocked" xml:space="preserve"><value>Strict mode is on. Please wait for the break to finish.</value></data>
+  <data name="FullscreenBreak_Short" xml:space="preserve"><value>Short break</value></data>
+  <data name="FullscreenBreak_Long" xml:space="preserve"><value>Long break</value></data>
+  <data name="FullscreenBreak_Hint" xml:space="preserve"><value>Stand up, stretch, look into the distance</value></data>
 </root>

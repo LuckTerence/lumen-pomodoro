@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: LuckTerence.LumenPomodoro
+PackageVersion: 0.4.0
+PackageLocale: zh-CN
+Publisher: LuckTerence
+PublisherUrl: https://github.com/LuckTerence
+PublisherSupportUrl: https://github.com/LuckTerence/lumen-pomodoro/issues
+Author: LuckTerence
+PackageName: Lumen Pomodoro
+PackageUrl: https://github.com/LuckTerence/lumen-pomodoro
+License: Apache-2.0
+LicenseUrl: https://github.com/LuckTerence/lumen-pomodoro/blob/main/LICENSE
+Copyright: Copyright (c) LuckTerence
+ShortDescription: 摄像头指示灯提醒的 Windows 番茄钟，本地优先、无账号。
+Description: |-
+  Lumen Pomodoro 是面向个人深度学习的 Windows 桌面番茄钟。
+  专注结束后可调用笔记本摄像头，点亮硬件指示灯作为物理休息提醒。
+  不保存照片、不录制视频、不上传摄像头数据。支持任务、统计、防走神与全屏休息。
+Moniker: lumen-pomodoro
+Tags:
+  - pomodoro
+  - focus
+  - productivity
+  - timer
+  - camera
+  - 番茄钟
+  - 专注
+ReleaseNotesUrl: https://github.com/LuckTerence/lumen-pomodoro/releases
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

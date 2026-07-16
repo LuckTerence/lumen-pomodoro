@@ -5,6 +5,7 @@ using System.Windows;
 using LumenPomodoro.Services;
 using LumenPomodoro.Services.Abstractions;
 using LumenPomodoro.ViewModels;
+using LumenPomodoro.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Serilog;
@@ -18,16 +19,19 @@ public partial class App : Application
 
     public App()
     {
-        // 确保 pack:// URI 在单文件发布模式下正确解析到本地程序集资源
         try { ResourceAssembly = typeof(App).Assembly; } catch { /* 运行时已自动设置 */ }
     }
 
-    public static T GetRequiredService<T>() where T : notnull
+    /// <summary>
+    /// 内部使用的服务定位器（仅限 App 启动/PageProvider 等无法 DI 的场景）。
+    /// 新代码应优先使用构造函数注入。
+    /// </summary>
+    internal static T GetRequiredService<T>() where T : notnull
         => ((App)Current).Services.GetRequiredService<T>();
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // 1. Bootstrap Serilog before anything else
+        // 1. Bootstrap Serilog
         var logDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "LumenPomodoro");
@@ -49,7 +53,7 @@ public partial class App : Application
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
-        // 3. Wire global exception handlers (now using Serilog)
+        // 3. Wire global exception handlers
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
@@ -73,11 +77,15 @@ public partial class App : Application
 
         ApplyLanguageOnStartup();
         ApplyThemeOnStartup();
+
+        // 4. 通过 DI 创建主窗口并显示
+        var mainWindow = Services.GetRequiredService<MainWindow>();
+        mainWindow.Show();
     }
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Services - interfaces → implementations
+        // Services (Singleton)
         services.AddSingleton<IStorageService, StorageService>();
         services.AddSingleton<ITimerService, TimerService>();
         services.AddSingleton<ICameraService, CameraService>();
@@ -85,15 +93,16 @@ public partial class App : Application
         services.AddSingleton<ISoundService, SoundService>();
         services.AddSingleton<IInsightEngine, InsightEngine>();
         services.AddSingleton<IExportService, ExportService>();
+        services.AddSingleton<ITrayService, TrayService>();
 
-        // ViewModels
+        // ViewModels (Transient)
         services.AddTransient<MainViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<StatsViewModel>();
         services.AddTransient<TasksViewModel>();
 
-        // TrayService — registered as singleton, resolved manually in MainWindow
-        services.AddSingleton<ITrayService, TrayService>();
+        // Views (Transient — Window 生命周期由 WPF 管理)
+        services.AddTransient<MainWindow>();
     }
 
     private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -136,7 +145,7 @@ public partial class App : Application
         {
             Current.Dispatcher.BeginInvoke(() =>
             {
-                if (Current.MainWindow is Views.MainWindow mainWindow)
+                if (Current.MainWindow is MainWindow mainWindow)
                 {
                     mainWindow.HandleWake();
                 }
@@ -165,19 +174,26 @@ public partial class App : Application
 
     private void ApplyThemeOnStartup()
     {
-        ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+        var storageService = Services.GetRequiredService<IStorageService>();
+        var settings = storageService.LoadSettings();
+        ApplyTheme(settings.Theme);
     }
 
     public void ApplyTheme(string theme)
     {
-        ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+        var actualTheme = theme switch
+        {
+            "light" => ApplicationTheme.Light,
+            "dark" => ApplicationTheme.Dark,
+            _ => ApplicationTheme.Dark  // "system" or unknown → dark (default)
+        };
+        ApplicationThemeManager.Apply(actualTheme);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
 
-        // 释放 DI 容器中的单例服务（CameraService, TimerService, SoundService 等）
         (Services as IDisposable)?.Dispose();
 
         Log.Information("应用退出");

@@ -53,3 +53,10 @@ desktop.ini
 *.lnk
 coverage-report/
 **/TestResults/
+
+## Xcode / macOS
+LumenPomodoroMac/build/
+LumenPomodoroMac/.build/
+LumenPomodoroMac/DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/

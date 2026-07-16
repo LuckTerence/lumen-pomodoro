@@ -217,6 +217,9 @@ public class TrayService : ITrayService
 
     private void ExitItem_Click(object? sender, RoutedEventArgs e)
     {
+        if (!_mainViewModel.ConfirmExitIfNeeded(_mainWindow))
+            return;
+
         try
         {
             FireAndForget(_cameraService.StopCameraAsync(), "退出时停止摄像头");

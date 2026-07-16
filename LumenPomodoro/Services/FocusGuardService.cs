@@ -12,29 +12,39 @@ namespace LumenPomodoro.Services;
 /// <summary>
 /// 基于前台窗口 + 键鼠空闲的防走神检测。
 /// 周期性轮询：空闲超阈值判为"离开"，前台进程名/窗口标题命中黑名单判为"分心"。
-/// 连续命中达到防抖次数后触发一次 <see cref="DistractionDetected"/>，恢复专注后触发 <see cref="FocusRegained"/>。
+/// 连续命中达到防抖次数后触发一次 <see cref="DistractionDetected"/>（每会话有上限），
+/// 恢复专注后触发 <see cref="FocusRegained"/>。
 /// </summary>
 public sealed class FocusGuardService : IFocusGuardService
 {
-    private const int DebounceHits = 1;
-
     private readonly object _lock = new();
+    private readonly FocusGuardEngine _engine = new();
     private Timer? _timer;
     private string _ownProcessName = string.Empty;
 
     private string[] _blocklist = Array.Empty<string>();
     private double _idleThresholdSeconds;
     private int _pollMs;
+    private bool _respectDoNotDisturb = true;
 
-    private int _consecutiveHits;
-    private bool _isDistracted;
+    /// <summary>测试用：覆盖原生 Evaluate，返回分心原因或 null。</summary>
+    internal Func<string?>? EvaluateOverride { get; set; }
+
+    /// <summary>测试用：覆盖系统勿扰检测。</summary>
+    internal Func<bool>? DoNotDisturbOverride { get; set; }
 
     public bool IsRunning { get; private set; }
+
+    /// <summary>当前会话已发出的告警次数（便于诊断与测试）。</summary>
+    public int AlertCount
+    {
+        get { lock (_lock) return _engine.AlertCount; }
+    }
 
     public event Action<string>? DistractionDetected;
     public event Action? FocusRegained;
 
-    public void Start(Settings settings)
+    public void Start(Settings settings, bool resetSessionCounters = true)
     {
         if (settings == null || !settings.FocusGuardEnabled) return;
 
@@ -49,6 +59,15 @@ public sealed class FocusGuardService : IFocusGuardService
             _idleThresholdSeconds = Math.Max(1, settings.FocusGuardIdleSeconds);
             _pollMs = Math.Max(1, settings.FocusGuardPollSeconds) * 1000;
 
+            _engine.Configure(
+                settings.FocusGuardDebounceHits,
+                settings.FocusGuardMaxAlertsPerSession);
+            _respectDoNotDisturb = settings.FocusGuardRespectDoNotDisturb;
+            if (resetSessionCounters)
+                _engine.ResetSession();
+            else
+                _engine.ResetRunningState();
+
             try
             {
                 using var p = System.Diagnostics.Process.GetCurrentProcess();
@@ -59,13 +78,12 @@ public sealed class FocusGuardService : IFocusGuardService
                 _ownProcessName = string.Empty;
             }
 
-            _consecutiveHits = 0;
-            _isDistracted = false;
             IsRunning = true;
-
             _timer = new Timer(OnTick, null, _pollMs, _pollMs);
-            Log.Information("[FocusGuard] 启动，空闲阈值={Idle}s，轮询={Poll}ms，黑名单={Count} 项",
-                _idleThresholdSeconds, _pollMs, _blocklist.Length);
+            Log.Information(
+                "[FocusGuard] 启动，空闲阈值={Idle}s，轮询={Poll}ms，防抖={Debounce}，上限={Max}，遵从勿扰={Dnd}，黑名单={Count} 项，重置会话={Reset}",
+                _idleThresholdSeconds, _pollMs, _engine.DebounceHits, _engine.MaxAlertsPerSession,
+                _respectDoNotDisturb, _blocklist.Length, resetSessionCounters);
         }
     }
 
@@ -78,8 +96,7 @@ public sealed class FocusGuardService : IFocusGuardService
             IsRunning = false;
             toDispose = _timer;
             _timer = null;
-            _consecutiveHits = 0;
-            _isDistracted = false;
+            _engine.ResetRunningState();
         }
 
         toDispose?.Dispose();
@@ -88,44 +105,47 @@ public sealed class FocusGuardService : IFocusGuardService
 
     private void OnTick(object? state)
     {
-        // 进入临界区前判定是否仍在运行，避免 Stop 后的残留回调继续触发事件。
         lock (_lock)
         {
             if (!IsRunning) return;
         }
 
-        string? reason = Evaluate();
+        string? reason = EvaluateOverride?.Invoke() ?? Evaluate();
+        ProcessEvaluation(reason);
+    }
 
-        if (reason != null)
+    /// <summary>供单测直接注入判定结果，不经 Timer。</summary>
+    internal void ProcessEvaluation(string? reason)
+    {
+        bool suppress = false;
+        lock (_lock)
         {
-            bool fire = false;
-            lock (_lock)
+            if (!IsRunning) return;
+            if (_respectDoNotDisturb)
             {
-                if (!IsRunning) return;
-                _consecutiveHits++;
-                if (_consecutiveHits >= DebounceHits && !_isDistracted)
+                try
                 {
-                    _isDistracted = true;
-                    fire = true;
+                    suppress = DoNotDisturbOverride?.Invoke()
+                               ?? SystemAttentionState.IsDoNotDisturbActive();
+                }
+                catch
+                {
+                    suppress = false;
                 }
             }
-            if (fire) DistractionDetected?.Invoke(reason);
         }
-        else
+
+        FocusGuardTickResult result;
+        lock (_lock)
         {
-            bool regained = false;
-            lock (_lock)
-            {
-                if (!IsRunning) return;
-                _consecutiveHits = 0;
-                if (_isDistracted)
-                {
-                    _isDistracted = false;
-                    regained = true;
-                }
-            }
-            if (regained) FocusRegained?.Invoke();
+            if (!IsRunning) return;
+            result = _engine.Tick(reason, suppressNotification: suppress);
         }
+
+        if (result.FireDistraction && result.Reason != null)
+            DistractionDetected?.Invoke(result.Reason);
+        if (result.FireRegained)
+            FocusRegained?.Invoke();
     }
 
     /// <summary>判定当前是否分心；返回原因文案，专注时返回 null。</summary>

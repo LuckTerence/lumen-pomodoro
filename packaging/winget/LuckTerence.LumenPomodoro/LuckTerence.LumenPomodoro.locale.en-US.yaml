@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.locale.1.6.0.schema.json
+PackageIdentifier: LuckTerence.LumenPomodoro
+PackageVersion: 0.4.0
+PackageLocale: en-US
+Publisher: LuckTerence
+PublisherUrl: https://github.com/LuckTerence
+PublisherSupportUrl: https://github.com/LuckTerence/lumen-pomodoro/issues
+Author: LuckTerence
+PackageName: Lumen Pomodoro
+PackageUrl: https://github.com/LuckTerence/lumen-pomodoro
+License: Apache-2.0
+LicenseUrl: https://github.com/LuckTerence/lumen-pomodoro/blob/main/LICENSE
+Copyright: Copyright (c) LuckTerence
+ShortDescription: A local-first Windows Pomodoro timer with camera LED break alerts.
+Description: |-
+  Lumen Pomodoro is a Windows desktop focus timer for deep work.
+  When a focus session ends it can turn on the laptop camera so the hardware LED lights up as a hard-to-miss break signal.
+  No photos, no video recording, no cloud upload. Includes tasks, stats, focus guard, and optional fullscreen breaks.
+Tags:
+  - pomodoro
+  - focus
+  - productivity
+  - timer
+  - camera
+ReleaseNotesUrl: https://github.com/LuckTerence/lumen-pomodoro/releases
+ManifestType: locale
+ManifestVersion: 1.6.0
