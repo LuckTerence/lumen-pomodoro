@@ -13,10 +13,11 @@
 
 ## Windows 运行
 
-1. 解压 zip  
-2. 双击 `LumenPomodoro.exe`（启动器）  
-3. 若提示安装 .NET Desktop Runtime，按提示完成即可  
-4. 首次启动完成引导：为什么用灯 → 隐私 → 选场景（轻松 / 标准 / 严格）
+1. 解压 `LumenPomodoro.zip`  
+2. 双击 `LumenPomodoro.exe`（Release 为**自包含**包，一般无需另装 .NET）  
+3. 首次启动完成引导：为什么用灯 → 隐私 → 选场景（轻松 / 标准 / 严格）  
+
+> 开发者本机仍可用 `Publish-LumenPomodoro.cmd` 打「小启动器 + 需 Runtime」的小体积包。
 
 ## macOS 运行
 

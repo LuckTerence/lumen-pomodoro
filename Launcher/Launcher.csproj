@@ -5,7 +5,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishAot>true</PublishAot>
+    <!-- 本地可用 -p:PublishAot=true 打小体积；CI 默认关闭 AOT -->
+    <PublishAot>false</PublishAot>
     <SelfContained>true</SelfContained>
     <StripSymbols>true</StripSymbols>
     <OptimizationPreferSize>true</OptimizationPreferSize>

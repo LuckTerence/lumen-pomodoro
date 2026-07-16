@@ -4,6 +4,9 @@ import PackageDescription
 let package = Package(
     name: "LumenPomodoroMac",
     platforms: [.macOS(.v14)],
+    products: [
+        .executable(name: "LumenPomodoroMac", targets: ["LumenPomodoroMac"])
+    ],
     targets: [
         .executableTarget(
             name: "LumenPomodoroMac",

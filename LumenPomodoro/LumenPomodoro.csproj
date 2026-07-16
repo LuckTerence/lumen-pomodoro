@@ -11,7 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <!-- 与 net8.0-windows 对齐；10.x 在部分 CI 上解析/编译易失败 -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
