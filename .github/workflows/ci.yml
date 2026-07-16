@@ -36,12 +36,28 @@ jobs:
       # 先跑无 coverlet 的快速测试（coverlet + WPF Dispatcher 在 runner 上易挂死）
       - name: Test
         timeout-minutes: 8
-        run: >
-          dotnet test LumenPomodoro.Tests
-          --configuration Release
-          --no-build
-          --verbosity normal
-          --blame-hang-timeout 60s
+        run: |
+          set -e
+          dotnet test LumenPomodoro.Tests \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --blame-hang-timeout 60s \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory TestResults || {
+              echo "::error::Tests failed"
+              # 尽量打印失败用例
+              find TestResults -name '*.trx' -print -exec grep -E 'outcome="Failed"|testName=' {} \; | head -80 || true
+              exit 1
+            }
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: ignore
 
       - name: Test with coverage (advisory)
         continue-on-error: true
