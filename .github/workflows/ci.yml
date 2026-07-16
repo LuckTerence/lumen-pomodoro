@@ -27,9 +27,10 @@ jobs:
 
       - name: Format check
         run: |
-          # 失败时列出差异，便于修 CRLF / 空白
-          if ! dotnet format LumenPomodoro.sln --verify-no-changes --verbosity diagnostic; then
-            echo "::error::dotnet format 未通过。本仓库 EditorConfig 要求 end_of_line=crlf。"
+          # 只校验空白/行尾（EditorConfig end_of_line=crlf）。
+          # 完整 style analyzer 在跨平台编辑时噪声过大，不作为硬门禁。
+          if ! dotnet format whitespace LumenPomodoro.sln --verify-no-changes --verbosity diagnostic; then
+            echo "::error::whitespace/EOL format 未通过（仓库要求 CRLF）。"
             exit 1
           fi
 
