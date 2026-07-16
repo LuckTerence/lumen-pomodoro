@@ -23,32 +23,37 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # 主程序（framework-dependent 单文件）
+          Write-Host '=== Publish WPF app (framework-dependent) ==='
           dotnet publish LumenPomodoro/LumenPomodoro.csproj `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained false `
-            -p:PublishSingleFile=true `
-            -p:DebugType=none `
-            -p:DebugSymbols=false `
-            --output publish/app
+            -c Release -r win-x64 --self-contained false `
+            -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
+            -o publish/app
+          if ($LASTEXITCODE -ne 0) { throw "WPF publish failed: $LASTEXITCODE" }
 
-          # 启动器：CI 用非 AOT 自包含（避免 runner 缺少原生 AOT 工具链）
-          # 本地可用 Publish-LumenPomodoro.cmd 打 AOT 小体积版
+          Write-Host '=== Publish Launcher (self-contained, non-AOT) ==='
+          # 覆盖 csproj 中 PublishAot=true，避免 runner 无原生 AOT 工具链
           dotnet publish Launcher/Launcher.csproj `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained true `
+            -c Release -r win-x64 --self-contained true `
             -p:PublishAot=false `
             -p:PublishSingleFile=true `
-            -p:DebugType=none `
-            -p:DebugSymbols=false `
             -p:IncludeNativeLibrariesForSelfExtract=true `
-            --output publish
+            -p:DebugType=none -p:DebugSymbols=false `
+            -o publish/launcher-out
+          if ($LASTEXITCODE -ne 0) { throw "Launcher publish failed: $LASTEXITCODE" }
 
-          if (-not (Test-Path publish/LumenPomodoro.exe)) { throw 'Launcher exe missing' }
-          if (-not (Test-Path publish/app/LumenPomodoro.exe)) { throw 'App exe missing' }
+          # 启动器程序集名为 LumenPomodoro.exe
+          $launcher = Get-ChildItem publish/launcher-out -Filter LumenPomodoro.exe -Recurse | Select-Object -First 1
+          if (-not $launcher) {
+            Get-ChildItem publish/launcher-out -Recurse | Select-Object FullName
+            throw 'Launcher LumenPomodoro.exe not found'
+          }
+          Copy-Item $launcher.FullName publish/LumenPomodoro.exe -Force
 
+          $app = 'publish/app/LumenPomodoro.exe'
+          if (-not (Test-Path $app)) { throw "App missing: $app" }
+
+          Write-Host '=== Zip ==='
+          if (Test-Path LumenPomodoro.zip) { Remove-Item LumenPomodoro.zip -Force }
           Compress-Archive -Path publish/LumenPomodoro.exe,publish/app -DestinationPath LumenPomodoro.zip -Force
           $hash = (Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256).Hash.ToLower()
           Set-Content -Path winget-sha256.txt -Value $hash -NoNewline
@@ -70,21 +75,21 @@ jobs:
 
       - name: Show toolchain
         run: |
+          uname -m
           swift --version
           xcodebuild -version || true
 
-      - name: Build DMG
+      - name: Build DMG via SPM
         run: |
           set -euo pipefail
-          chmod +x LumenPomodoroMac/build-mac.sh LumenPomodoroMac/package-dmg.sh LumenPomodoroMac/generate-xcodeproj.sh
+          chmod +x LumenPomodoroMac/*.sh
           export VERSION="${GITHUB_REF_NAME#v}"
           cd LumenPomodoroMac
-          # 强制 SPM release 路径（不依赖 Xcode scheme）
-          swift build -c release --product LumenPomodoroMac || swift build -c release
-          test -x .build/release/LumenPomodoroMac
+          swift build -c release
+          find .build -type f -name LumenPomodoroMac | head -20
           ./package-dmg.sh
           ls -la dist/
-          test -n "$(ls dist/*.dmg 2>/dev/null)"
+          test -n "$(ls dist/*.dmg)"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -109,7 +114,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          find artifacts -type f -print
+          find artifacts -type f -print || true
           if [ -f artifacts/windows-package/LumenPomodoro.zip ]; then
             cp artifacts/windows-package/LumenPomodoro.zip dist/
             cp artifacts/windows-package/winget-sha256.txt dist/ || true
