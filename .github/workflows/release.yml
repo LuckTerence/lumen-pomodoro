@@ -59,19 +59,27 @@ jobs:
 
       - name: Build DMG
         run: |
+          set -euo pipefail
           chmod +x LumenPomodoroMac/build-mac.sh LumenPomodoroMac/package-dmg.sh LumenPomodoroMac/generate-xcodeproj.sh
           VERSION="${GITHUB_REF_NAME#v}"
           export VERSION
-          ./LumenPomodoroMac/package-dmg.sh
+          # CI 优先 SPM 可靠路径；package-dmg 会在无 xcode .app 时自动包 SPM 产物
+          cd LumenPomodoroMac
+          swift build -c release
+          ./package-dmg.sh
+          ls -la dist/
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-package
           path: LumenPomodoroMac/dist/*.dmg
+          if-no-files-found: error
 
   release:
     needs: [windows, macos]
+    # 任一侧失败仍尝试发布已有产物（至少 Windows）
+    if: always() && needs.windows.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,13 +88,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: false
 
       - name: Prepare release files
         run: |
+          set -euo pipefail
           mkdir -p dist
           cp artifacts/windows-package/LumenPomodoro.zip dist/
           cp artifacts/windows-package/winget-sha256.txt dist/ || true
-          cp artifacts/macos-package/*.dmg dist/ || true
+          if compgen -G "artifacts/macos-package/*.dmg" > /dev/null; then
+            cp artifacts/macos-package/*.dmg dist/
+          else
+            echo "WARN: no macOS dmg artifact"
+          fi
           ls -la dist
           SHA=$(cat dist/winget-sha256.txt 2>/dev/null || echo "see artifact")
           echo "WINGET_SHA256=$SHA" >> "$GITHUB_ENV"
@@ -97,3 +111,4 @@ jobs:
           files: dist/*
           generate_release_notes: true
           body_path: docs/GITHUB_RELEASE_v0.4.1.md
+          fail_on_unmatched_files: false
