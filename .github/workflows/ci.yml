@@ -26,7 +26,12 @@ jobs:
         run: dotnet build LumenPomodoro.sln --configuration Release --no-restore
 
       - name: Format check
-        run: dotnet format LumenPomodoro.sln --verify-no-changes
+        run: |
+          # 失败时列出差异，便于修 CRLF / 空白
+          if ! dotnet format LumenPomodoro.sln --verify-no-changes --verbosity diagnostic; then
+            echo "::error::dotnet format 未通过。本仓库 EditorConfig 要求 end_of_line=crlf。"
+            exit 1
+          fi
 
       - name: Test with coverage
         run: >
