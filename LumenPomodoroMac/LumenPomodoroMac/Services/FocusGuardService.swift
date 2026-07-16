@@ -60,7 +60,7 @@ final class FocusGuardService {
         }
 
         timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(pollSeconds), repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.tick()
             }
         }

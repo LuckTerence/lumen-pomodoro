@@ -95,7 +95,7 @@ final class TimerService: ObservableObject {
 
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.tick()
             }
         }

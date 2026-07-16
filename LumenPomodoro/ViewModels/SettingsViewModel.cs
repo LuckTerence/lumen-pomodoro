@@ -9,7 +9,7 @@ using Serilog;
 
 namespace LumenPomodoro.ViewModels;
 
-public partial class SettingsViewModel : IDisposable
+public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly IStorageService _storageService;
     private readonly ICameraService _cameraService;
