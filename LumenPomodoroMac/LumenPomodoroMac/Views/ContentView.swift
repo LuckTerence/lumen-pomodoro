@@ -38,9 +38,13 @@ struct ContentView: View {
             get: { viewModel.cameraErrorMessage != nil },
             set: { if !$0 { viewModel.cameraErrorMessage = nil } }
         )) {
-            Button("好") { viewModel.cameraErrorMessage = nil }
+            Button("打开系统设置") {
+                viewModel.openCameraPrivacySettings()
+                viewModel.cameraErrorMessage = nil
+            }
+            Button("好", role: .cancel) { viewModel.cameraErrorMessage = nil }
         } message: {
-            Text(viewModel.cameraErrorMessage ?? "")
+            Text((viewModel.cameraErrorMessage ?? "") + "\n\n灯不亮时请确认已允许本应用使用摄像头。")
         }
         .sheet(isPresented: $viewModel.showOnboarding) {
             OnboardingView(viewModel: viewModel)

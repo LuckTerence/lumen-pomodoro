@@ -130,6 +130,17 @@ struct SettingsView: View {
                             .buttonStyle(.borderedProminent)
                         Button("严格专注") { viewModel.applyFocusScenePreset("strict") }
                     }
+                    Button("重新查看首次引导") {
+                        viewModel.replayOnboarding()
+                    }
+                    .buttonStyle(.plain)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    Button("打开摄像头系统设置") {
+                        viewModel.openCameraPrivacySettings()
+                    }
+                    .buttonStyle(.bordered)
+                    .font(.caption)
                 }
                 .padding(.top, 4)
             }

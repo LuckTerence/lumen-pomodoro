@@ -1,0 +1,39 @@
+name: 摄像头灯问题
+description: 指示灯不亮、权限失败、被占用等
+title: "[摄像头] "
+labels: ["bug", "camera"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请尽量附上：系统版本、是否笔记本内置摄像头、错误原文。
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      options:
+        - Windows 10/11
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      placeholder: 例如：专注结束后没有亮灯；报错「权限被拒绝」
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 已自查
+      options:
+        - label: 已在系统设置中允许本应用使用摄像头
+        - label: 已确认没有其他应用独占摄像头
+        - label: 已尝试「设置 → 打开摄像头系统设置」

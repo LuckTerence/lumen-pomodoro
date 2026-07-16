@@ -290,6 +290,39 @@ public partial class SettingsViewModel : IDisposable
         }
     }
 
+    /// <summary>重新显示首次产品引导（设置页入口）。</summary>
+    [RelayCommand]
+    private void ReplayOnboarding()
+    {
+        var latest = _storageService.LoadSettings();
+        latest.HasCompletedOnboarding = false;
+        _storageService.SaveSettings(latest);
+
+        var owner = Application.Current?.MainWindow;
+        var win = new Views.OnboardingWindow(latest) { Owner = owner };
+        win.ShowDialog();
+        if (win.Completed)
+        {
+            _storageService.SaveSettings(latest);
+            LoadFromSettings(latest);
+            // 将完整对象写回，避免只同步了部分字段
+            Save();
+            MessageBox.Show("引导已完成，场景预设已更新。", "引导", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        else
+        {
+            // 用户直接关窗：恢复「已完成」，避免下次启动反复弹
+            latest.HasCompletedOnboarding = true;
+            _storageService.SaveSettings(latest);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenCameraPrivacySettings()
+    {
+        MainViewModel.OpenWindowsCameraPrivacySettings();
+    }
+
     [RelayCommand]
     private void ApplyLightFocusPreset() => ApplyScenePresetAndSave("light", "轻松");
 

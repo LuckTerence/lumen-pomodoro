@@ -1,0 +1,32 @@
+name: 防走神误报/漏报
+description: 黑名单、空闲、勿扰相关问题
+title: "[防走神] "
+labels: ["bug", "focus-guard"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      options:
+        - Windows 10/11
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      placeholder: 误报、漏报、提醒太频繁、勿扰时仍弹窗等
+    validations:
+      required: true
+  - type: input
+    id: settings
+    attributes:
+      label: 相关设置
+      placeholder: 防抖次数 / 空闲秒数 / 是否开启勿扰遵从
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true

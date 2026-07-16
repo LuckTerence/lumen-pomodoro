@@ -17,6 +17,8 @@
 | [focus-guard-stretchly-alignment.md](./focus-guard-stretchly-alignment.md) | FocusGuard 与 Stretchly 规则对齐表 + backlog |
 | [packaging-winget-mac.md](./packaging-winget-mac.md) | winget 清单与 macOS DMG 打包 / 发版清单 |
 | [roadmap-v0.4-pm.md](./roadmap-v0.4-pm.md) | 产品路线图与验收清单 |
+| [core-path-checklist.md](./core-path-checklist.md) | 发版核心路径双端验收 |
+| [release-v0.4.0.md](./release-v0.4.0.md) | v0.4.0 发布说明草稿 |
 
 ## 审查
 

@@ -189,6 +189,15 @@
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" VerticalAlignment="Center" />
                     </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="摄像头权限" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="灯不亮时，请确认 Windows 已允许本应用使用摄像头" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="打开系统设置" Command="{Binding OpenCameraPrivacySettingsCommand}"
+                                Padding="12,6" Cursor="Hand" Background="#334155" Foreground="White" BorderThickness="0" />
+                    </Grid>
                     <StackPanel Visibility="{Binding CameraAlertEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid Margin="0,0,0,14">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
@@ -378,6 +387,10 @@
                                         Margin="6,0,0,0" Padding="8,8" Cursor="Hand"
                                         Background="#7C3AED" Foreground="White" BorderThickness="0" />
                             </UniformGrid>
+                            <Button Content="重新查看首次引导"
+                                    Command="{Binding ReplayOnboardingCommand}"
+                                    Margin="0,12,0,0" Padding="12,8" Cursor="Hand" HorizontalAlignment="Left"
+                                    Background="Transparent" Foreground="#94A3B8" BorderThickness="0" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

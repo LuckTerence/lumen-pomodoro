@@ -551,22 +551,69 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _notifications.PlaySound("FocusComplete", AppSettings.SoundEnabled);
         _notifications.ShowSystem(Properties.LocalizedStrings.CameraError, error, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        OnPropertyChanged(nameof(CameraStatusDisplay));
 
         if (error.Contains(Properties.LocalizedStrings.CameraProtectedRelease))
             IsFocusCompleted = true;
 
-        if (AppSettings.PopupEnabled)
-        {
-            MessageBox.Show(
-                $"{error}\n\n如果摄像头权限未开启，可以前往 Windows 隐私设置开启摄像头权限。",
-                Properties.LocalizedStrings.CameraErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        // 始终给出可操作诊断（不仅依赖 Popup 开关）
+        var likelyPermission = LooksLikeCameraPermissionError(error);
+        var owner = Application.Current?.MainWindow;
+        var result = MessageBox.Show(
+            owner,
+            $"{error}\n\n" +
+            (likelyPermission
+                ? "这通常是系统未允许本应用使用摄像头。是否打开 Windows「摄像头隐私」设置？"
+                : "若指示灯未亮，常见原因是摄像头被占用或权限关闭。是否打开 Windows「摄像头隐私」设置排查？"),
+            Properties.LocalizedStrings.CameraErrorTitle,
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.Yes);
 
-            if (error.Contains("权限") || error.Contains("denied") || error.Contains("access"))
+        if (result == MessageBoxResult.Yes)
+            OpenWindowsCameraPrivacySettings();
+    }
+
+    /// <summary>打开系统摄像头隐私页（供错误诊断与设置页调用）。</summary>
+    public static void OpenWindowsCameraPrivacySettings()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                try { System.Diagnostics.Process.Start("ms-settings:privacy-webcam"); }
-                catch (Exception ex) { Log.Warning(ex, "打开摄像头隐私设置失败"); }
+                FileName = "ms-settings:privacy-webcam",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "打开摄像头隐私设置失败");
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "ms-settings:privacy",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex2)
+            {
+                Log.Warning(ex2, "打开隐私设置失败");
             }
         }
+    }
+
+    private static bool LooksLikeCameraPermissionError(string error)
+    {
+        if (string.IsNullOrEmpty(error)) return false;
+        return error.Contains("权限", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("denied", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("access", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("不可用", StringComparison.Ordinal)
+               || error.Contains("失败", StringComparison.Ordinal)
+               || error.Contains("占用", StringComparison.Ordinal)
+               || error.Contains("not found", StringComparison.OrdinalIgnoreCase);
     }
 
     // ── Data & Streak ──

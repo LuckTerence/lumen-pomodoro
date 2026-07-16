@@ -16,6 +16,7 @@ final class AppViewModel: ObservableObject {
     @Published var showPrivacySheet = false
     @Published var showOnboarding = false
     @Published var cameraErrorMessage: String?
+    @Published var showCameraErrorOfferSettings = false
     @Published var lastCompletedSummary = ""
     @Published var dailyReport: DailyReport?
     @Published var showDailyReport = false
@@ -169,6 +170,21 @@ final class AppViewModel: ObservableObject {
 
     func applyStrictFocusPreset() {
         applyFocusScenePreset("strict")
+    }
+
+    func replayOnboarding() {
+        settings.hasCompletedOnboarding = false
+        saveSettings()
+        showOnboarding = true
+    }
+
+    func openCameraPrivacySettings() {
+        SystemSettingsOpener.openCameraPrivacy()
+    }
+
+    func presentCameraError(_ message: String) {
+        cameraErrorMessage = message
+        showCameraErrorOfferSettings = true
     }
 
     func syncLaunchAtLoginFromSettings() {

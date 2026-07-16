@@ -125,12 +125,7 @@ struct OnboardingView: View {
     }
 
     private func openAccessibilitySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
-        // 提示系统弹窗（若未信任）
-        let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(opts)
+        SystemSettingsOpener.openAccessibility(prompt: true)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { refreshPermissions() }
     }
 

@@ -33,6 +33,7 @@
 		A10000000000000000000024 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000026 /* Color+Hex.swift */; };
 		A10000000000000000000025 /* FullscreenBreakView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000027 /* FullscreenBreakView.swift */; };
 		A10000000000000000000026 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000028 /* OnboardingView.swift */; };
+		A10000000000000000000027 /* SystemSettingsOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* SystemSettingsOpener.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +65,7 @@
 		A20000000000000000000026 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		A20000000000000000000027 /* FullscreenBreakView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullscreenBreakView.swift; sourceTree = "<group>"; };
 		A20000000000000000000028 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A20000000000000000000029 /* SystemSettingsOpener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSettingsOpener.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* LumenPomodoroMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LumenPomodoroMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -132,6 +134,7 @@
 				A20000000000000000000021 /* DynamicIslandService.swift */,
 				A20000000000000000000022 /* DailyReportService.swift */,
 				A20000000000000000000023 /* LaunchAtLoginService.swift */,
+				A20000000000000000000029 /* SystemSettingsOpener.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -272,6 +275,7 @@
 				A10000000000000000000024 /* Color+Hex.swift in Sources */,
 				A10000000000000000000025 /* FullscreenBreakView.swift in Sources */,
 				A10000000000000000000026 /* OnboardingView.swift in Sources */,
+				A10000000000000000000027 /* SystemSettingsOpener.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
