@@ -22,22 +22,29 @@ bash "$MAC_DIR/build-mac.sh"
 # 优先 Xcode 产物，其次 SPM 可执行文件包装
 APP_PATH="$BUILD_DIR/DerivedData/Build/Products/Release/LumenPomodoroMac.app"
 if [[ ! -d "$APP_PATH" ]]; then
-  # SPM 产物路径因 arch/triple 而异，统一 find
-  SPM_BIN="$(find "$MAC_DIR/.build" -type f -name LumenPomodoroMac ! -name '*.o' ! -name '*.swiftmodule' 2>/dev/null | while read -r f; do
-    [[ -x "$f" ]] && file "$f" 2>/dev/null | grep -q 'executable' && echo "$f" && break
-  done | head -1)"
+  # SPM 产物路径因 arch/triple 而异；排除 dSYM 内的同名 debug 文件
+  SPM_BIN=""
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    [[ "$f" == *".dSYM"* ]] && continue
+    [[ "$f" != *"/release/"* ]] && continue
+    if [[ -x "$f" ]] && file "$f" 2>/dev/null | grep -Eqi 'Mach-O|executable'; then
+      SPM_BIN="$f"
+      break
+    fi
+  done < <(find "$MAC_DIR/.build" -type f -name LumenPomodoroMac 2>/dev/null | sort)
+
   if [[ -z "${SPM_BIN:-}" || ! -x "$SPM_BIN" ]]; then
-    # 常见路径兜底
     for cand in \
       "$MAC_DIR/.build/release/LumenPomodoroMac" \
       "$MAC_DIR/.build/arm64-apple-macosx/release/LumenPomodoroMac" \
       "$MAC_DIR/.build/x86_64-apple-macosx/release/LumenPomodoroMac"; do
-      if [[ -x "$cand" ]]; then SPM_BIN="$cand"; break; fi
+      if [[ -x "$cand" && "$cand" != *".dSYM"* ]]; then SPM_BIN="$cand"; break; fi
     done
   fi
   if [[ -z "${SPM_BIN:-}" || ! -x "$SPM_BIN" ]]; then
     echo "ERROR: neither Xcode app nor SPM binary found under .build"
-    find "$MAC_DIR/.build" -name 'LumenPomodoroMac*' 2>/dev/null | head -20 || true
+    find "$MAC_DIR/.build" -type f -name LumenPomodoroMac 2>/dev/null | head -30 || true
     exit 1
   fi
   echo "==> Packaging SPM binary into .app bundle: $SPM_BIN"
