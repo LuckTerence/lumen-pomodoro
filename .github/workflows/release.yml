@@ -14,40 +14,59 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish Windows (self-contained single-file)
+      - name: Publish Windows
+        id: pub
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          # CI 可靠路径：自包含 WPF 单文件（无需单独启动器 / AOT）
-          # 用户本机仍可用 Publish-LumenPomodoro.cmd 打「小启动器 + FDD」包
-          dotnet restore LumenPomodoro/LumenPomodoro.csproj
+          $ErrorActionPreference = 'Continue'
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+          Write-Host 'dotnet --info'
+          dotnet --info | Tee-Object -FilePath logs/dotnet-info.txt
+
+          Write-Host '=== restore ==='
+          dotnet restore LumenPomodoro/LumenPomodoro.csproj -v minimal 2>&1 | Tee-Object -FilePath logs/restore.txt
+          if ($LASTEXITCODE -ne 0) { throw "restore failed $LASTEXITCODE" }
+
+          Write-Host '=== build ==='
+          dotnet build LumenPomodoro/LumenPomodoro.csproj -c Release -v minimal --no-restore 2>&1 | Tee-Object -FilePath logs/build.txt
+          if ($LASTEXITCODE -ne 0) { throw "build failed $LASTEXITCODE" }
+
+          Write-Host '=== publish self-contained ==='
           dotnet publish LumenPomodoro/LumenPomodoro.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
+            -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:EnableCompressionInSingleFile=true `
-            -p:DebugType=none `
-            -p:DebugSymbols=false `
-            -o publish/win
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-ChildItem publish/win | Format-Table Name,Length
-          if (-not (Test-Path publish/win/LumenPomodoro.exe)) { throw 'LumenPomodoro.exe missing' }
+            -p:DebugType=none -p:DebugSymbols=false `
+            -o publish/win --no-restore 2>&1 | Tee-Object -FilePath logs/publish.txt
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content logs/publish.txt -Tail 80
+            throw "publish failed $LASTEXITCODE"
+          }
 
-          # zip 内直接是 exe（解压即用）
+          Get-ChildItem publish/win | Tee-Object -FilePath logs/out-list.txt
+          if (-not (Test-Path publish/win/LumenPomodoro.exe)) { throw 'exe missing' }
+
           if (Test-Path LumenPomodoro.zip) { Remove-Item LumenPomodoro.zip -Force }
           Compress-Archive -Path publish/win/* -DestinationPath LumenPomodoro.zip -Force
           $hash = (Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256).Hash.ToLower()
           Set-Content winget-sha256.txt $hash -NoNewline
-          Write-Host "SHA256=$hash Size=$((Get-Item LumenPomodoro.zip).Length)"
+          Write-Host "OK SHA256=$hash"
 
-      - name: Upload Windows artifact
+      - name: Upload logs always
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-logs
+          path: logs/
+          if-no-files-found: ignore
+
+      - name: Upload Windows package
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
@@ -60,36 +79,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Toolchain
-        run: |
-          uname -a
-          swift --version
-
       - name: Build DMG
         run: |
           set -euo pipefail
+          mkdir -p logs
+          {
+            uname -a
+            swift --version
+          } | tee logs/toolchain.txt
+
           chmod +x LumenPomodoroMac/*.sh
           export VERSION="${GITHUB_REF_NAME#v}"
-          # workflow_dispatch 时无 tag，用 props 版本
           if [[ "$VERSION" == "$GITHUB_REF_NAME" ]]; then
-            VERSION=$(grep -E '<Version>' Directory.Build.props | sed -E 's/.*<Version>([^<]+)<.*/\1/')
+            VERSION=$(sed -n 's/.*<Version>\([^<]*\)<.*/\1/p' Directory.Build.props | head -1)
             export VERSION
           fi
-          echo "VERSION=$VERSION"
+          echo "VERSION=$VERSION" | tee -a logs/toolchain.txt
+
           cd LumenPomodoroMac
-          swift package resolve
-          swift build -c release --product LumenPomodoroMac
-          find .build -type f -name LumenPomodoroMac -print
-          ./package-dmg.sh
-          ls -la dist/
+          swift package resolve 2>&1 | tee ../logs/swift-resolve.txt
+          swift build -c release --product LumenPomodoroMac 2>&1 | tee ../logs/swift-build.txt
+
+          echo '=== binaries ===' | tee -a ../logs/find-bin.txt
+          find .build -type f -name LumenPomodoroMac 2>/dev/null | tee -a ../logs/find-bin.txt
+
+          ./package-dmg.sh 2>&1 | tee ../logs/package-dmg.txt
+          ls -la dist/ | tee -a ../logs/package-dmg.txt
           test -n "$(ls dist/*.dmg)"
 
-      - name: Upload macOS artifact
+      - name: Upload mac logs always
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-logs
+          path: logs/
+          if-no-files-found: ignore
+
+      - name: Upload macOS package
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: macos-package
           path: LumenPomodoroMac/dist/*.dmg
-          if-no-files-found: error
 
   release:
     needs: [windows, macos]
@@ -97,25 +128,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Prepare files
+      - name: Pack dist
         run: |
           set -euo pipefail
           mkdir -p dist
-          find artifacts -type f -print
+          find artifacts -type f
           cp artifacts/windows-package/LumenPomodoro.zip dist/ 2>/dev/null || true
           cp artifacts/windows-package/winget-sha256.txt dist/ 2>/dev/null || true
           cp artifacts/macos-package/*.dmg dist/ 2>/dev/null || true
           ls -la dist
           test -n "$(ls -A dist)"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
