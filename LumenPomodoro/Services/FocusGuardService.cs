@@ -48,9 +48,16 @@ public sealed class FocusGuardService : IFocusGuardService
     {
         if (settings == null || !settings.FocusGuardEnabled) return;
 
+        // 若已在跑：停止旧 Timer 后按新参数重启（避免双重 Timer；暂停后恢复走 resetSessionCounters=false）
+        Timer? previousTimer = null;
         lock (_lock)
         {
-            if (IsRunning) return;
+            if (IsRunning)
+            {
+                IsRunning = false;
+                previousTimer = _timer;
+                _timer = null;
+            }
 
             _blocklist = (settings.FocusGuardBlocklist ?? new List<string>())
                 .Where(s => !string.IsNullOrWhiteSpace(s))
@@ -85,6 +92,8 @@ public sealed class FocusGuardService : IFocusGuardService
                 _idleThresholdSeconds, _pollMs, _engine.DebounceHits, _engine.MaxAlertsPerSession,
                 _respectDoNotDisturb, _blocklist.Length, resetSessionCounters);
         }
+
+        previousTimer?.Dispose();
     }
 
     public void Stop()

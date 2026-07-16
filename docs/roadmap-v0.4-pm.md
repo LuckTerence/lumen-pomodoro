@@ -19,8 +19,8 @@
 
 - [x] 产品代码就绪（引导 / 预设 / 灯状态 / 严格与全屏）
 - [x] 核心路径验收清单文档（`core-path-checklist.md`）
-- [x] Release 说明草稿（`release-v0.4.1.md`）
-- [x] 打 tag `v0.4.1` 并推送（触发 Release CI；产物以 Actions/Release 页为准）
+- [x] Release 说明草稿（`release-v0.4.1.md` / `release-v0.4.2.md`）
+- [x] 打 tag 并推送（当前目标 `v0.4.2`；产物以 Actions/Release 页为准）
 - [ ] **人工**：15 秒演示素材（专注结束 → 指示灯亮）
 - [ ] **人工**：按 checklist 双端点验并签字
 

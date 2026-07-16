@@ -30,6 +30,8 @@ final class AppViewModel: ObservableObject {
     let focusGuard = FocusGuardService()
 
     private var currentSession: FocusSession?
+    /// 最近完成会话 id，用于评分/笔记事后写入
+    private var lastCompletedSessionId: String?
     private var completedSessionsToday = 0
     private var sessionEndPreNotifySent = false
     private let storage = StorageService.shared
@@ -290,6 +292,7 @@ final class AppViewModel: ObservableObject {
     }
 
     func startBreak(long: Bool = false) {
+        persistReviewToLastSession()
         isFocusCompleted = false
         sessionEndPreNotifySent = false
         focusGuard.stop()
@@ -314,6 +317,7 @@ final class AppViewModel: ObservableObject {
     func skipBreak() {
         guard tryAllowEndBreakEarly() else { return }
 
+        persistReviewToLastSession()
         isFocusCompleted = false
         focusGuard.stop()
         showFullscreenBreak = false
@@ -359,6 +363,28 @@ final class AppViewModel: ObservableObject {
 
     func setRating(_ rating: Int) {
         userRating = rating
+        guard let id = lastCompletedSessionId else { return }
+        var sessions = storage.loadSessions()
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        sessions[index].qualityScore = rating
+        storage.saveSessions(sessions)
+    }
+
+    /// 将完成面板上的评分/笔记写回最近会话（开始/跳过休息时调用）
+    func persistReviewToLastSession() {
+        guard let id = lastCompletedSessionId else { return }
+        var sessions = storage.loadSessions()
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        if userRating > 0 {
+            sessions[index].qualityScore = userRating
+        }
+        let notes = currentNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !notes.isEmpty {
+            sessions[index].notes = notes
+        }
+        storage.saveSessions(sessions)
+        lastCompletedSessionId = nil
+        currentNotes = ""
     }
 
     func addTask(name: String, category: String, color: String) {
@@ -449,9 +475,11 @@ final class AppViewModel: ObservableObject {
         if var session = currentSession {
             session.endTime = Date()
             session.completed = true
+            // 笔记/评分通常在完成后填写，此处先落盘会话，事后由 setRating / persistReview 更新
             session.notes = currentNotes.isEmpty ? nil : currentNotes
             session.qualityScore = userRating
             storage.appendSession(session)
+            lastCompletedSessionId = session.id
             currentSession = nil
         }
 
@@ -504,17 +532,21 @@ final class AppViewModel: ObservableObject {
         guard settings.cameraAlertEnabled else { return }
         switch settings.cameraAlertMode {
         case .fixedDuration:
-            await cameraService.startForDuration(seconds: settings.cameraFixedOnSeconds)
+            do {
+                try await cameraService.startForDuration(seconds: settings.cameraFixedOnSeconds)
+            } catch {
+                presentCameraError(error.localizedDescription)
+            }
         case .untilConfirm, .followBreak:
             do { try await cameraService.start() }
-            catch { cameraErrorMessage = error.localizedDescription }
+            catch { presentCameraError(error.localizedDescription) }
         }
     }
 
     private func startCameraForBreak() async {
         guard settings.cameraAlertEnabled else { return }
         do { try await cameraService.start() }
-        catch { cameraErrorMessage = error.localizedDescription }
+        catch { presentCameraError(error.localizedDescription) }
     }
 
     private func stopCameraIfNeeded() async {

@@ -7,6 +7,9 @@ final class StorageService {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
     private let appSupportURL: URL
+    private let lock = NSLock()
+    /// 会话列表内存缓存，避免统计/连胜/洞察反复解码同一 JSON
+    private var sessionsCache: [FocusSession]?
 
     private var settingsURL: URL { appSupportURL.appendingPathComponent("settings.json") }
     private var tasksURL: URL { appSupportURL.appendingPathComponent("tasks.json") }
@@ -59,10 +62,20 @@ final class StorageService {
     }
 
     func loadSessions() -> [FocusSession] {
-        load(from: sessionsURL, as: [FocusSession].self) ?? []
+        lock.lock()
+        defer { lock.unlock() }
+        if let sessionsCache {
+            return sessionsCache
+        }
+        let loaded = load(from: sessionsURL, as: [FocusSession].self) ?? []
+        sessionsCache = loaded
+        return loaded
     }
 
     func saveSessions(_ sessions: [FocusSession]) {
+        lock.lock()
+        sessionsCache = sessions
+        lock.unlock()
         save(sessions, to: sessionsURL)
     }
 
@@ -107,14 +120,18 @@ final class StorageService {
 
     private func calculateStreak(until date: Date) -> Int {
         let calendar = Calendar.current
+        // 只读盘一次；原先在循环内反复 loadSessions 会在长 streak 时 O(n×days) 放大 IO
+        let completedDays: Set<Date> = Set(
+            loadSessions()
+                .filter(\.completed)
+                .map { calendar.startOfDay(for: $0.startTime) }
+        )
+
         var streak = 0
         var checkDate = calendar.startOfDay(for: date)
 
         while true {
-            let hasSession = loadSessions().contains {
-                $0.completed && calendar.isDate($0.startTime, inSameDayAs: checkDate)
-            }
-            if hasSession {
+            if completedDays.contains(checkDate) {
                 streak += 1
                 guard let previous = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
                 checkDate = previous

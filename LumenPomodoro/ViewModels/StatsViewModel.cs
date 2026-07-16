@@ -234,10 +234,10 @@ public partial class StatsViewModel : ObservableObject
                 break;
         }
 
-        if (_filterDateFrom.HasValue && _filterDateTo.HasValue)
+        if (FilterDateFrom.HasValue && FilterDateTo.HasValue)
         {
-            periodStart = _filterDateFrom.Value.Date;
-            periodEnd = _filterDateTo.Value.Date;
+            periodStart = FilterDateFrom.Value.Date;
+            periodEnd = FilterDateTo.Value.Date;
             StatsDateLabel = $"{periodStart:M月d日} - {periodEnd:M月d日}";
             CanGoNext = false;
         }
@@ -329,11 +329,11 @@ public partial class StatsViewModel : ObservableObject
         var totalPomodoros = completed.Count;
         var totalMinutes = completed.Sum(s => s.FocusMinutes);
 
-        if (_streakDays >= 7)
-            achievements.Add(new AchievementItem { Icon = "🔥", Title = $"{_streakDays} 天连击", Subtitle = "连续专注" });
-        if (_streakDays >= 30)
+        if (StreakDays >= 7)
+            achievements.Add(new AchievementItem { Icon = "🔥", Title = $"{StreakDays} 天连击", Subtitle = "连续专注" });
+        if (StreakDays >= 30)
             achievements.Add(new AchievementItem { Icon = "💎", Title = "钻石连击", Subtitle = "30 天连续专注" });
-        if (_streakDays >= 100)
+        if (StreakDays >= 100)
             achievements.Add(new AchievementItem { Icon = "👑", Title = "王者连击", Subtitle = "100 天连续专注" });
         if (totalPomodoros >= 10)
             achievements.Add(new AchievementItem { Icon = "🍅", Title = $"{totalPomodoros} 个番茄", Subtitle = "累计番茄数" });

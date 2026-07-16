@@ -207,36 +207,48 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private void WireEvents()
     {
-        // NotificationCoordinator → MainViewModel events
-        _notifications.TrayMenuNeedsUpdate += () => TrayMenuNeedsUpdate?.Invoke();
-        _notifications.NotificationRequested += (t, m) => NotificationRequested?.Invoke(t, m);
-        _notifications.InAppNotificationRequested += (t, m) => InAppNotificationRequested?.Invoke(t, m);
-        _notifications.CountdownStartRequested += m => CountdownStartRequested?.Invoke(m);
-        _notifications.CountdownUpdateRequested += m => CountdownUpdateRequested?.Invoke(m);
-        _notifications.CountdownStopRequested += () => CountdownStopRequested?.Invoke();
+        // NotificationCoordinator → MainViewModel events（命名方法便于 Dispose 正确解绑）
+        _notifications.TrayMenuNeedsUpdate += OnTrayMenuNeedsUpdate;
+        _notifications.NotificationRequested += OnNotificationRequested;
+        _notifications.InAppNotificationRequested += OnInAppNotificationRequested;
+        _notifications.CountdownStartRequested += OnCountdownStartRequested;
+        _notifications.CountdownUpdateRequested += OnCountdownUpdateRequested;
+        _notifications.CountdownStopRequested += OnCountdownStopRequested;
 
         // TimerController → handlers
         _timerController.TickUpdated += OnTimerTickUpdated;
         _timerController.FocusCompleted += OnFocusCompleted;
         _timerController.BreakCompleted += OnBreakCompleted;
-        _timerController.ModeChanged += mode => CurrentStatus = mode;
+        _timerController.ModeChanged += OnTimerModeChanged;
 
         // CameraAlertController → handlers
-        _cameraAlert.StatusChanged += _ =>
-        {
-            OnPropertyChanged(nameof(CameraStatus));
-            OnPropertyChanged(nameof(IsCameraAlertActive));
-            OnPropertyChanged(nameof(CameraStatusDisplay));
-        };
+        _cameraAlert.StatusChanged += OnCameraStatusChanged;
         _cameraAlert.ErrorOccurred += HandleCameraError;
-        _cameraAlert.SystemNotificationRequested += (t, m) =>
-            _notifications.ShowSystem(t, m, AppSettings.SystemNotificationEnabled, IsWindowActive);
+        _cameraAlert.SystemNotificationRequested += OnCameraSystemNotification;
         _cameraAlert.WindowActivationRequested += OnWindowActivation;
 
         // FocusGuard
         _focusGuard.DistractionDetected += OnFocusGuardDistraction;
         _focusGuard.FocusRegained += OnFocusGuardRegained;
     }
+
+    private void OnTrayMenuNeedsUpdate() => TrayMenuNeedsUpdate?.Invoke();
+    private void OnNotificationRequested(string t, string m) => NotificationRequested?.Invoke(t, m);
+    private void OnInAppNotificationRequested(string t, string m) => InAppNotificationRequested?.Invoke(t, m);
+    private void OnCountdownStartRequested(string m) => CountdownStartRequested?.Invoke(m);
+    private void OnCountdownUpdateRequested(string m) => CountdownUpdateRequested?.Invoke(m);
+    private void OnCountdownStopRequested() => CountdownStopRequested?.Invoke();
+    private void OnTimerModeChanged(TimerMode mode) => CurrentStatus = mode;
+
+    private void OnCameraStatusChanged(string _)
+    {
+        OnPropertyChanged(nameof(CameraStatus));
+        OnPropertyChanged(nameof(IsCameraAlertActive));
+        OnPropertyChanged(nameof(CameraStatusDisplay));
+    }
+
+    private void OnCameraSystemNotification(string t, string m) =>
+        _notifications.ShowSystem(t, m, AppSettings.SystemNotificationEnabled, IsWindowActive);
 
     // ── RelayCommands（替代 View 代码后置中的方法调用） ──
 
@@ -726,9 +738,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (abandonedSession != null)
             _storageService.AddSession(abandonedSession);
 
-        _cameraAlert.StatusChanged -= _ => { };
+        _notifications.TrayMenuNeedsUpdate -= OnTrayMenuNeedsUpdate;
+        _notifications.NotificationRequested -= OnNotificationRequested;
+        _notifications.InAppNotificationRequested -= OnInAppNotificationRequested;
+        _notifications.CountdownStartRequested -= OnCountdownStartRequested;
+        _notifications.CountdownUpdateRequested -= OnCountdownUpdateRequested;
+        _notifications.CountdownStopRequested -= OnCountdownStopRequested;
+
+        _cameraAlert.StatusChanged -= OnCameraStatusChanged;
         _cameraAlert.ErrorOccurred -= HandleCameraError;
-        _cameraAlert.SystemNotificationRequested -= (t, m) => { };
+        _cameraAlert.SystemNotificationRequested -= OnCameraSystemNotification;
         _cameraAlert.WindowActivationRequested -= OnWindowActivation;
 
         _focusGuard.DistractionDetected -= OnFocusGuardDistraction;
@@ -738,10 +757,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _timerController.TickUpdated -= OnTimerTickUpdated;
         _timerController.FocusCompleted -= OnFocusCompleted;
         _timerController.BreakCompleted -= OnBreakCompleted;
+        _timerController.ModeChanged -= OnTimerModeChanged;
 
         _timerController.Dispose();
         _notifications.Dispose();
 
-        CameraAlertController.FireAndForgetAsync(_cameraAlert.StopCameraAsync(), "Dispose 停止摄像头");
+        _ = CameraAlertController.FireAndForgetAsync(_cameraAlert.StopCameraAsync(), "Dispose 停止摄像头");
     }
 }

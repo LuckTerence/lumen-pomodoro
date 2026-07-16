@@ -28,21 +28,23 @@ jobs:
           Write-Host 'dotnet --info'
           dotnet --info | Tee-Object -FilePath logs/dotnet-info.txt
 
-          Write-Host '=== restore ==='
-          dotnet restore LumenPomodoro/LumenPomodoro.csproj -v minimal 2>&1 | Tee-Object -FilePath logs/restore.txt
+          Write-Host '=== restore (win-x64 RID for publish) ==='
+          # 必须带 -r，否则 project.assets.json 无 net8.0-windows/win-x64 目标，publish --no-restore 会 NETSDK1047
+          dotnet restore LumenPomodoro/LumenPomodoro.csproj -r win-x64 -v minimal 2>&1 | Tee-Object -FilePath logs/restore.txt
           if ($LASTEXITCODE -ne 0) { throw "restore failed $LASTEXITCODE" }
 
           Write-Host '=== build ==='
-          dotnet build LumenPomodoro/LumenPomodoro.csproj -c Release -v minimal --no-restore 2>&1 | Tee-Object -FilePath logs/build.txt
+          dotnet build LumenPomodoro/LumenPomodoro.csproj -c Release -r win-x64 -v minimal --no-restore 2>&1 | Tee-Object -FilePath logs/build.txt
           if ($LASTEXITCODE -ne 0) { throw "build failed $LASTEXITCODE" }
 
           Write-Host '=== publish self-contained ==='
+          # 允许 publish 再 restore 一次作为兜底（避免 assets 与 RID 不一致）
           dotnet publish LumenPomodoro/LumenPomodoro.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:DebugType=none -p:DebugSymbols=false `
-            -o publish/win --no-restore 2>&1 | Tee-Object -FilePath logs/publish.txt
+            -o publish/win 2>&1 | Tee-Object -FilePath logs/publish.txt
           if ($LASTEXITCODE -ne 0) {
             Get-Content logs/publish.txt -Tail 80
             throw "publish failed $LASTEXITCODE"
@@ -145,5 +147,5 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
-          body_path: docs/GITHUB_RELEASE_v0.4.1.md
+          body_path: docs/GITHUB_RELEASE_v0.4.2.md
           fail_on_unmatched_files: false

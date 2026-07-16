@@ -1,3 +1,4 @@
+using LumenPomodoro.Models;
 using LumenPomodoro.Services;
 
 namespace LumenPomodoro.Tests.Services;

@@ -67,15 +67,12 @@ final class CameraService: ObservableObject {
         }
     }
 
-    func startForDuration(seconds: Int) async {
-        do {
-            try await start()
-            guard isRunning else { return }
-            try? await Task.sleep(for: .seconds(seconds))
-            stop()
-        } catch {
-            statusMessage = error.localizedDescription
-        }
+    /// 点亮固定秒数后自动关闭；失败时抛出，由调用方展示诊断。
+    func startForDuration(seconds: Int) async throws {
+        try await start()
+        guard isRunning else { return }
+        try? await Task.sleep(for: .seconds(seconds))
+        stop()
     }
 
     func stop() {
