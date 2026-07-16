@@ -62,6 +62,52 @@ public class StorageServiceTests : IDisposable
     }
 
     [Fact]
+    public void SaveSettings_RoundTrips_V04ProductFields()
+    {
+        var settings = new Settings();
+        settings.ApplyStandardFocusPreset();
+        settings.HasCompletedOnboarding = true;
+        settings.HasShownCameraPrivacyNotice = true;
+        settings.FullscreenBreakEnabled = true;
+        settings.SessionEndPreNotifySeconds = 45;
+        settings.ConfirmExitWhileFocusing = true;
+        settings.FocusGuardDebounceHits = 3;
+        settings.FocusGuardMaxAlertsPerSession = 2;
+        settings.FocusGuardRespectDoNotDisturb = false;
+
+        _storageService.SaveSettings(settings);
+        var loaded = _storageService.LoadSettings();
+
+        Assert.True(loaded.HasCompletedOnboarding);
+        Assert.True(loaded.HasShownCameraPrivacyNotice);
+        Assert.True(loaded.CameraAlertEnabled);
+        Assert.Equal(CameraAlertLevel.Medium, loaded.CameraAlertLevel);
+        Assert.True(loaded.FullscreenBreakEnabled);
+        Assert.Equal(45, loaded.SessionEndPreNotifySeconds);
+        Assert.Equal(3, loaded.FocusGuardDebounceHits);
+        Assert.Equal(2, loaded.FocusGuardMaxAlertsPerSession);
+        Assert.False(loaded.FocusGuardRespectDoNotDisturb);
+        Assert.False(loaded.StrictModeEnabled);
+    }
+
+    [Fact]
+    public void SaveSettings_StrictPreset_RoundTrips()
+    {
+        var settings = new Settings();
+        settings.ApplyStrictFocusPreset();
+        settings.HasCompletedOnboarding = true;
+        _storageService.SaveSettings(settings);
+        var loaded = _storageService.LoadSettings();
+
+        Assert.True(loaded.StrictModeEnabled);
+        Assert.True(loaded.FullscreenBreakEnabled);
+        Assert.True(loaded.CameraAlertEnabled);
+        Assert.Equal(CameraAlertLevel.Severe, loaded.CameraAlertLevel);
+        Assert.False(loaded.CameraAlertCanManualClose);
+        Assert.False(loaded.EffectiveAllowEndBreakEarly);
+    }
+
+    [Fact]
     public void LoadTasks_WhenNoTasksFile_ReturnsDefaultTasks()
     {
         // Act

@@ -58,5 +58,9 @@ coverage-report/
 LumenPomodoroMac/build/
 LumenPomodoroMac/.build/
 LumenPomodoroMac/DerivedData/
+LumenPomodoroMac/dist/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
+
+## Local agent / tooling
+.workbuddy/

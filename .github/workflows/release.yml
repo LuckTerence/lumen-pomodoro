@@ -96,18 +96,4 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
-          body: |
-            ## Lumen Pomodoro ${{ github.ref_name }}
-
-            ### Windows
-            - 下载 `LumenPomodoro.zip`，解压后运行根目录 `LumenPomodoro.exe`
-            - 需要 .NET 8 Desktop Runtime（启动器可引导安装）
-            - winget SHA256: `${{ env.WINGET_SHA256 }}`
-            - 清单模板：`packaging/winget/LuckTerence.LumenPomodoro/`
-
-            ### macOS
-            - 下载 `LumenPomodoro-mac-*.dmg`，拖到「应用程序」
-            - 未签名时请右键 → 打开
-
-            ### 隐私
-            - 摄像头仅本机亮灯；不拍照、不录像、不上传
+          body_path: docs/GITHUB_RELEASE_v0.4.0.md
