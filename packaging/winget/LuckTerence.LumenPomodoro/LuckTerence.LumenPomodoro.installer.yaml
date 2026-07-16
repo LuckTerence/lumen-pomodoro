@@ -9,7 +9,7 @@
 #   Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256
 #
 PackageIdentifier: LuckTerence.LumenPomodoro
-PackageVersion: 0.4.0
+PackageVersion: 0.4.1
 Platform:
   - Windows.Desktop
 MinimumOSVersion: 10.0.17763.0
@@ -25,7 +25,7 @@ UpgradeBehavior: install
 ReleaseDate: 2026-07-17
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/LuckTerence/lumen-pomodoro/releases/download/v0.4.0/LumenPomodoro.zip
+    InstallerUrl: https://github.com/LuckTerence/lumen-pomodoro/releases/download/v0.4.1/LumenPomodoro.zip
     InstallerSha256: REPLACE_WITH_SHA256_OF_LumenPomodoro.zip
     Dependencies:
       PackageDependencies:

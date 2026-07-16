@@ -18,7 +18,8 @@
 | [packaging-winget-mac.md](./packaging-winget-mac.md) | winget 清单与 macOS DMG 打包 / 发版清单 |
 | [roadmap-v0.4-pm.md](./roadmap-v0.4-pm.md) | 产品路线图与验收清单 |
 | [core-path-checklist.md](./core-path-checklist.md) | 发版核心路径双端验收 |
-| [release-v0.4.0.md](./release-v0.4.0.md) | v0.4.0 发布说明草稿 |
+| [release-v0.4.1.md](./release-v0.4.1.md) | v0.4.1 正式双端发布说明 |
+| [GITHUB_RELEASE_v0.4.1.md](./GITHUB_RELEASE_v0.4.1.md) | GitHub Release 正文 |
 
 ## 审查
 
