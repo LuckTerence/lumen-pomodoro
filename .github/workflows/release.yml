@@ -21,28 +21,39 @@ jobs:
       - name: Publish Windows package
         shell: pwsh
         run: |
-          dotnet publish LumenPomodoro\LumenPomodoro.csproj `
+          $ErrorActionPreference = 'Stop'
+
+          # 主程序（framework-dependent 单文件）
+          dotnet publish LumenPomodoro/LumenPomodoro.csproj `
             --configuration Release `
             --runtime win-x64 `
             --self-contained false `
             -p:PublishSingleFile=true `
             -p:DebugType=none `
             -p:DebugSymbols=false `
-            --output publish\app
+            --output publish/app
 
-          dotnet publish Launcher\Launcher.csproj `
+          # 启动器：CI 用非 AOT 自包含（避免 runner 缺少原生 AOT 工具链）
+          # 本地可用 Publish-LumenPomodoro.cmd 打 AOT 小体积版
+          dotnet publish Launcher/Launcher.csproj `
             --configuration Release `
             --runtime win-x64 `
             --self-contained true `
-            -p:PublishAot=true `
+            -p:PublishAot=false `
+            -p:PublishSingleFile=true `
             -p:DebugType=none `
             -p:DebugSymbols=false `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
             --output publish
 
-          Compress-Archive -Path publish\LumenPomodoro.exe,publish\app -DestinationPath LumenPomodoro.zip -Force
+          if (-not (Test-Path publish/LumenPomodoro.exe)) { throw 'Launcher exe missing' }
+          if (-not (Test-Path publish/app/LumenPomodoro.exe)) { throw 'App exe missing' }
+
+          Compress-Archive -Path publish/LumenPomodoro.exe,publish/app -DestinationPath LumenPomodoro.zip -Force
           $hash = (Get-FileHash .\LumenPomodoro.zip -Algorithm SHA256).Hash.ToLower()
-          Set-Content -Path winget-sha256.txt -Value $hash
+          Set-Content -Path winget-sha256.txt -Value $hash -NoNewline
           Write-Host "SHA256=$hash"
+          Get-Item LumenPomodoro.zip | Format-List Name,Length
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -57,17 +68,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version || true
+
       - name: Build DMG
         run: |
           set -euo pipefail
           chmod +x LumenPomodoroMac/build-mac.sh LumenPomodoroMac/package-dmg.sh LumenPomodoroMac/generate-xcodeproj.sh
-          VERSION="${GITHUB_REF_NAME#v}"
-          export VERSION
-          # CI 优先 SPM 可靠路径；package-dmg 会在无 xcode .app 时自动包 SPM 产物
+          export VERSION="${GITHUB_REF_NAME#v}"
           cd LumenPomodoroMac
-          swift build -c release
+          # 强制 SPM release 路径（不依赖 Xcode scheme）
+          swift build -c release --product LumenPomodoroMac || swift build -c release
+          test -x .build/release/LumenPomodoroMac
           ./package-dmg.sh
           ls -la dist/
+          test -n "$(ls dist/*.dmg 2>/dev/null)"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -78,8 +95,7 @@ jobs:
 
   release:
     needs: [windows, macos]
-    # 任一侧失败仍尝试发布已有产物（至少 Windows）
-    if: always() && needs.windows.result == 'success'
+    if: always() && (needs.windows.result == 'success' || needs.macos.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,22 +104,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-          merge-multiple: false
 
       - name: Prepare release files
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp artifacts/windows-package/LumenPomodoro.zip dist/
-          cp artifacts/windows-package/winget-sha256.txt dist/ || true
-          if compgen -G "artifacts/macos-package/*.dmg" > /dev/null; then
+          find artifacts -type f -print
+          if [ -f artifacts/windows-package/LumenPomodoro.zip ]; then
+            cp artifacts/windows-package/LumenPomodoro.zip dist/
+            cp artifacts/windows-package/winget-sha256.txt dist/ || true
+          fi
+          if ls artifacts/macos-package/*.dmg >/dev/null 2>&1; then
             cp artifacts/macos-package/*.dmg dist/
-          else
-            echo "WARN: no macOS dmg artifact"
           fi
           ls -la dist
-          SHA=$(cat dist/winget-sha256.txt 2>/dev/null || echo "see artifact")
-          echo "WINGET_SHA256=$SHA" >> "$GITHUB_ENV"
+          test -n "$(ls -A dist)"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
