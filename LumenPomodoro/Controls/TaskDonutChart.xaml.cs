@@ -96,7 +96,8 @@ public partial class TaskDonutChart : ChartBase
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
             row.Children.Add(new Ellipse
             {
-                Width = 10, Height = 10,
+                Width = 10,
+                Height = 10,
                 Fill = new SolidColorBrush(color),
                 Margin = new Thickness(0, 0, 8, 0),
                 VerticalAlignment = VerticalAlignment.Center

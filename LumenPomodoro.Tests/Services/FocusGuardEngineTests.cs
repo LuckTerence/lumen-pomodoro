@@ -139,14 +139,14 @@ public class FocusGuardServiceTests
     private static Settings TestSettings(
         int debounce = 2,
         int maxAlerts = 3) => new()
-    {
-        FocusGuardEnabled = true,
-        FocusGuardIdleSeconds = 180,
-        FocusGuardPollSeconds = 60, // 慢轮询，测试只用 ProcessEvaluation
-        FocusGuardDebounceHits = debounce,
-        FocusGuardMaxAlertsPerSession = maxAlerts,
-        FocusGuardBlocklist = new List<string> { "bilibili" }
-    };
+        {
+            FocusGuardEnabled = true,
+            FocusGuardIdleSeconds = 180,
+            FocusGuardPollSeconds = 60, // 慢轮询，测试只用 ProcessEvaluation
+            FocusGuardDebounceHits = debounce,
+            FocusGuardMaxAlertsPerSession = maxAlerts,
+            FocusGuardBlocklist = new List<string> { "bilibili" }
+        };
 
     [Fact]
     public void ProcessEvaluation_DebounceAndMaxAlerts_EndToEnd()
