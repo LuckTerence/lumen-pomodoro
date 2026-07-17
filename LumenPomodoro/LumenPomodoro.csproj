@@ -10,14 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <!-- 版本全部固定，避免 8.* / 4.* 浮动版本在不同机器/CI 解析到不一致的包 -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- 与 net8.0-windows 对齐；10.x 在部分 CI 上解析/编译易失败 -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="WPF-UI" Version="4.*" />
-    <PackageReference Include="WPF-UI.Abstractions" Version="4.*" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+    <PackageReference Include="WPF-UI.Abstractions" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>

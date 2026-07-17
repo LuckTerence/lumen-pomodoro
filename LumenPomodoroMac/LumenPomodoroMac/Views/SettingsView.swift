@@ -1,3 +1,4 @@
+import LumenPomodoroMacCore
 import SwiftUI
 
 struct SettingsView: View {
@@ -155,6 +156,11 @@ struct SettingsView: View {
         .onAppear {
             blocklistText = viewModel.settings.focusGuardBlocklist.joined(separator: "\n")
         }
+        .onDisappear {
+            // 兜底落盘：所有控件均已通过 settingsBinding 即时保存，
+            // 此处再保存一次以覆盖任何遗漏的修改路径，确保设置持久化。
+            viewModel.saveSettings()
+        }
         .onChange(of: blocklistText) { _, newValue in
             viewModel.settings.focusGuardBlocklist = newValue
                 .split(whereSeparator: \.isNewline)
@@ -165,7 +171,7 @@ struct SettingsView: View {
     }
 
     /// 创建自动落盘的 Settings 双向绑定（整结构赋值，确保 @Published 与磁盘同步）
-    private func settingsBinding<T>(_ keyPath: WritableKeyPath<Settings, T>) -> Binding<T> {
+    private func settingsBinding<T>(_ keyPath: WritableKeyPath<LumenPomodoroMacCore.Settings, T>) -> Binding<T> {
         Binding(
             get: { viewModel.settings[keyPath: keyPath] },
             set: { newValue in

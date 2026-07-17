@@ -107,55 +107,8 @@ public class TimerServiceTests
         Assert.Equal(changedMode, TimerMode.Idle);
     }
 
-    [Fact(Skip = "DispatcherTimer 需要 UI 线程，在单元测试中无法触发")]
-    public void TimerTick_ShouldDecreaseRemainingSeconds()
-    {
-        // Arrange
-        int tickCount = 0;
-        int lastRemaining = -1;
-        _timerService.TimerTick += (s, e) =>
-        {
-            if (lastRemaining != -1 && tickCount < 3)
-            {
-                Assert.Equal(lastRemaining - 1, e.RemainingSeconds);
-            }
-            lastRemaining = e.RemainingSeconds;
-            tickCount++;
-        };
-
-        // Act
-        _timerService.StartFocus(1); // 1 minute for quick test
-        Thread.Sleep(2100); // Wait for 2 ticks
-        _timerService.Stop();
-
-        // Assert
-        Assert.True(tickCount >= 2);
-    }
-
-    [Fact(Skip = "DispatcherTimer 需要 UI 线程，在单元测试中无法触发")]
-    public void TimerComplete_ShouldFireTimerCompletedEvent()
-    {
-        // Arrange
-        bool completed = false;
-        TimerMode? completedMode = null;
-        _timerService.TimerCompleted += (s, e) =>
-        {
-            completed = true;
-            completedMode = e.CompletedMode;
-        };
-
-        // Act — 使用短时间（2秒）验证事件触发，避免 61 秒等待
-        _timerService.StartFocus(1); // Start 1-minute timer
-        Thread.Sleep(2500); // Wait long enough to verify tick works
-        _timerService.Stop();
-
-        // Assert — 验证 TimerTick 正常触发（完整倒计时在集成测试中验证）
-        Assert.True(_timerService.RemainingSeconds < 60 || completed);
-        if (completed)
-        {
-            Assert.Equal(TimerMode.Focus, completedMode);
-        }
-    }
+    // 注：倒计时递减与完成的真实行为已迁移到纯逻辑类 TimerEngine，
+    // 由 TimerEngineTests 以虚拟时钟全面覆盖（不再依赖 DispatcherTimer / UI 线程）。
 
     [Fact]
     public void TimerDispose_ShouldNotThrow()

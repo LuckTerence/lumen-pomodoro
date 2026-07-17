@@ -1,5 +1,6 @@
 using LumenPomodoro.Models;
 using LumenPomodoro.Services;
+using LumenPomodoro.ViewModels;
 
 namespace LumenPomodoro.Tests.Services;
 
@@ -110,6 +111,7 @@ public class InsightEngineTests
         var sessions = Enumerable.Range(0, 5).Select(i => new FocusSession
         {
             Completed = true,
+            StartTime = DateTime.Today.AddDays(-i).AddHours(9),
             EndTime = DateTime.Today.AddDays(-i).AddHours(10),
             FocusMinutes = 25
         }).ToList();
@@ -184,16 +186,37 @@ public class InsightEngineTests
     }
 
     [Fact]
-    public void CalculateStreak_YesterdayOnly_Returns0()
+    public void CalculateStreak_SingleYesterdaySession_Returns1()
     {
         var sessions = new List<FocusSession>
         {
-            new() { Completed = true, EndTime = DateTime.Today.AddDays(-1).AddHours(10), FocusMinutes = 25 },
+            new() { Completed = true, StartTime = DateTime.Today.AddDays(-1).AddHours(10), FocusMinutes = 25 },
         };
-        // InsightEngine.CalculateStreak is called internally, let's test via GetInsights
-        var insights = _engine.GetInsights(sessions, []);
-        // No streak insight (only 1 day, start counting from today which has 0)
-        Assert.DoesNotContain(insights, i => i.Type == InsightType.Streak);
+        // 昨天有一次完成 → 连胜从昨天起算为 1（今天无记录也计入）
+        Assert.Equal(1, InsightEngine.CalculateStreak(sessions));
+    }
+
+    [Fact]
+    public void CalculateStreak_GapGreaterThanOneDay_Returns0()
+    {
+        var sessions = new List<FocusSession>
+        {
+            new() { Completed = true, StartTime = DateTime.Today.AddDays(-3).AddHours(10), FocusMinutes = 25 },
+        };
+        // 最近一次完成距今天 > 1 天 → 连胜中断为 0
+        Assert.Equal(0, InsightEngine.CalculateStreak(sessions));
+    }
+
+    [Fact]
+    public void CalculateStreak_ConsecutiveDays_CountsBackward()
+    {
+        var sessions = new List<FocusSession>
+        {
+            new() { Completed = true, StartTime = DateTime.Today.AddDays(-2).AddHours(10), FocusMinutes = 25 },
+            new() { Completed = true, StartTime = DateTime.Today.AddDays(-1).AddHours(10), FocusMinutes = 25 },
+            // 今天无 session，昨天与前天连续
+        };
+        Assert.Equal(2, InsightEngine.CalculateStreak(sessions));
     }
 
     [Fact]
@@ -213,5 +236,42 @@ public class InsightEngineTests
             Assert.Equal(0, week.TotalMinutes);
             Assert.Equal(0, week.CompletedPomodoros);
         });
+    }
+
+    [Fact]
+    public void AllInsightMethods_IgnoreNullEndTimeSessions_NoThrow()
+    {
+        // 契约 §3.6：Completed=true 但无 EndTime 的脏数据，统计应忽略而非崩溃
+        var sessions = new List<FocusSession>
+        {
+            new() { Completed = true, EndTime = DateTime.Today.AddHours(9), FocusMinutes = 25, TaskName = "数学" },
+            new() { Completed = true, EndTime = DateTime.Today.AddDays(-1).AddHours(9), FocusMinutes = 25, TaskName = "数学" },
+            new() { Completed = true, EndTime = null, FocusMinutes = 25, TaskName = "英语" },
+        };
+        var start = DateTime.Today.AddDays(-7);
+        var end = DateTime.Today;
+        var tasks = new List<TaskItem> { new() { Name = "数学" }, new() { Name = "英语" } };
+
+        // 以下方法曾因对无 EndTime 的 session 执行 EndTime!.Value 而空引用崩溃
+        _ = _engine.GetHeatmapData(sessions);
+        _ = _engine.GetHourlyDistribution(sessions, start, end);
+        _ = _engine.GetTaskBreakdown(sessions, start, end, tasks);
+        _ = _engine.GetWeeklyTrend(sessions);
+        _ = _engine.GetInsights(sessions, tasks);
+        _ = _engine.GetGoalProgress(sessions, 120, 600);
+        _ = _engine.GetComparisons(sessions);
+    }
+
+    [Fact]
+    public void ShouldShowStreakEncouragement_AllNullEndTime_DoesNotThrow()
+    {
+        var sessions = new List<FocusSession>
+        {
+            new() { Completed = true, EndTime = null, FocusMinutes = 25 },
+            new() { Completed = true, EndTime = null, FocusMinutes = 25 },
+        };
+        // MaxBy(EndTime) 在全部 EndTime 为空时会选中空键，历史版本此处 EndTime!.Value 崩溃
+        var result = SessionScoringController.ShouldShowStreakEncouragement(sessions);
+        Assert.False(result);
     }
 }

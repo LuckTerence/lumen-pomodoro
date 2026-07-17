@@ -1,3 +1,4 @@
+import LumenPomodoroMacCore
 import SwiftUI
 
 struct TimerView: View {

@@ -67,7 +67,8 @@ public class SessionScoringController
     public static bool ShouldShowStreakEncouragement(List<FocusSession> completedSessions)
     {
         if (completedSessions.Count == 0) return false;
-        var lastSession = completedSessions.MaxBy(s => s.EndTime);
+        // 仅考虑确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据）
+        var lastSession = completedSessions.Where(s => s.EndTime.HasValue).MaxBy(s => s.EndTime);
         return lastSession != null && (DateTime.Today - lastSession.EndTime!.Value.Date).TotalDays >= 1;
     }
 

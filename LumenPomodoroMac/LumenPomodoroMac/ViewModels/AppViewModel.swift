@@ -1,10 +1,11 @@
+import LumenPomodoroMacCore
 import AppKit
 import Foundation
 import SwiftUI
 
 @MainActor
 final class AppViewModel: ObservableObject {
-    @Published var settings: Settings
+    @Published var settings: LumenPomodoroMacCore.Settings
     @Published var tasks: [TaskItem] = []
     @Published var selectedTask: TaskItem?
     @Published var todayStats = DailyStats()

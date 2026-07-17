@@ -226,6 +226,21 @@ WeChat, Weixin, 微信, QQ, TikTok, Steam, 网易云音乐, 爱奇艺, 腾讯视
 
 ---
 
+### 3.6 日期归属规则（Day Attribution）【2026-07 新增·已收敛】
+
+> 历史分歧（已修复）：Win 端原本以 `EndTime` 归日，Mac 端以 `StartTime` 归日，导致同一 `sessions.json` 两端「连胜天数」与「今日番茄数」不一致。
+
+**契约规则：** 一个 `FocusSession` 归属于它**开始当天**（`StartTime.Date`），而非结束当天（`EndTime.Date）。
+
+- 连胜（`CalculateStreak` / `calculateStreak`）：按 `StartTime.Date` 取去重日集合，从今天/昨天起向过去连续计数。
+- 「今日」统计（`GetTodayStats` / `todayStats`）：以 `StartTime.Date == 今天` 判定。
+- 跨零点会话（今晚开始、明早结束）计入**开始当天**，两端一致。
+- `Completed == true` 时 `StartTime` 必非空（见 §3.2），故归日无需空判断。
+
+**验收：** 同一 `sessions.json` 样本 → 两端 `CurrentStreak` 与「今日番茄数」数值一致（见 `LumenPomodoro.Tests/Services/GoldenStatsTests.cs`；Mac 侧 XCTest 见 Task #7）。
+
+**已知遗留（后续收敛，未列入本次）：** Win 端 `InsightEngine` 的其余按日分组（热力图、小时分布、周趋势、目标进度、对比、效率）仍沿用 `EndTime`；为彻底一致，后续应将这些分组也统一为 `StartTime`。
+
 ## 4. 计时状态机（行为契约）
 
 ### 4.1 模式枚举
@@ -364,6 +379,7 @@ LumenPomodoroMac
 
 | 差异 | Win | Mac | 目标 |
 |------|-----|-----|------|
+| 连胜 / 今日归日 | `EndTime`（旧）→ `StartTime`（2026-07 已统一） | `StartTime` | **已收敛为 StartTime**（见 §3.6） |
 | 在位检测设置 | 有 | 模型可能缺失 | Mac 保留字段或明确 ignore |
 | 托盘 vs 菜单栏 | Tray* | MenuBar* | 文档化，不强制同字段 |
 | 设置落盘 | ViewModel 保存 | SettingsView `settingsBinding` 整结构赋值 + `saveSettings` | 已加固（2026-07） |

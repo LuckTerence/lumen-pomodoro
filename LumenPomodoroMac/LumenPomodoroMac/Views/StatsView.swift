@@ -1,3 +1,4 @@
+import LumenPomodoroMacCore
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers

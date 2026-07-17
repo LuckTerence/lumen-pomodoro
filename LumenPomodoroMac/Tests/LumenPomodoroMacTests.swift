@@ -1,0 +1,118 @@
+import XCTest
+import Foundation
+import LumenPomodoroMacCore
+
+final class LumenPomodoroMacTests: XCTestCase {
+
+    private func makeTempDir() -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lumen_mac_test_\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    // MARK: - Settings 编解码
+
+    func testSettingsCodableRoundTrip() throws {
+        var s = Settings()
+        s.workMinutes = 50
+        s.cameraAlertEnabled = true
+        s.examName = "托福"
+        s.focusGuardBlocklist = ["wechat", "bilibili"]
+
+        let data = try JSONEncoder().encode(s)
+        let decoded = try JSONDecoder().decode(Settings.self, from: data)
+
+        XCTAssertEqual(decoded.workMinutes, 50)
+        XCTAssertEqual(decoded.cameraAlertEnabled, true)
+        XCTAssertEqual(decoded.examName, "托福")
+        XCTAssertEqual(decoded.focusGuardBlocklist, ["wechat", "bilibili"])
+    }
+
+    // MARK: - StorageService 持久化
+
+    func testStorageServiceSettingsRoundTrip() {
+        let tmp = makeTempDir()
+        let storage = StorageService(baseDirectory: tmp)
+
+        var s = Settings()
+        s.workMinutes = 45
+        s.soundEnabled = false
+        storage.saveSettings(s)
+
+        // 重新读取（同一目录，模拟重启）
+        let reloaded = StorageService(baseDirectory: tmp).loadSettings()
+        XCTAssertEqual(reloaded.workMinutes, 45)
+        XCTAssertEqual(reloaded.soundEnabled, false)
+    }
+
+    func testStorageServiceSessionsRoundTrip() {
+        let tmp = makeTempDir()
+        let storage = StorageService(baseDirectory: tmp)
+
+        storage.appendSession(FocusSession(
+            taskName: "数学", startTime: Date().addingTimeInterval(-1800),
+            endTime: Date(), focusMinutes: 25, completed: true))
+
+        let reloaded = StorageService(baseDirectory: tmp).loadSessions()
+        XCTAssertEqual(reloaded.count, 1)
+        XCTAssertEqual(reloaded.first?.taskName, "数学")
+        XCTAssertEqual(reloaded.first?.completed, true)
+    }
+
+    // MARK: - Schema 迁移
+
+    func testMigrationV0ToV1() throws {
+        let tmp = makeTempDir()
+        let appDir = tmp.appendingPathComponent("LumenPomodoro")
+        try FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+
+        // 模拟 V0 数据：settings.json 无 SchemaVersion，且不存在 _schema.json
+        let v0: [String: Any] = ["WorkMinutes": 30, "SoundEnabled": true]
+        let settingsURL = appDir.appendingPathComponent("settings.json")
+        try JSONSerialization.data(withJSONObject: v0, options: .prettyPrinted)
+            .write(to: settingsURL, options: .atomic)
+
+        // 触发迁移
+        _ = StorageService(baseDirectory: tmp)
+
+        // _schema.json 应已生成且为版本 1
+        let schemaURL = appDir.appendingPathComponent("_schema.json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: schemaURL.path))
+        let schemaDoc = try JSONSerialization.jsonObject(with: Data(contentsOf: schemaURL)) as? [String: Any]
+        XCTAssertEqual(schemaDoc?["schema_version"] as? Int, 1)
+
+        // settings.json 应补写 SchemaVersion = 1
+        let settingsDoc = try JSONSerialization.jsonObject(with: Data(contentsOf: settingsURL)) as? [String: Any]
+        XCTAssertEqual(settingsDoc?["SchemaVersion"] as? Int, 1)
+    }
+
+    // MARK: - InsightEngine
+
+    func testCalculateStreakConsecutiveDays() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let sessions = (0..<3).map { offset -> FocusSession in
+            let day = calendar.date(byAdding: .day, value: -offset, to: today)!
+            let end = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)!
+            return FocusSession(
+                startTime: end.addingTimeInterval(-1500),
+                endTime: end, focusMinutes: 25, completed: true)
+        }
+        XCTAssertEqual(InsightEngine.calculateStreak(from: sessions), 3)
+    }
+
+    func testCalculateStreakBrokenByGap() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        // 今天与两天前，中间缺一天 → 连胜应为 1
+        let sessions = [0, 2].map { offset -> FocusSession in
+            let day = calendar.date(byAdding: .day, value: -offset, to: today)!
+            let end = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)!
+            return FocusSession(
+                startTime: end.addingTimeInterval(-1500),
+                endTime: end, focusMinutes: 25, completed: true)
+        }
+        XCTAssertEqual(InsightEngine.calculateStreak(from: sessions), 1)
+    }
+}

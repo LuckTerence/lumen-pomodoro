@@ -1,6 +1,6 @@
 import Foundation
 
-enum InsightEngine {
+public enum InsightEngine {
     private static let dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
     private static let minSessionsForInsight = 3
     private static let streakThreshold = 3
@@ -12,11 +12,11 @@ enum InsightEngine {
     private static let maxInsightCount = 5
     private static let milestones = [10, 50, 100, 500, 1000]
 
-    static func completedSessions(from sessions: [FocusSession]) -> [FocusSession] {
+    public static func completedSessions(from sessions: [FocusSession]) -> [FocusSession] {
         sessions.filter { $0.completed && $0.endTime != nil }
     }
 
-    static func getHeatmapData(from sessions: [FocusSession]) -> [HeatmapDay] {
+    public static func getHeatmapData(from sessions: [FocusSession]) -> [HeatmapDay] {
         let completed = completedSessions(from: sessions)
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -54,7 +54,7 @@ enum InsightEngine {
         return result
     }
 
-    static func getHourlyDistribution(from sessions: [FocusSession], start: Date, end: Date) -> [HourlyDataPoint] {
+    public static func getHourlyDistribution(from sessions: [FocusSession], start: Date, end: Date) -> [HourlyDataPoint] {
         let calendar = Calendar.current
         let startDay = calendar.startOfDay(for: start)
         let endDay = calendar.startOfDay(for: end)
@@ -80,7 +80,7 @@ enum InsightEngine {
         }
     }
 
-    static func getTaskBreakdown(from sessions: [FocusSession], start: Date, end: Date, tasks: [TaskItem]) -> [TaskSlice] {
+    public static func getTaskBreakdown(from sessions: [FocusSession], start: Date, end: Date, tasks: [TaskItem]) -> [TaskSlice] {
         let calendar = Calendar.current
         let filtered = completedSessions(from: sessions).filter {
             guard let endTime = $0.endTime else { return false }
@@ -103,7 +103,7 @@ enum InsightEngine {
             .sorted { $0.pomodoroCount > $1.pomodoroCount }
     }
 
-    static func getWeeklyTrend(from sessions: [FocusSession]) -> [WeeklyDataPoint] {
+    public static func getWeeklyTrend(from sessions: [FocusSession]) -> [WeeklyDataPoint] {
         let completed = completedSessions(from: sessions)
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -134,7 +134,7 @@ enum InsightEngine {
         }
     }
 
-    static func getInsights(from sessions: [FocusSession], tasks: [TaskItem]) -> [Insight] {
+    public static func getInsights(from sessions: [FocusSession], tasks: [TaskItem]) -> [Insight] {
         let completed = completedSessions(from: sessions)
         var insights: [Insight] = []
 
@@ -219,7 +219,7 @@ enum InsightEngine {
         return Array(insights.prefix(maxInsightCount))
     }
 
-    static func getGoalProgress(from sessions: [FocusSession], dailyGoalMinutes: Int, weeklyGoalMinutes: Int) -> [GoalProgress] {
+    public static func getGoalProgress(from sessions: [FocusSession], dailyGoalMinutes: Int, weeklyGoalMinutes: Int) -> [GoalProgress] {
         let completed = completedSessions(from: sessions)
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -259,7 +259,7 @@ enum InsightEngine {
         return result
     }
 
-    static func calculateStreak(from completed: [FocusSession]) -> Int {
+    public static func calculateStreak(from completed: [FocusSession]) -> Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let days = Set(completed.compactMap { $0.endTime.map { calendar.startOfDay(for: $0) } })

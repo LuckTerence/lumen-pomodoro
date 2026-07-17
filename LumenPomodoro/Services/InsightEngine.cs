@@ -32,7 +32,8 @@ public class InsightEngine : IInsightEngine
     public List<HeatmapDay> GetHeatmapData(List<FocusSession> sessions)
     {
         var today = DateTime.Today;
-        var completedAll = sessions;
+        // 仅统计确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据，忽略）
+        var completedAll = sessions.Where(s => s.EndTime.HasValue).ToList();
 
         var earliestDate = completedAll.Count > 0
             ? completedAll.Min(s => s.EndTime!.Value.Date)
@@ -71,6 +72,7 @@ public class InsightEngine : IInsightEngine
     /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<HourlyDataPoint> GetHourlyDistribution(List<FocusSession> sessions, DateTime start, DateTime end)
     {
+        sessions = sessions.Where(s => s.EndTime.HasValue).ToList();
         var hourlyGroups = sessions
             .Where(s => s.EndTime!.Value.Date >= start.Date && s.EndTime!.Value.Date <= end.Date)
             .GroupBy(s => s.EndTime!.Value.Hour)
@@ -91,6 +93,7 @@ public class InsightEngine : IInsightEngine
     /// <param name="sessions">预过滤为已完成且有 EndTime</param>
     public List<TaskSlice> GetTaskBreakdown(List<FocusSession> sessions, DateTime start, DateTime end, List<TaskItem>? tasks = null)
     {
+        sessions = sessions.Where(s => s.EndTime.HasValue).ToList();
         var filtered = sessions
             .Where(s => s.EndTime!.Value.Date >= start.Date && s.EndTime!.Value.Date <= end.Date)
             .ToList();
@@ -123,8 +126,11 @@ public class InsightEngine : IInsightEngine
         var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
 
+        // 仅统计确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据，忽略）
+        var validSessions = sessions.Where(s => s.EndTime.HasValue).ToList();
+
         // 一次性按周 GroupBy，避免 8 次 O(n) 全表扫描
-        var weekGroups = sessions
+        var weekGroups = validSessions
             .GroupBy(s =>
             {
                 var daysFromFirst = (s.EndTime!.Value.Date - thisMonday.AddDays(-7 * 7)).Days;
@@ -154,7 +160,8 @@ public class InsightEngine : IInsightEngine
     public List<Insight> GetInsights(List<FocusSession> sessions, List<TaskItem> tasks)
     {
         var insights = new List<Insight>();
-        var completed = sessions;
+        // 仅统计确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据，忽略）
+        var completed = sessions.Where(s => s.EndTime.HasValue).ToList();
 
         if (completed.Count < MinSessionsForInsight)
         {
@@ -358,7 +365,7 @@ public class InsightEngine : IInsightEngine
         if (completed.Count == 0) return 0;
 
         var daysWithSessions = completed
-            .Select(s => s.EndTime!.Value.Date)
+            .Select(s => s.StartTime.Date)
             .Distinct()
             .OrderByDescending(d => d)
             .ToList();
@@ -383,7 +390,8 @@ public class InsightEngine : IInsightEngine
     {
         var result = new List<GoalProgress>();
         var today = DateTime.Today;
-        var completed = sessions;
+        // 仅统计确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据，忽略）
+        var completed = sessions.Where(s => s.EndTime.HasValue).ToList();
 
         var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);
@@ -429,7 +437,8 @@ public class InsightEngine : IInsightEngine
     {
         var result = new List<ComparisonData>();
         var today = DateTime.Today;
-        var completed = sessions;
+        // 仅统计确有 EndTime 的 session（契约 §3.6：Completed 但无 EndTime 视为脏数据，忽略）
+        var completed = sessions.Where(s => s.EndTime.HasValue).ToList();
 
         var thisMonday = GetMonday(today);
         if (thisMonday > today) thisMonday = thisMonday.AddDays(-7);

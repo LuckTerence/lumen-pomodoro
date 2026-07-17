@@ -1,25 +1,25 @@
 import Foundation
 
-enum TimerMode: String, Codable {
+public enum TimerMode: String, Codable {
     case idle
     case focus
     case `break`
     case paused
 }
 
-enum CameraAlertMode: String, Codable {
+public enum CameraAlertMode: String, Codable {
     case fixedDuration = "FixedDuration"
     case untilConfirm = "UntilConfirm"
     case followBreak = "FollowBreak"
 }
 
-enum CameraAlertLevel: String, Codable {
+public enum CameraAlertLevel: String, Codable {
     case light = "Light"
     case medium = "Medium"
     case severe = "Severe"
 }
 
-enum InsightType: String, Codable {
+public enum InsightType: String, Codable {
     case peakHour = "PeakHour"
     case bestDay = "BestDay"
     case trend = "Trend"
@@ -28,71 +28,73 @@ enum InsightType: String, Codable {
     case motivation = "Motivation"
 }
 
-struct Settings: Codable, Equatable {
-    var schemaVersion: Int = 1
-    var workMinutes: Int = 25
-    var shortBreakMinutes: Int = 5
-    var longBreakMinutes: Int = 15
-    var longBreakInterval: Int = 4
-    var cameraAlertEnabled: Bool = false
-    var cameraAlertMode: CameraAlertMode = .untilConfirm
-    var cameraFixedOnSeconds: Int = 180
-    var cameraFollowBreakEnabled: Bool = true
-    var cameraIndex: Int = 0
-    var cameraAlertCanManualClose: Bool = true
-    var cameraAlertLevel: CameraAlertLevel = .medium
-    var hasShownCameraPrivacyNotice: Bool = false
+public struct Settings: Codable, Equatable {
+    public var schemaVersion: Int = 1
+    public var workMinutes: Int = 25
+    public var shortBreakMinutes: Int = 5
+    public var longBreakMinutes: Int = 15
+    public var longBreakInterval: Int = 4
+    public var cameraAlertEnabled: Bool = false
+    public var cameraAlertMode: CameraAlertMode = .untilConfirm
+    public var cameraFixedOnSeconds: Int = 180
+    public var cameraFollowBreakEnabled: Bool = true
+    public var cameraIndex: Int = 0
+    public var cameraAlertCanManualClose: Bool = true
+    public var cameraAlertLevel: CameraAlertLevel = .medium
+    public var hasShownCameraPrivacyNotice: Bool = false
     /// 是否完成首次产品引导
-    var hasCompletedOnboarding: Bool = false
-    var focusGuardEnabled: Bool = true
-    var focusGuardBlocklist: [String] = Settings.defaultBlocklist
-    var focusGuardIdleSeconds: Int = 180
-    var focusGuardPollSeconds: Int = 5
+    public var hasCompletedOnboarding: Bool = false
+    public var focusGuardEnabled: Bool = true
+    public var focusGuardBlocklist: [String] = Settings.defaultBlocklist
+    public var focusGuardIdleSeconds: Int = 180
+    public var focusGuardPollSeconds: Int = 5
     /// 连续 poll 命中次数达到后才告警（防抖），默认 2
-    var focusGuardDebounceHits: Int = 2
+    public var focusGuardDebounceHits: Int = 2
     /// 单次专注最多走神通知次数，默认 3
-    var focusGuardMaxAlertsPerSession: Int = 3
+    public var focusGuardMaxAlertsPerSession: Int = 3
     /// 系统勿扰时降级通知（预留）
-    var focusGuardRespectDoNotDisturb: Bool = true
-    var focusGuardAlertLevel: CameraAlertLevel = .severe
-    var dailyGoalMinutes: Int = 120
-    var weeklyGoalMinutes: Int = 600
-    var dailyTargetPomodoros: Int = 8
-    var soundEnabled: Bool = true
-    var popupEnabled: Bool = true
-    var systemNotificationEnabled: Bool = true
-    var menuBarEnabled: Bool = true
-    var launchAtLogin: Bool = false
-    var theme: String = "system"
-    var lastSelectedTaskId: String?
-    var examDate: Date?
-    var examName: String = "考研"
-    var examCountdownEnabled: Bool = true
-    var insightsEnabled: Bool = true
-    var dailyReportEnabled: Bool = true
-    var dynamicIslandEnabled: Bool = true
+    public var focusGuardRespectDoNotDisturb: Bool = true
+    public var focusGuardAlertLevel: CameraAlertLevel = .severe
+    public var dailyGoalMinutes: Int = 120
+    public var weeklyGoalMinutes: Int = 600
+    public var dailyTargetPomodoros: Int = 8
+    public var soundEnabled: Bool = true
+    public var popupEnabled: Bool = true
+    public var systemNotificationEnabled: Bool = true
+    public var menuBarEnabled: Bool = true
+    public var launchAtLogin: Bool = false
+    public var theme: String = "system"
+    public var lastSelectedTaskId: String?
+    public var examDate: Date?
+    public var examName: String = "考研"
+    public var examCountdownEnabled: Bool = true
+    public var insightsEnabled: Bool = true
+    public var dailyReportEnabled: Bool = true
+    public var dynamicIslandEnabled: Bool = true
     /// keep | minimize | hide — 主窗口在前台时岛的行为
-    var dynamicIslandWhenFocused: String = "minimize"
-    var lastReportShownDate: Date?
+    public var dynamicIslandWhenFocused: String = "minimize"
+    public var lastReportShownDate: Date?
     /// 计时进行中退出需确认
-    var confirmExitWhileFocusing: Bool = true
+    public var confirmExitWhileFocusing: Bool = true
     /// 结束前预告秒数；0 = 关闭
-    var sessionEndPreNotifySeconds: Int = 30
+    public var sessionEndPreNotifySeconds: Int = 30
     /// 休息时全屏遮罩
-    var fullscreenBreakEnabled: Bool = false
+    public var fullscreenBreakEnabled: Bool = false
     /// 严格模式：禁止手动关灯、禁止提前结束休息
-    var strictModeEnabled: Bool = false
-    var language: String = "system"
+    public var strictModeEnabled: Bool = false
+    public var language: String = "system"
 
-    var effectiveCameraAlertCanManualClose: Bool {
+    public var effectiveCameraAlertCanManualClose: Bool {
         !strictModeEnabled && cameraAlertCanManualClose
     }
 
-    var effectiveAllowEndBreakEarly: Bool {
+    public var effectiveAllowEndBreakEarly: Bool {
         !strictModeEnabled
     }
 
-    mutating func applyLightFocusPreset() {
+    public init() {}
+
+    public mutating func applyLightFocusPreset() {
         strictModeEnabled = false
         fullscreenBreakEnabled = false
         dynamicIslandEnabled = true
@@ -107,7 +109,7 @@ struct Settings: Codable, Equatable {
         systemNotificationEnabled = true
     }
 
-    mutating func applyStandardFocusPreset() {
+    public mutating func applyStandardFocusPreset() {
         strictModeEnabled = false
         fullscreenBreakEnabled = false
         dynamicIslandEnabled = true
@@ -126,7 +128,7 @@ struct Settings: Codable, Equatable {
     }
 
     /// 严格专注：严格 + 全屏休息 + 岛 keep（灯可选，默认关）
-    mutating func applyStrictFocusPreset() {
+    public mutating func applyStrictFocusPreset() {
         strictModeEnabled = true
         fullscreenBreakEnabled = true
         dynamicIslandEnabled = true
@@ -144,7 +146,7 @@ struct Settings: Codable, Equatable {
         systemNotificationEnabled = true
     }
 
-    mutating func applyFocusScenePreset(_ scene: String) {
+    public mutating func applyFocusScenePreset(_ scene: String) {
         switch scene.lowercased() {
         case "light", "轻松":
             applyLightFocusPreset()
@@ -156,7 +158,7 @@ struct Settings: Codable, Equatable {
     }
 
     /// 摄像头灯可读状态
-    func cameraStatusDisplay(isActive: Bool, raw: String) -> String {
+    public func cameraStatusDisplay(isActive: Bool, raw: String) -> String {
         if !cameraAlertEnabled {
             return "摄像头灯：关闭（设置中可开启，仅作硬件提醒）"
         }
@@ -170,13 +172,13 @@ struct Settings: Codable, Equatable {
         return "摄像头灯：待命（专注结束后点亮）"
     }
 
-    static let defaultBlocklist = [
+    public static let defaultBlocklist = [
         "bilibili", "youtube", "抖音", "douyin", "微博", "weibo",
         "知乎", "zhihu", "WeChat", "Weixin", "微信", "QQ", "TikTok",
         "Steam", "网易云音乐", "爱奇艺", "腾讯视频", "优酷", "Safari"
     ]
 
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case schemaVersion = "SchemaVersion"
         case workMinutes = "WorkMinutes"
         case shortBreakMinutes = "ShortBreakMinutes"
@@ -225,9 +227,7 @@ struct Settings: Codable, Equatable {
         case language = "Language"
     }
 
-    init() {}
-
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         schemaVersion = try c.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         workMinutes = try c.decodeIfPresent(Int.self, forKey: .workMinutes) ?? 25
@@ -277,7 +277,7 @@ struct Settings: Codable, Equatable {
         language = try c.decodeIfPresent(String.self, forKey: .language) ?? "system"
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(schemaVersion, forKey: .schemaVersion)
         try c.encode(workMinutes, forKey: .workMinutes)
@@ -328,14 +328,22 @@ struct Settings: Codable, Equatable {
     }
 }
 
-struct TaskItem: Codable, Identifiable, Equatable {
-    var id: String = UUID().uuidString
-    var name: String = ""
-    var category: String = ""
-    var color: String = "#3B82F6"
-    var createdAt: Date = Date()
+public struct TaskItem: Codable, Identifiable, Equatable {
+    public var id: String = UUID().uuidString
+    public var name: String = ""
+    public var category: String = ""
+    public var color: String = "#3B82F6"
+    public var createdAt: Date = Date()
 
-    enum CodingKeys: String, CodingKey {
+    public init(id: String = UUID().uuidString, name: String = "", category: String = "", color: String = "#3B82F6", createdAt: Date = Date()) {
+        self.id = id
+        self.name = name
+        self.category = category
+        self.color = color
+        self.createdAt = createdAt
+    }
+
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case category = "Category"
@@ -344,18 +352,30 @@ struct TaskItem: Codable, Identifiable, Equatable {
     }
 }
 
-struct FocusSession: Codable, Identifiable {
-    var id: String = UUID().uuidString
-    var taskId: String = ""
-    var taskName: String = ""
-    var startTime: Date = Date()
-    var endTime: Date?
-    var focusMinutes: Int = 25
-    var completed: Bool = false
-    var notes: String?
-    var qualityScore: Int = 0
+public struct FocusSession: Codable, Identifiable {
+    public var id: String = UUID().uuidString
+    public var taskId: String = ""
+    public var taskName: String = ""
+    public var startTime: Date = Date()
+    public var endTime: Date?
+    public var focusMinutes: Int = 25
+    public var completed: Bool = false
+    public var notes: String?
+    public var qualityScore: Int = 0
 
-    enum CodingKeys: String, CodingKey {
+    public init(id: String = UUID().uuidString, taskId: String = "", taskName: String = "", startTime: Date = Date(), endTime: Date? = nil, focusMinutes: Int = 25, completed: Bool = false, notes: String? = nil, qualityScore: Int = 0) {
+        self.id = id
+        self.taskId = taskId
+        self.taskName = taskName
+        self.startTime = startTime
+        self.endTime = endTime
+        self.focusMinutes = focusMinutes
+        self.completed = completed
+        self.notes = notes
+        self.qualityScore = qualityScore
+    }
+
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case taskId = "TaskId"
         case taskName = "TaskName"
@@ -368,79 +388,143 @@ struct FocusSession: Codable, Identifiable {
     }
 }
 
-struct DailyStats {
-    var completedPomodoros: Int = 0
-    var totalFocusMinutes: Int = 0
-    var currentStreak: Int = 0
+public struct DailyStats {
+    public var completedPomodoros: Int = 0
+    public var totalFocusMinutes: Int = 0
+    public var currentStreak: Int = 0
+
+    public init(completedPomodoros: Int = 0, totalFocusMinutes: Int = 0, currentStreak: Int = 0) {
+        self.completedPomodoros = completedPomodoros
+        self.totalFocusMinutes = totalFocusMinutes
+        self.currentStreak = currentStreak
+    }
 }
 
-struct DailyReport: Identifiable {
-    let id = UUID()
-    var date: Date
-    var completedPomodoros: Int
-    var totalMinutes: Int
-    var mainTask: String
-    var streakDays: Int
-    var avgQualityScore: Double
-    var uniqueTasksCount: Int
-    var categorySuggestion: String
+public struct DailyReport: Identifiable {
+    public let id = UUID()
+    public var date: Date
+    public var completedPomodoros: Int
+    public var totalMinutes: Int
+    public var mainTask: String
+    public var streakDays: Int
+    public var avgQualityScore: Double
+    public var uniqueTasksCount: Int
+    public var categorySuggestion: String
+
+    public init(date: Date, completedPomodoros: Int, totalMinutes: Int, mainTask: String, streakDays: Int, avgQualityScore: Double, uniqueTasksCount: Int, categorySuggestion: String) {
+        self.date = date
+        self.completedPomodoros = completedPomodoros
+        self.totalMinutes = totalMinutes
+        self.mainTask = mainTask
+        self.streakDays = streakDays
+        self.avgQualityScore = avgQualityScore
+        self.uniqueTasksCount = uniqueTasksCount
+        self.categorySuggestion = categorySuggestion
+    }
 }
 
-struct Insight: Identifiable {
-    let id = UUID()
-    var title: String
-    var description: String
-    var actionHint: String
-    var type: InsightType
+public struct Insight: Identifiable {
+    public let id = UUID()
+    public var title: String
+    public var description: String
+    public var actionHint: String
+    public var type: InsightType
+
+    public init(title: String, description: String, actionHint: String, type: InsightType) {
+        self.title = title
+        self.description = description
+        self.actionHint = actionHint
+        self.type = type
+    }
 }
 
-struct HeatmapDay: Identifiable {
-    var id: Date { date }
-    var date: Date
-    var focusMinutes: Int
-    var intensityLevel: Int
+public struct HeatmapDay: Identifiable {
+    public var id: Date { date }
+    public var date: Date
+    public var focusMinutes: Int
+    public var intensityLevel: Int
+
+    public init(date: Date, focusMinutes: Int, intensityLevel: Int) {
+        self.date = date
+        self.focusMinutes = focusMinutes
+        self.intensityLevel = intensityLevel
+    }
 }
 
-struct HourlyDataPoint: Identifiable {
-    var id: Int { hour }
-    var hour: Int
-    var totalMinutes: Int
-    var sessionCount: Int
+public struct HourlyDataPoint: Identifiable {
+    public var id: Int { hour }
+    public var hour: Int
+    public var totalMinutes: Int
+    public var sessionCount: Int
+
+    public init(hour: Int, totalMinutes: Int, sessionCount: Int) {
+        self.hour = hour
+        self.totalMinutes = totalMinutes
+        self.sessionCount = sessionCount
+    }
 }
 
-struct WeeklyDataPoint: Identifiable {
-    var id: Date { weekStart }
-    var weekStart: Date
-    var totalMinutes: Int
-    var completedPomodoros: Int
+public struct WeeklyDataPoint: Identifiable {
+    public var id: Date { weekStart }
+    public var weekStart: Date
+    public var totalMinutes: Int
+    public var completedPomodoros: Int
+
+    public init(weekStart: Date, totalMinutes: Int, completedPomodoros: Int) {
+        self.weekStart = weekStart
+        self.totalMinutes = totalMinutes
+        self.completedPomodoros = completedPomodoros
+    }
 }
 
-struct TaskSlice: Identifiable {
-    var id: String { taskName }
-    var taskName: String
-    var taskColor: String
-    var pomodoroCount: Int
-    var percentage: Double
+public struct TaskSlice: Identifiable {
+    public var id: String { taskName }
+    public var taskName: String
+    public var taskColor: String
+    public var pomodoroCount: Int
+    public var percentage: Double
+
+    public init(taskName: String, taskColor: String, pomodoroCount: Int, percentage: Double) {
+        self.taskName = taskName
+        self.taskColor = taskColor
+        self.pomodoroCount = pomodoroCount
+        self.percentage = percentage
+    }
 }
 
-struct GoalProgress: Identifiable {
-    var id: String { label }
-    var label: String
-    var currentMinutes: Int
-    var targetMinutes: Int
-    var progressPercent: Double
-    var isCompleted: Bool
+public struct GoalProgress: Identifiable {
+    public var id: String { label }
+    public var label: String
+    public var currentMinutes: Int
+    public var targetMinutes: Int
+    public var progressPercent: Double
+    public var isCompleted: Bool
+
+    public init(label: String, currentMinutes: Int, targetMinutes: Int, progressPercent: Double, isCompleted: Bool) {
+        self.label = label
+        self.currentMinutes = currentMinutes
+        self.targetMinutes = targetMinutes
+        self.progressPercent = progressPercent
+        self.isCompleted = isCompleted
+    }
 }
 
-struct PomodoroPreset: Identifiable {
-    let id = UUID()
-    let name: String
-    let work: Int
-    let shortBreak: Int
-    let longBreak: Int
+public struct PomodoroPreset: Identifiable {
+    public let id = UUID()
+    public let name: String
+    public let work: Int
+    public let shortBreak: Int
+    public let longBreak: Int
+
+    public init(name: String, work: Int, shortBreak: Int, longBreak: Int) {
+        self.name = name
+        self.work = work
+        self.shortBreak = shortBreak
+        self.longBreak = longBreak
+    }
 }
 
-extension PomodoroPreset {
+public extension PomodoroPreset {
     static let standard = PomodoroPreset(name: "标准", work: 25, shortBreak: 5, longBreak: 15)
     static let deep = PomodoroPreset(name: "深度", work: 50, shortBreak: 10, longBreak: 20)
     static let sprint = PomodoroPreset(name: "冲刺", work: 15, shortBreak: 3, longBreak: 10)

@@ -9,269 +9,123 @@ namespace LumenPomodoro.Services;
 public class TimerService : ITimerService
 {
     private const int TimerIntervalMs = 250;
-    private const int TickSeconds = 1;
 
-    /// <summary>唤醒补偿：忽略 2 秒内的偏差（系统延迟误判）</summary>
-    private const double WakeCompensationMinSeconds = 2;
-    /// <summary>唤醒补偿：超过 24 小时视为时钟调整而非真实睡眠</summary>
-    private const double WakeCompensationMaxSeconds = 86400;
-    /// <summary>每 tick 最多补偿次数，防止长时间卡顿一次性扣除过多秒数</summary>
-    private const int MaxTickCompensationCount = 10;
     private readonly DispatcherTimer _timer;
-    private readonly object _lock = new object();
-    private int _remainingSeconds;
-    private int _totalSeconds;
-    private TimerMode _currentMode;
-    private TimerMode _modeBeforePause;
-    private bool _isPaused;
-    private bool _isRunning;
-    private DateTime _lastTickTime;
-    private DateTime _nextTickTime; // 下一个tick的预期时间，用于精度补偿
+    private readonly TimerEngine _engine;
 
     public event EventHandler<TimerTickEventArgs>? TimerTick;
     public event EventHandler<TimerCompletedEventArgs>? TimerCompleted;
     public event EventHandler<TimerModeChangedEventArgs>? ModeChanged;
 
-    public TimerMode CurrentMode => _currentMode;
-    public bool IsRunning => _isRunning;
-    public bool IsPaused => _isPaused;
-    public int RemainingSeconds => _remainingSeconds;
-    public int TotalSeconds => _totalSeconds;
+    public TimerMode CurrentMode => _engine.CurrentMode;
+    public bool IsRunning => _engine.IsRunning;
+    public bool IsPaused => _engine.IsPaused;
+    public int RemainingSeconds => _engine.RemainingSeconds;
+    public int TotalSeconds => _engine.TotalSeconds;
 
     public TimerService()
     {
         // 使用250ms检查频率，平衡精度和功耗
-        // 实际tick对齐通过_nextTickTime控制，避免UI线程繁忙导致的累积误差
+        // 实际tick对齐由 TimerEngine 通过 _nextTickTime 控制，避免UI线程繁忙导致的累积误差
+        _engine = new TimerEngine();
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(TimerIntervalMs) };
         _timer.Tick += Timer_Tick;
-        _currentMode = TimerMode.Idle;
-        _lastTickTime = DateTime.UtcNow;
-        _nextTickTime = DateTime.UtcNow;
     }
 
     public void StartFocus(int minutes)
     {
-        int remaining, total;
-        lock (_lock)
-        {
-            if (_isRunning) return;
-            _totalSeconds = minutes * 60;
-            _remainingSeconds = _totalSeconds;
-            _currentMode = TimerMode.Focus;
-            _isRunning = true;
-            _isPaused = false;
-            _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds); // 设置第一个tick时间
-            _timer.Start();
-            remaining = _remainingSeconds;
-            total = _totalSeconds;
-        }
+        if (_engine.IsRunning) return;
+        var prev = _engine.CurrentMode;
+        _engine.StartFocus(minutes, DateTime.UtcNow);
+        _timer.Start();
 
         Log.Information("开始专注 {Minutes} 分钟", minutes);
-        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Focus));
-        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Focus));
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, _engine.CurrentMode));
+        TimerTick?.Invoke(this, new TimerTickEventArgs(_engine.RemainingSeconds, _engine.TotalSeconds, _engine.CurrentMode));
     }
 
     public void StartBreak(int minutes)
     {
-        int remaining, total;
-        lock (_lock)
-        {
-            if (_isRunning) return;
-            _totalSeconds = minutes * 60;
-            _remainingSeconds = _totalSeconds;
-            _currentMode = TimerMode.Break;
-            _isRunning = true;
-            _isPaused = false;
-            _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
-            _timer.Start();
-            remaining = _remainingSeconds;
-            total = _totalSeconds;
-        }
+        if (_engine.IsRunning) return;
+        var prev = _engine.CurrentMode;
+        _engine.StartBreak(minutes, DateTime.UtcNow);
+        _timer.Start();
 
         Log.Information("开始休息 {Minutes} 分钟", minutes);
-        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Idle, TimerMode.Break));
-        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, TimerMode.Break));
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, _engine.CurrentMode));
+        TimerTick?.Invoke(this, new TimerTickEventArgs(_engine.RemainingSeconds, _engine.TotalSeconds, _engine.CurrentMode));
     }
 
     public void Pause()
     {
-        TimerMode oldMode = TimerMode.Idle;
-        bool shouldInvoke = false;
-        lock (_lock)
+        var prev = _engine.CurrentMode;
+        if (_engine.Pause(DateTime.UtcNow))
         {
-            if (_isRunning && !_isPaused)
-            {
-                _isPaused = true;
-                oldMode = _currentMode;
-                _modeBeforePause = _currentMode;
-                _currentMode = TimerMode.Paused;
-                _timer.Stop();
-                shouldInvoke = true;
-            }
-        }
-
-        if (shouldInvoke)
-        {
-            Log.Debug("计时器暂停，之前模式: {Mode}", oldMode.ToString());
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Paused));
+            _timer.Stop();
+            Log.Debug("计时器暂停，之前模式: {Mode}", prev.ToString());
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, _engine.CurrentMode));
         }
     }
 
     public void Resume()
     {
-        TimerMode restoredMode = TimerMode.Idle;
-        bool shouldInvoke = false;
-        lock (_lock)
+        var prev = _engine.CurrentMode;
+        if (_engine.Resume(DateTime.UtcNow))
         {
-            if (_isRunning && _isPaused)
-            {
-                _isPaused = false;
-                restoredMode = _modeBeforePause;
-                _currentMode = restoredMode;
-                _lastTickTime = DateTime.UtcNow;
-                _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
-                _timer.Start();
-                shouldInvoke = true;
-            }
-        }
-
-        if (shouldInvoke)
-        {
-            Log.Debug("计时器恢复，模式: {Mode}", restoredMode);
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(TimerMode.Paused, restoredMode));
+            _timer.Start();
+            Log.Debug("计时器恢复，模式: {Mode}", _engine.CurrentMode);
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, _engine.CurrentMode));
         }
     }
 
     public void Reset()
     {
-        TimerMode oldMode;
-        lock (_lock)
-        {
-            _timer.Stop();
-            _isRunning = false;
-            _isPaused = false;
-            _remainingSeconds = 0;
-            _totalSeconds = 0;
-            oldMode = _currentMode;
-            _currentMode = TimerMode.Idle;
-            _nextTickTime = DateTime.UtcNow;
-        }
+        var prev = _engine.CurrentMode;
+        _engine.Reset(DateTime.UtcNow);
+        _timer.Stop();
 
-        Log.Debug("计时器重置，之前模式: {Mode}", oldMode);
-        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
+        Log.Debug("计时器重置，之前模式: {Mode}", prev);
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, TimerMode.Idle));
         TimerTick?.Invoke(this, new TimerTickEventArgs(0, 0, TimerMode.Idle));
     }
 
     public void Stop()
     {
-        TimerMode oldMode;
-        lock (_lock)
-        {
-            oldMode = _currentMode;
-            _timer.Stop();
-            _isRunning = false;
-            _isPaused = false;
-            _nextTickTime = DateTime.UtcNow;
-        }
-        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(oldMode, TimerMode.Idle));
+        var prev = _engine.CurrentMode;
+        _engine.Stop(DateTime.UtcNow);
+        _timer.Stop();
+        ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(prev, TimerMode.Idle));
     }
 
     public void CorrectAfterWake()
     {
-        int remaining, total;
-        TimerMode mode;
-        bool shouldComplete = false;
-        TimerMode completedMode = TimerMode.Idle;
-
-        lock (_lock)
+        var r = _engine.ApplyWakeCorrection(DateTime.UtcNow);
+        if (r.ShouldTick)
         {
-            if (!_isRunning || _isPaused) return;
-
-            var elapsed = (DateTime.UtcNow - _lastTickTime).TotalSeconds;
-            // 小于 WakeCompensationMinSeconds 忽略（避免系统延迟误判）
-            // 大于 WakeCompensationMaxSeconds 忽略（可能是时钟调整，而非实际睡眠）
-            if (elapsed < WakeCompensationMinSeconds || elapsed > WakeCompensationMaxSeconds) return;
-
-            // 扣除所有错过的秒数（系统休眠期间计时器停止运行）
-            // elapsed可能包含小数部分，转换为int会截断，但误差小于1秒可接受
-            _remainingSeconds = Math.Max(0, _remainingSeconds - (int)elapsed);
-            _lastTickTime = DateTime.UtcNow;
-            _nextTickTime = _lastTickTime.AddSeconds(TickSeconds);
-            remaining = _remainingSeconds;
-            total = _totalSeconds;
-            mode = _currentMode;
-
-            if (_remainingSeconds <= 0)
-            {
-                _timer.Stop();
-                _isRunning = false;
-                completedMode = _currentMode;
-                _currentMode = TimerMode.Idle;
-                shouldComplete = true;
-            }
+            TimerTick?.Invoke(this, new TimerTickEventArgs(r.RemainingSeconds, r.TotalSeconds, r.Mode));
         }
 
-        TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
-
-        if (shouldComplete)
+        if (r.ShouldComplete)
         {
-            Log.Information("休眠唤醒后计时器完成，模式: {Mode}", completedMode);
-            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
+            Log.Information("休眠唤醒后计时器完成，模式: {Mode}", r.CompletedMode);
+            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(r.CompletedMode));
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(r.CompletedMode, TimerMode.Idle));
         }
     }
 
     private void Timer_Tick(object? sender, EventArgs e)
     {
-        bool shouldComplete = false;
-        TimerMode completedMode = TimerMode.Idle;
-        int remaining, total;
-        TimerMode mode;
-
-        lock (_lock)
+        var r = _engine.Advance(DateTime.UtcNow);
+        if (r.ShouldTick)
         {
-            if (_isPaused) return;
-
-            var now = DateTime.UtcNow;
-            // 如果还没到下一个tick时间，直接返回
-            if (now < _nextTickTime) return;
-
-            // 计算需要触发的tick次数（通常为1，补偿延迟时可能>1）
-            int ticksToProcess = 0;
-            while (_nextTickTime <= now && ticksToProcess < MaxTickCompensationCount) // 最多补偿 MaxTickCompensationCount 个tick，防止长时间卡顿一次性扣除过多
-            {
-                ticksToProcess++;
-                _nextTickTime = _nextTickTime.AddSeconds(TickSeconds);
-            }
-
-            _remainingSeconds = Math.Max(0, _remainingSeconds - ticksToProcess);
-            _lastTickTime = now;
-            remaining = _remainingSeconds;
-            total = _totalSeconds;
-            mode = _currentMode;
-
-            if (_remainingSeconds <= 0)
-            {
-                _timer.Stop();
-                _isRunning = false;
-                completedMode = _currentMode;
-                _currentMode = TimerMode.Idle;
-                shouldComplete = true;
-            }
+            TimerTick?.Invoke(this, new TimerTickEventArgs(r.RemainingSeconds, r.TotalSeconds, r.Mode));
         }
 
-        if (!shouldComplete)
+        if (r.ShouldComplete)
         {
-            TimerTick?.Invoke(this, new TimerTickEventArgs(remaining, total, mode));
-        }
-
-        if (shouldComplete)
-        {
-            Log.Information("计时器自然完成，模式: {Mode}", completedMode);
-            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(completedMode));
-            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(completedMode, TimerMode.Idle));
+            Log.Information("计时器自然完成，模式: {Mode}", r.CompletedMode);
+            TimerCompleted?.Invoke(this, new TimerCompletedEventArgs(r.CompletedMode));
+            ModeChanged?.Invoke(this, new TimerModeChangedEventArgs(r.CompletedMode, TimerMode.Idle));
         }
     }
 

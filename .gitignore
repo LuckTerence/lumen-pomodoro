@@ -64,3 +64,7 @@ LumenPomodoroMac/dist/
 
 ## Local agent / tooling
 .workbuddy/
+
+## mingw/MSYS 崩溃产物（在 Windows 下运行 bash 时偶发）
+bash.exe.stackdump
+*.stackdump

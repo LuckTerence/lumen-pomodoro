@@ -116,16 +116,18 @@ dotnet test LumenPomodoro.Tests
 
 ## 技术栈
 
-| 类别 | 技术 |
-|------|------|
-| 框架 | .NET 8 + WPF |
-| UI | WPF-UI (lepo.co) |
-| 摄像头 | Windows Media Foundation |
-| 存储 | System.Text.Json + 本地 JSON 文件 |
-| 托盘 | Hardcodet.NotifyIcon.Wpf |
-| 日志 | Serilog |
-| 测试 | xUnit |
-| 架构 | MVVM + DI（构造函数注入） |
+Lumen Pomodoro 提供 Windows 与 macOS 双端实现，数据与契约保持一致（见 [docs/cross-platform-contract.md](docs/cross-platform-contract.md)）。
+
+| 类别 | Windows | macOS |
+|------|---------|-------|
+| 框架 | .NET 8 + WPF | Swift 6 + SwiftUI（SwiftPM） |
+| UI | WPF-UI (lepo.co) | SwiftUI |
+| 摄像头 | Windows Media Foundation | AVFoundation |
+| 存储 | System.Text.Json + 本地 JSON 文件（双端 schema 一致） | Foundation JSONEncoder + 本地 JSON 文件 |
+| 驻留 | Hardcodet.NotifyIcon.Wpf（托盘） | 菜单栏（MenuBar） |
+| 日志 | Serilog | os.Logger |
+| 测试 | xUnit | XCTest |
+| 架构 | MVVM + DI（构造函数注入） | @ObservableObject + 共享单例（StorageService.shared） |
 
 ## 配置文件
 

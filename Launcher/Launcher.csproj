@@ -5,6 +5,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- 原生 AOT 引导程序：AOT/裁剪告警在非 Windows 环境难以验证，暂不纳入 TreatWarningsAsErrors 护栏 -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- 本地可用 -p:PublishAot=true 打小体积；CI 默认关闭 AOT -->
     <PublishAot>false</PublishAot>
     <SelfContained>true</SelfContained>

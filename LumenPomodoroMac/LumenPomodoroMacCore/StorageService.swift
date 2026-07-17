@@ -1,7 +1,7 @@
 import Foundation
 
-final class StorageService {
-    static let shared = StorageService()
+public final class StorageService {
+    public static let shared = StorageService()
 
     private let fileManager = FileManager.default
     private let encoder: JSONEncoder
@@ -14,8 +14,13 @@ final class StorageService {
     private var settingsURL: URL { appSupportURL.appendingPathComponent("settings.json") }
     private var tasksURL: URL { appSupportURL.appendingPathComponent("tasks.json") }
     private var sessionsURL: URL { appSupportURL.appendingPathComponent("sessions.json") }
+    private var schemaVersionURL: URL { appSupportURL.appendingPathComponent("_schema.json") }
 
-    private init() {
+    /// 当前数据 schema 版本，需与 Windows 端及 docs/cross-platform-contract.md 对齐。
+    private let currentSchemaVersion = 1
+
+    /// 默认使用 Application Support/LumenPomodoro；测试可传入临时目录以隔离真实数据。
+    public init(baseDirectory: URL? = nil) {
         encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
@@ -36,32 +41,119 @@ final class StorageService {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(value)")
         }
 
-        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let base = baseDirectory
+            ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         appSupportURL = base.appendingPathComponent("LumenPomodoro", isDirectory: true)
         try? fileManager.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
+
+        runMigrations()
     }
 
-    var dataDirectoryPath: String {
+    // MARK: - Schema 迁移
+
+    /// 启动时按 docs/cross-platform-contract.md 的迁移规则执行：
+    /// 若存储的 schema 版本低于当前版本，按序执行 Vn → Vn+1；
+    /// 高于当前版本（未来数据）仅告警、不静默写坏。
+    private func runMigrations() {
+        let current = getStoredSchemaVersion()
+
+        if current > currentSchemaVersion {
+            NSLog("[StorageService] 数据 schema 版本 \(current) 高于当前 \(currentSchemaVersion)，请升级 App（只读降级，不写坏数据）")
+            if !fileManager.fileExists(atPath: schemaVersionURL.path) {
+                saveSchemaVersion(current)
+            }
+            return
+        }
+
+        guard current < currentSchemaVersion else {
+            // 已是最新，确保 _schema.json 存在以便跨端互拷识别
+            if !fileManager.fileExists(atPath: schemaVersionURL.path) {
+                saveSchemaVersion(currentSchemaVersion)
+            }
+            return
+        }
+
+        NSLog("[StorageService] 执行数据迁移 V\(current) → V\(currentSchemaVersion)")
+        // 逐版本递增迁移，保证跨多版本升级（V0→V1→V2…）也能逐步执行，避免新增版本后“迁移死路”。
+        for version in (current + 1)...currentSchemaVersion {
+            migrateToVersion(version)
+        }
+        saveSchemaVersion(currentSchemaVersion)
+    }
+
+    /// 执行从 V(version-1) 到 V(version) 的迁移步骤。新增 schema 版本时只需在此追加分支，
+    /// 并提升 `currentSchemaVersion`；`runMigrations()` 的循环会自动按序执行所有中间步骤。
+    private func migrateToVersion(_ version: Int) {
+        switch version {
+        case 1:
+            migrateV0ToV1()
+        // case 2:
+        //     migrateV1ToV2()
+        default:
+            NSLog("[StorageService] 未实现 V\(version) 的迁移步骤，已跳过")
+        }
+    }
+
+    private func getStoredSchemaVersion() -> Int {
+        if let data = try? Data(contentsOf: schemaVersionURL),
+           let doc = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let v = doc["schema_version"] as? Int {
+            return v
+        }
+        // 兼容回退：从 settings.json 的 SchemaVersion 读取
+        if let data = try? Data(contentsOf: settingsURL),
+           let doc = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let v = doc["SchemaVersion"] as? Int {
+            return v
+        }
+        return 0
+    }
+
+    private func saveSchemaVersion(_ version: Int) {
+        let meta: [String: Any] = [
+            "schema_version": version,
+            "updated_at": ISO8601DateFormatter().string(from: Date())
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: meta, options: .prettyPrinted) {
+            try? data.write(to: schemaVersionURL, options: .atomic)
+        }
+    }
+
+    private func migrateV0ToV1() {
+        // V0（无 SchemaVersion 字段）升级到 V1：仅补写版本元数据，无字段破坏性变更。
+        // 若 settings.json 存在且缺少 SchemaVersion，补写为 1。
+        guard fileManager.fileExists(atPath: settingsURL.path),
+              let data = try? Data(contentsOf: settingsURL),
+              var doc = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              (doc["SchemaVersion"] as? Int) ?? 0 == 0 else { return }
+        doc["SchemaVersion"] = 1
+        if let updated = try? JSONSerialization.data(withJSONObject: doc, options: .prettyPrinted) {
+            try? updated.write(to: settingsURL, options: .atomic)
+        }
+    }
+
+
+    public var dataDirectoryPath: String {
         appSupportURL.path
     }
 
-    func loadSettings() -> Settings {
+    public func loadSettings() -> Settings {
         load(from: settingsURL, as: Settings.self) ?? Settings()
     }
 
-    func saveSettings(_ settings: Settings) {
+    public func saveSettings(_ settings: Settings) {
         save(settings, to: settingsURL)
     }
 
-    func loadTasks() -> [TaskItem] {
+    public func loadTasks() -> [TaskItem] {
         load(from: tasksURL, as: [TaskItem].self) ?? defaultTasks()
     }
 
-    func saveTasks(_ tasks: [TaskItem]) {
+    public func saveTasks(_ tasks: [TaskItem]) {
         save(tasks, to: tasksURL)
     }
 
-    func loadSessions() -> [FocusSession] {
+    public func loadSessions() -> [FocusSession] {
         lock.lock()
         defer { lock.unlock() }
         if let sessionsCache {
@@ -72,20 +164,20 @@ final class StorageService {
         return loaded
     }
 
-    func saveSessions(_ sessions: [FocusSession]) {
+    public func saveSessions(_ sessions: [FocusSession]) {
         lock.lock()
         sessionsCache = sessions
         lock.unlock()
         save(sessions, to: sessionsURL)
     }
 
-    func appendSession(_ session: FocusSession) {
+    public func appendSession(_ session: FocusSession) {
         var sessions = loadSessions()
         sessions.append(session)
         saveSessions(sessions)
     }
 
-    func updateSession(_ session: FocusSession) {
+    public func updateSession(_ session: FocusSession) {
         var sessions = loadSessions()
         if let index = sessions.firstIndex(where: { $0.id == session.id }) {
             sessions[index] = session
@@ -93,7 +185,7 @@ final class StorageService {
         }
     }
 
-    func todayStats(on date: Date = Date()) -> DailyStats {
+    public func todayStats(on date: Date = Date()) -> DailyStats {
         let calendar = Calendar.current
         let sessions = loadSessions().filter {
             $0.completed && calendar.isDate($0.startTime, inSameDayAs: date)
@@ -110,7 +202,7 @@ final class StorageService {
         )
     }
 
-    func sessionsForLastDays(_ days: Int) -> [FocusSession] {
+    public func sessionsForLastDays(_ days: Int) -> [FocusSession] {
         let calendar = Calendar.current
         guard let start = calendar.date(byAdding: .day, value: -(days - 1), to: calendar.startOfDay(for: Date())) else {
             return []

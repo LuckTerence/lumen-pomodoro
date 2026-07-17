@@ -1,13 +1,19 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using LumenPomodoro.Models;
 using LumenPomodoro.Services.Abstractions;
 using Serilog;
 
 namespace LumenPomodoro.Services;
 
-public class StorageService : IStorageService
+/// <summary>
+/// 会话数据持久化服务。
+/// 内存缓存为真相来源，文件写盘在后台线程异步完成，避免计时完成回调阻塞 UI 线程；
+/// 同时对 sessions.json 做数量裁剪以限制长期增长。
+/// </summary>
+public class StorageService : IStorageService, IDisposable
 {
     private readonly string _appDataPath;
     private readonly string _settingsFile;
@@ -16,6 +22,16 @@ public class StorageService : IStorageService
     private readonly string _schemaFile;
 
     private const int CurrentSchemaVersion = 1;
+
+    // sessions.json 保留的最大会话条数：超出后裁剪最早的会话，限制文件体积与反序列化开销。
+    // 该上限足够大（约 27 年每日使用），裁剪最早会话在极端情况下可能影响超长历史的连胜统计，
+    // 但可避免文件无限增长导致本地追踪器逐渐变慢。
+    private const int MaxRetainedSessions = 10000;
+
+    // 后台写盘任务链：串行执行，保证文件写入顺序与提交顺序一致。
+    private readonly object _writeLock = new();
+    private Task _writeChain = Task.CompletedTask;
+    private bool _disposed;
 
     private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
 
@@ -83,18 +99,52 @@ public class StorageService : IStorageService
     private void RunMigrations()
     {
         var current = GetStoredSchemaVersion();
-        if (current >= CurrentSchemaVersion) return;
+
+        // 数据版本高于当前程序版本（来自更新的 App）：只读降级，写回原版本号并告警，不静默写坏。
+        if (current > CurrentSchemaVersion)
+        {
+            Log.Warning("数据 schema 版本 {Stored} 高于当前程序版本 {Current}，将仅读取不降级（请升级 App）", current, CurrentSchemaVersion);
+            if (!File.Exists(_schemaFile)) SaveSchemaVersion(current);
+            return;
+        }
+
+        if (current >= CurrentSchemaVersion)
+        {
+            // 已是最新：确保 _schema.json 存在以便跨端识别
+            if (!File.Exists(_schemaFile)) SaveSchemaVersion(CurrentSchemaVersion);
+            return;
+        }
 
         Log.Information("执行数据迁移: V{From} → V{To}", current, CurrentSchemaVersion);
 
-        // V0 → V1: 初始化 schema 版本，无数据结构变更
-        if (current < 1)
+        // 逐版本递增迁移，保证跨多版本升级（V0→V1→V2…）也能逐步执行，避免新增版本后“迁移死路”。
+        for (int version = current + 1; version <= CurrentSchemaVersion; version++)
         {
-            MigrateV0ToV1();
+            MigrateToVersion(version);
         }
 
         SaveSchemaVersion(CurrentSchemaVersion);
         Log.Information("数据迁移完成");
+    }
+
+    /// <summary>
+    /// 执行从 V(version-1) 到 V(version) 的迁移步骤。新增 schema 版本时只需在此追加分支，
+    /// 并提升 <see cref="CurrentSchemaVersion"/>；<see cref="RunMigrations"/> 的循环会自动按序执行所有中间步骤。
+    /// </summary>
+    private void MigrateToVersion(int version)
+    {
+        switch (version)
+        {
+            case 1:
+                MigrateV0ToV1();
+                break;
+            // case 2:
+            //     MigrateV1ToV2();
+            //     break;
+            default:
+                Log.Warning("未实现 V{Version} 的迁移步骤，已跳过", version);
+                break;
+        }
     }
 
     private void MigrateV0ToV1()
@@ -422,10 +472,11 @@ public class StorageService : IStorageService
     {
         lock (_fileLock)
         {
-            var content = JsonSerializer.Serialize(sessions, IndentedOptions);
-            AtomicWriteAllText(_sessionsFile, content);
-            UpdateSessionsCache(sessions);
+            var next = new List<FocusSession>(sessions);
+            PruneSessions(next);
+            UpdateSessionsCache(next);
             InvalidateStatsCache();
+            QueueSessionsWrite(next);
         }
     }
 
@@ -435,7 +486,10 @@ public class StorageService : IStorageService
         {
             var sessions = GetOrLoadSessions();
             sessions.Add(session);
-            SaveSessionsWithTransaction(sessions);
+            PruneSessions(sessions);
+            UpdateSessionsCache(sessions);
+            InvalidateStatsCache();
+            QueueSessionsWrite(sessions);
         }
         Log.Information("保存专注会话: {TaskName}, {FocusMinutes} 分钟", session.TaskName, session.FocusMinutes);
     }
@@ -449,7 +503,9 @@ public class StorageService : IStorageService
             if (session != null)
             {
                 updater(session);
-                SaveSessionsWithTransaction(sessions);
+                UpdateSessionsCache(sessions);
+                InvalidateStatsCache();
+                QueueSessionsWrite(sessions);
             }
         }
     }
@@ -476,12 +532,72 @@ public class StorageService : IStorageService
         _tasksCache = tasks;
     }
 
-    private void SaveSessionsWithTransaction(List<FocusSession> sessions)
+    /// <summary>
+    /// 将完整会话列表的序列化与写盘投递到后台线程，避免阻塞调用方（UI 线程）。
+    /// 通过任务链串行化，保证文件内容最终与最后一次提交一致。
+    /// </summary>
+    private void QueueSessionsWrite(List<FocusSession> sessions)
     {
-        var content = JsonSerializer.Serialize(sessions, IndentedOptions);
-        AtomicWriteAllText(_sessionsFile, content);
-        UpdateSessionsCache(sessions);
-        InvalidateStatsCache();
+        var snapshot = new List<FocusSession>(sessions);
+        Task previous;
+        lock (_writeLock)
+        {
+            if (_disposed) return;
+            previous = _writeChain;
+            _writeChain = previous.ContinueWith(
+                _ => WriteSessionsSnapshot(snapshot),
+                CancellationToken.None,
+                TaskContinuationOptions.None,
+                TaskScheduler.Default);
+        }
+    }
+
+    private void WriteSessionsSnapshot(List<FocusSession> snapshot)
+    {
+        try
+        {
+            var content = JsonSerializer.Serialize(snapshot, IndentedOptions);
+            AtomicWriteAllText(_sessionsFile, content);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "后台写入会话文件失败");
+        }
+    }
+
+    /// <summary>
+    /// 裁剪最早会话以将数量控制在 <see cref="MaxRetainedSessions"/> 以内。
+    /// </summary>
+    private void PruneSessions(List<FocusSession> sessions)
+    {
+        if (sessions.Count <= MaxRetainedSessions) return;
+
+        var overflow = sessions.Count - MaxRetainedSessions;
+        Log.Warning("会话数 {Count} 超过上限 {Max}，裁剪最早的 {Overflow} 条以限制 sessions.json 体积",
+            sessions.Count, MaxRetainedSessions, overflow);
+        sessions.RemoveRange(0, overflow);
+    }
+
+    /// <summary>
+    /// 应用退出时由 DI 容器调用：等待后台写盘任务链完成，尽量不丢失最近一次会话。
+    /// </summary>
+    public void Dispose()
+    {
+        Task chain;
+        lock (_writeLock)
+        {
+            _disposed = true;
+            chain = _writeChain;
+        }
+
+        try
+        {
+            chain.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "等待会话写盘完成超时，可能存在未落盘数据");
+        }
     }
 
     public DailyStats GetTodayStats()
@@ -501,7 +617,7 @@ public class StorageService : IStorageService
 
             var sessions = GetOrLoadSessions();
             var today = DateTime.Today;
-            var todaySessions = sessions.Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == today).ToList();
+            var todaySessions = sessions.Where(s => s.Completed && s.StartTime.Date == today).ToList();
 
             var stats = new DailyStats();
             stats.CompletedPomodoros = todaySessions.Count;
@@ -527,7 +643,7 @@ public class StorageService : IStorageService
 
     private static int CalculateStreak(List<FocusSession> sessions)
     {
-        var completed = sessions.Where(s => s.Completed && s.EndTime.HasValue).ToList();
+        var completed = sessions.Where(s => s.Completed).ToList();
         return InsightEngine.CalculateStreak(completed);
     }
 }

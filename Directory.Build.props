@@ -4,5 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <!-- 构建护栏：警告视为错误，避免引入新的编译告警 -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>

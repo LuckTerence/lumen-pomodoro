@@ -343,4 +343,118 @@ public class StorageServiceTests : IDisposable
             if (Directory.Exists(cleanPath)) Directory.Delete(cleanPath, true);
         }
     }
+
+    [Fact]
+    public void AddSession_PersistsToFileAfterDispose_BackgroundWriteFlushed()
+    {
+        // 会话写盘在后台线程异步完成，需通过 Dispose 冲刷任务链；
+        // 验证退出后数据已落盘，而非仅停留在内存缓存。
+        var path = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "async_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var session = new FocusSession
+            {
+                Id = "async_1",
+                TaskId = "t1",
+                TaskName = "Async Task",
+                StartTime = DateTime.Now.AddMinutes(-25),
+                EndTime = DateTime.Now,
+                Completed = true,
+                FocusMinutes = 25
+            };
+
+            StorageService writer = new StorageService(path);
+            writer.AddSession(session);
+            writer.Dispose(); // 冲刷后台写盘任务链
+
+            var reader = new StorageService(path);
+            var loaded = reader.LoadSessions();
+            Assert.Contains(loaded, s => s.Id == "async_1");
+        }
+        finally
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, true);
+        }
+    }
+
+    [Fact]
+    public void SaveSessions_PrunesToMaxRetainedSessions()
+    {
+        // 超过上限后裁剪最早会话，限制 sessions.json 体积。
+        var path = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "prune_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            const int overLimit = 10001; // MaxRetainedSessions = 10000
+            var sessions = Enumerable.Range(0, overLimit)
+                .Select(i => new FocusSession
+                {
+                    Id = "p_" + i,
+                    TaskId = "t",
+                    TaskName = "Task",
+                    StartTime = DateTime.Now.AddMinutes(-i),
+                    Completed = true,
+                    FocusMinutes = 25
+                })
+                .ToList();
+
+            var storage = new StorageService(path);
+            storage.SaveSessions(sessions);
+            storage.Dispose();
+
+            var reloaded = new StorageService(path).LoadSessions();
+            Assert.Equal(10000, reloaded.Count);
+            // 最早的一条（p_0）应被裁剪
+            Assert.DoesNotContain(reloaded, s => s.Id == "p_0");
+            // 最新的一条（p_10000）应保留
+            Assert.Contains(reloaded, s => s.Id == "p_10000");
+        }
+        finally
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, true);
+        }
+    }
+
+    [Fact]
+    public void RunMigrations_FreshInstall_WritesSchemaVersion1()
+    {
+        // 全新安装（无 _schema.json）：迁移应写入 schema 版本 1
+        var path = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "mig_fresh_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            _ = new StorageService(path);
+            var schemaFile = Path.Combine(path, "_schema.json");
+            Assert.True(File.Exists(schemaFile), "应生成 _schema.json");
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(schemaFile));
+            Assert.True(doc.RootElement.TryGetProperty("schema_version", out var v));
+            Assert.Equal(1, v.GetInt32());
+        }
+        finally
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, true);
+        }
+    }
+
+    [Fact]
+    public void RunMigrations_FutureSchemaVersion_PreservedNoDowngrade()
+    {
+        // 数据来自更新的 App（schema 版本高于当前程序）：只读降级，保留原版本号，不静默写坏。
+        var path = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "mig_future_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(path);
+            var future = 99;
+            File.WriteAllText(Path.Combine(path, "_schema.json"),
+                System.Text.Json.JsonSerializer.Serialize(new { schema_version = future, updated_at = DateTime.Now.ToString("O") }));
+
+            _ = new StorageService(path);
+
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(path, "_schema.json")));
+            Assert.True(doc.RootElement.TryGetProperty("schema_version", out var v));
+            Assert.Equal(future, v.GetInt32());
+        }
+        finally
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, true);
+        }
+    }
 }
