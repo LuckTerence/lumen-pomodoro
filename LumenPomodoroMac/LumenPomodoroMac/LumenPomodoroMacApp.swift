@@ -101,12 +101,12 @@ struct LumenPomodoroMacApp: App {
     }
 
     private var statusLabel: String {
+        // 与灵动岛标题保持同一套文案
         switch viewModel.currentStatus {
         case .idle:
             return viewModel.isFocusCompleted ? "专注完成 · 选择休息" : "准备开始"
-        case .focus: return "专注中"
-        case .break: return "休息中"
-        case .paused: return "已暂停"
+        case .focus, .break, .paused:
+            return DynamicIslandService.title(for: viewModel.currentStatus)
         }
     }
 

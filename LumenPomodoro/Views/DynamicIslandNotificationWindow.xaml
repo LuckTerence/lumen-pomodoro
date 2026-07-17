@@ -5,25 +5,49 @@
         SizeToContent="WidthAndHeight"
         WindowStyle="None" AllowsTransparency="True" Topmost="True"
         ShowInTaskbar="False" ShowActivated="False"
-        Background="Transparent">
-    <Border x:Name="PillBorder" CornerRadius="20" Background="#E01A1A1A"
-            Padding="24,10" Margin="0"
-            RenderTransformOrigin="0.5,0.5">
-        <Border.RenderTransform>
-            <ScaleTransform ScaleX="1" ScaleY="1" />
-        </Border.RenderTransform>
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.4" Color="Black"/>
-        </Border.Effect>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock x:Name="TitleBlock" FontSize="14" FontWeight="SemiBold"
-                       Foreground="White" VerticalAlignment="Center"/>
-            <TextBlock x:Name="CountdownBlock" FontSize="24" FontWeight="Light"
-                       Foreground="White" VerticalAlignment="Center"
-                       Margin="12,0,0,0" FontFamily="Inter Light"
-                       Visibility="Collapsed"/>
-            <TextBlock x:Name="MessageBlock" FontSize="12" Foreground="#CCFFFFFF"
-                       Margin="10,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
-    </Border>
+        Background="Transparent"
+        MouseLeftButtonUp="Island_MouseLeftButtonUp">
+  <Border x:Name="PillBorder" CornerRadius="22" Background="#E01A1A1A"
+          Padding="18,10" Margin="0" Cursor="Hand"
+          RenderTransformOrigin="0.5,0.5">
+    <Border.RenderTransform>
+      <ScaleTransform ScaleX="1" ScaleY="1" />
+    </Border.RenderTransform>
+    <Border.Effect>
+      <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.4" Color="Black"/>
+    </Border.Effect>
+    <StackPanel>
+      <!-- Compact / Transient 主行 -->
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <TextBlock x:Name="TitleBlock" FontSize="13" FontWeight="SemiBold"
+                   Foreground="White" VerticalAlignment="Center"/>
+        <TextBlock x:Name="CountdownBlock" FontSize="22" FontWeight="Light"
+                   Foreground="White" VerticalAlignment="Center"
+                   Margin="12,0,0,0" FontFamily="Inter Light"
+                   Visibility="Collapsed"/>
+        <TextBlock x:Name="MessageBlock" FontSize="12" Foreground="#CCFFFFFF"
+                   Margin="10,0,0,0" VerticalAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Expanded 操作区 -->
+      <StackPanel x:Name="ActionsPanel" Orientation="Horizontal"
+                  HorizontalAlignment="Center" Margin="0,10,0,0"
+                  Visibility="Collapsed">
+        <Button x:Name="PauseResumeButton" Content="暂停" Click="PauseResume_Click"
+                Margin="0,0,8,0" Padding="12,4" Cursor="Hand"
+                Background="#33FFFFFF" Foreground="White" BorderThickness="0"/>
+        <Button x:Name="SkipBreakButton" Content="结束休息" Click="SkipBreak_Click"
+                Margin="0,0,8,0" Padding="12,4" Cursor="Hand"
+                Background="#33FFFFFF" Foreground="White" BorderThickness="0"
+                Visibility="Collapsed"/>
+        <Button x:Name="StartFocusButton" Content="开始" Click="StartFocus_Click"
+                Margin="0,0,8,0" Padding="12,4" Cursor="Hand"
+                Background="#3B82F6" Foreground="White" BorderThickness="0"
+                Visibility="Collapsed"/>
+        <Button x:Name="OpenMainButton" Content="主窗口" Click="OpenMain_Click"
+                Padding="12,4" Cursor="Hand"
+                Background="Transparent" Foreground="#AAB0B8" BorderThickness="0"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
 </Window>

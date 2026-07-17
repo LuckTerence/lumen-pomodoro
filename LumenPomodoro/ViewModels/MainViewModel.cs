@@ -525,14 +525,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private void OnFocusGuardDistraction(string reason)
     {
-        // 次数上限已在 FocusGuardEngine 内执行；此处只做 UI 反馈
+        // 次数上限已在 FocusGuardEngine 内执行；优先走灵动岛 Transient
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher == null) return;
 
         dispatcher.BeginInvoke(() =>
         {
             var level = AppSettings.FocusGuardAlertLevel;
-            _notifications.ShowSystem(Properties.LocalizedStrings.DistractionAlert, reason, systemNotificationEnabled: true, IsWindowActive);
+            // Transient 岛通知（popup 关时仍显示岛事件，避免完全静默）
+            _notifications.ShowInApp(Properties.LocalizedStrings.DistractionAlert, reason, popupEnabled: true);
+            if (!IsWindowActive)
+                _notifications.ShowSystem(Properties.LocalizedStrings.DistractionAlert, reason, systemNotificationEnabled: true, IsWindowActive);
 
             if (level >= CameraAlertLevel.Medium)
                 _notifications.PlaySound("FocusComplete", soundEnabled: true);

@@ -80,8 +80,10 @@ public class StorageServiceTests : IDisposable
 
         Assert.True(loaded.HasCompletedOnboarding);
         Assert.True(loaded.HasShownCameraPrivacyNotice);
-        Assert.True(loaded.CameraAlertEnabled);
-        Assert.Equal(CameraAlertLevel.Medium, loaded.CameraAlertLevel);
+        Assert.False(loaded.CameraAlertEnabled);
+        Assert.True(loaded.DynamicIslandEnabled);
+        Assert.Equal("minimize", loaded.DynamicIslandWhenFocused);
+        Assert.True(loaded.FocusGuardEnabled);
         Assert.True(loaded.FullscreenBreakEnabled);
         Assert.Equal(45, loaded.SessionEndPreNotifySeconds);
         Assert.Equal(3, loaded.FocusGuardDebounceHits);
@@ -101,9 +103,9 @@ public class StorageServiceTests : IDisposable
 
         Assert.True(loaded.StrictModeEnabled);
         Assert.True(loaded.FullscreenBreakEnabled);
-        Assert.True(loaded.CameraAlertEnabled);
-        Assert.Equal(CameraAlertLevel.Severe, loaded.CameraAlertLevel);
-        Assert.False(loaded.CameraAlertCanManualClose);
+        Assert.True(loaded.DynamicIslandEnabled);
+        Assert.Equal("keep", loaded.DynamicIslandWhenFocused);
+        Assert.False(loaded.CameraAlertEnabled);
         Assert.False(loaded.EffectiveAllowEndBreakEarly);
     }
 

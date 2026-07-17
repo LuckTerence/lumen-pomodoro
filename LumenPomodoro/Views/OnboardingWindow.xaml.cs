@@ -38,6 +38,8 @@ public partial class OnboardingWindow : Window
         }
 
         ApplySelectedPreset();
+        // 岛优先：引导结束始终开启灵动岛
+        _settings.DynamicIslandEnabled = true;
         Finish(markCompleted: true);
     }
 
@@ -49,7 +51,8 @@ public partial class OnboardingWindow : Window
 
     private void SkipButton_Click(object sender, RoutedEventArgs e)
     {
-        // 跳过仍标记完成，避免反复弹；不改用户场景预设
+        // 跳过仍标记完成，避免反复弹；不改用户场景预设，但确保岛开启
+        _settings.DynamicIslandEnabled = true;
         Finish(markCompleted: true);
     }
 

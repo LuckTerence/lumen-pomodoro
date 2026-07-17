@@ -99,7 +99,7 @@ public class NotificationCoordinatorTests : IDisposable
     }
 
     [Fact]
-    public void StartCountdown_WhenNotTopmostAndEnabled_FiresCountdownStartRequested()
+    public void StartCountdown_WhenEnabled_FiresCountdownStartRequested()
     {
         string? receivedMessage = null;
         _coordinator.CountdownStartRequested += m => receivedMessage = m;
@@ -110,18 +110,19 @@ public class NotificationCoordinatorTests : IDisposable
     }
 
     [Fact]
-    public void StartCountdown_WhenTopmost_DoesNothing()
+    public void StartCountdown_WhenTopmost_StillFires_IslandIsPrimary()
     {
+        // 岛为产品主交互：窗口置顶不再抑制倒计时推送
         var fired = false;
         _coordinator.CountdownStartRequested += _ => fired = true;
 
         _coordinator.StartCountdown("25:00", isWindowTopmost: true, dynamicIslandEnabled: true);
 
-        Assert.False(fired);
+        Assert.True(fired);
     }
 
     [Fact]
-    public void UpdateCountdown_WhenNotTopmostAndEnabled_FiresCountdownUpdateRequested()
+    public void UpdateCountdown_WhenEnabled_FiresCountdownUpdateRequested()
     {
         string? receivedTime = null;
         _coordinator.CountdownUpdateRequested += t => receivedTime = t;
@@ -132,12 +133,12 @@ public class NotificationCoordinatorTests : IDisposable
     }
 
     [Fact]
-    public void UpdateCountdown_WhenTopmost_DoesNothing()
+    public void UpdateCountdown_WhenDisabled_DoesNothing()
     {
         var fired = false;
         _coordinator.CountdownUpdateRequested += _ => fired = true;
 
-        _coordinator.UpdateCountdown("10:00", isWindowTopmost: true, dynamicIslandEnabled: true);
+        _coordinator.UpdateCountdown("10:00", isWindowTopmost: false, dynamicIslandEnabled: false);
 
         Assert.False(fired);
     }

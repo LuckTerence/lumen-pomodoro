@@ -7,6 +7,7 @@ namespace LumenPomodoro.ViewModels;
 
 /// <summary>
 /// 统一声音、系统通知、灵动岛倒计时、托盘更新逻辑。
+/// 灵动岛为产品主交互：只要启用即推送，前台淡化策略由 View 层处理。
 /// </summary>
 public class NotificationCoordinator : IDisposable
 {
@@ -62,15 +63,19 @@ public class NotificationCoordinator : IDisposable
         NotificationRequested?.Invoke(title, message);
     }
 
+    /// <summary>启动灵动岛倒计时（不因窗口置顶而抑制）。</summary>
     public void StartCountdown(string message, bool isWindowTopmost, bool dynamicIslandEnabled)
     {
-        if (!isWindowTopmost && dynamicIslandEnabled)
+        // isWindowTopmost 保留参数以兼容调用方；岛展示策略改由 View 按 WhenFocused 处理
+        _ = isWindowTopmost;
+        if (dynamicIslandEnabled)
             CountdownStartRequested?.Invoke(message);
     }
 
     public void UpdateCountdown(string remainingTime, bool isWindowTopmost, bool dynamicIslandEnabled)
     {
-        if (!isWindowTopmost && dynamicIslandEnabled)
+        _ = isWindowTopmost;
+        if (dynamicIslandEnabled)
             CountdownUpdateRequested?.Invoke(remainingTime);
     }
 

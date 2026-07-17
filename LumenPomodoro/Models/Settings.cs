@@ -103,7 +103,15 @@ public class Settings
     public bool InsightsEnabled { get; set; } = true;
     public bool DailyReportEnabled { get; set; } = true;
     public bool ExamCountdownEnabled { get; set; } = true;
+
+    /// <summary>顶部灵动岛（产品主交互）。默认开启。</summary>
     public bool DynamicIslandEnabled { get; set; } = true;
+
+    /// <summary>
+    /// 主窗口在前台时岛的行为：keep=保持；minimize=淡化缩小；hide=隐藏。
+    /// 默认 minimize：岛仍可见但不抢戏。
+    /// </summary>
+    public string DynamicIslandWhenFocused { get; set; } = "minimize";
 
     /// <summary>专注/休息计时进行中关闭应用时弹出确认。默认 true。</summary>
     public bool ConfirmExitWhileFocusing { get; set; } = true;
@@ -133,11 +141,13 @@ public class Settings
     /// <summary>休息中是否允许提前结束（严格模式强制否）。</summary>
     public bool EffectiveAllowEndBreakEarly => !StrictModeEnabled;
 
-    /// <summary>轻松：少打扰，主要靠声音/系统通知，不强制灯与全屏。</summary>
+    /// <summary>轻松：岛 + 声音/通知，不强制灯与防走神。</summary>
     public void ApplyLightFocusPreset()
     {
         StrictModeEnabled = false;
         FullscreenBreakEnabled = false;
+        DynamicIslandEnabled = true;
+        DynamicIslandWhenFocused = "minimize";
         CameraAlertEnabled = false;
         CameraAlertCanManualClose = true;
         FocusGuardEnabled = false;
@@ -148,16 +158,15 @@ public class Settings
         SystemNotificationEnabled = true;
     }
 
-    /// <summary>标准：灯 + 中等强度 + 防走神，适合日常备考。</summary>
+    /// <summary>标准：灵动岛主交互 + 防走神；摄像头灯可选（默认关）。</summary>
     public void ApplyStandardFocusPreset()
     {
         StrictModeEnabled = false;
         FullscreenBreakEnabled = false;
-        CameraAlertEnabled = true;
-        CameraAlertMode = CameraAlertMode.UntilConfirm;
-        CameraAlertLevel = CameraAlertLevel.Medium;
+        DynamicIslandEnabled = true;
+        DynamicIslandWhenFocused = "minimize";
+        CameraAlertEnabled = false;
         CameraAlertCanManualClose = true;
-        CameraFollowBreakEnabled = true;
         FocusGuardEnabled = true;
         FocusGuardAlertLevel = CameraAlertLevel.Medium;
         ConfirmExitWhileFocusing = true;
@@ -169,18 +178,17 @@ public class Settings
     }
 
     /// <summary>
-    /// 严格专注：严格模式 + 全屏休息 + 摄像头灯（Severe / 不可手关 / 跟随休息）。
+    /// 严格专注：严格模式 + 全屏休息 + 岛常驻感更强；摄像头灯仍可选。
     /// 不覆盖时长、任务、黑名单等个人配置。
     /// </summary>
     public void ApplyStrictFocusPreset()
     {
         StrictModeEnabled = true;
         FullscreenBreakEnabled = true;
-        CameraAlertEnabled = true;
-        CameraAlertMode = CameraAlertMode.UntilConfirm;
-        CameraAlertLevel = CameraAlertLevel.Severe;
+        DynamicIslandEnabled = true;
+        DynamicIslandWhenFocused = "keep";
+        CameraAlertEnabled = false;
         CameraAlertCanManualClose = false;
-        CameraFollowBreakEnabled = true;
         FocusGuardEnabled = true;
         FocusGuardAlertLevel = CameraAlertLevel.Severe;
         ConfirmExitWhileFocusing = true;

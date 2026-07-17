@@ -82,6 +82,7 @@ final class AppViewModel: ObservableObject {
         settings = storage.loadSettings()
         bindTimer()
         bindFocusGuard()
+        bindDynamicIslandActions()
         reloadData()
         NotificationService.shared.requestAuthorizationIfNeeded()
         syncLaunchAtLoginFromSettings()
@@ -94,6 +95,17 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    private func bindDynamicIslandActions() {
+        dynamicIsland.onPause = { [weak self] in self?.togglePause() }
+        dynamicIsland.onResume = { [weak self] in self?.togglePause() }
+        dynamicIsland.onSkipBreak = { [weak self] in self?.skipBreak() }
+        dynamicIsland.onStartFocus = { [weak self] in self?.startFocus() }
+        dynamicIsland.onOpenMain = {
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            NSApplication.shared.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
+        }
+    }
+
     var cameraStatusDisplay: String {
         settings.cameraStatusDisplay(isActive: isCameraAlertActive, raw: cameraStatus)
     }
@@ -101,6 +113,7 @@ final class AppViewModel: ObservableObject {
     func completeOnboarding(scene: String) {
         var next = settings
         next.applyFocusScenePreset(scene)
+        next.dynamicIslandEnabled = true
         if next.cameraAlertEnabled {
             next.hasShownCameraPrivacyNotice = true
         }
@@ -136,11 +149,15 @@ final class AppViewModel: ObservableObject {
 
     func onAppBecameActive() {
         isWindowActive = true
-        dynamicIsland.hide()
+        dynamicIsland.mainWindowFocused = true
+        dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
+        updateDynamicIslandIfNeeded(forceStart: false)
     }
 
     func onAppResignedActive() {
         isWindowActive = false
+        dynamicIsland.mainWindowFocused = false
+        dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
         updateDynamicIslandIfNeeded(forceStart: true)
     }
 
@@ -167,6 +184,8 @@ final class AppViewModel: ObservableObject {
         settings = snapshot
         syncLaunchAtLoginFromSettings()
         timerService.configureIdle(minutes: settings.workMinutes)
+        dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
+        updateDynamicIslandIfNeeded(forceStart: false)
         objectWillChange.send()
     }
 
@@ -447,10 +466,11 @@ final class AppViewModel: ObservableObject {
         guard remainingSeconds > 0, remainingSeconds <= threshold else { return }
 
         sessionEndPreNotifySent = true
+        dynamicIsland.showNotification(title: "即将结束", message: "还剩 \(remainingSeconds) 秒")
         NotificationService.shared.show(
             title: "即将结束",
             body: "还剩 \(remainingSeconds) 秒",
-            enabled: settings.systemNotificationEnabled
+            enabled: settings.systemNotificationEnabled && !isWindowActive
         )
         if settings.soundEnabled {
             SoundService.shared.playCompletion(enabled: true)
@@ -458,8 +478,9 @@ final class AppViewModel: ObservableObject {
     }
 
     private func handleFocusGuardDistraction(_ reason: String) {
-        // 次数上限已在 FocusGuardService 内执行
-        NotificationService.shared.show(title: "走神提醒", body: reason, enabled: true)
+        // 次数上限已在 FocusGuardService 内执行；优先 Transient 岛
+        dynamicIsland.showNotification(title: "走神提醒", message: reason)
+        NotificationService.shared.show(title: "走神提醒", body: reason, enabled: !isWindowActive)
         if settings.focusGuardAlertLevel != .light {
             SoundService.shared.playCompletion(enabled: true)
         }
@@ -493,9 +514,8 @@ final class AppViewModel: ObservableObject {
             enabled: settings.systemNotificationEnabled
         )
 
-        if settings.popupEnabled && !isWindowActive {
-            dynamicIsland.showNotification(title: "专注完成", message: lastCompletedSummary)
-        }
+        // 完成事件走 Transient（岛优先）
+        dynamicIsland.showNotification(title: "专注完成", message: lastCompletedSummary)
 
         if settings.strictModeEnabled || settings.cameraAlertLevel == .severe {
             NSApplication.shared.activate(ignoringOtherApps: true)
@@ -508,24 +528,24 @@ final class AppViewModel: ObservableObject {
         reloadData()
         timerService.configureIdle(minutes: settings.workMinutes)
         syncTimerDisplay()
-        dynamicIsland.hide()
+        // 完成态不立刻 hide：Transient 由岛自行回收
     }
 
     private func handleBreakCompleted() {
         focusGuard.stop()
         showFullscreenBreak = false
         SoundService.shared.playCompletion(enabled: settings.soundEnabled)
+        dynamicIsland.showNotification(title: "休息结束", message: "可以开始下一轮专注了。")
         NotificationService.shared.show(
             title: "休息结束",
             body: "可以开始下一轮专注了。",
-            enabled: settings.systemNotificationEnabled
+            enabled: settings.systemNotificationEnabled && !isWindowActive
         )
         Task {
             await stopCameraIfNeeded()
         }
         timerService.configureIdle(minutes: settings.workMinutes)
         syncTimerDisplay()
-        dynamicIsland.hide()
     }
 
     private func triggerCameraAlertAfterFocus() async {
@@ -566,6 +586,9 @@ final class AppViewModel: ObservableObject {
     }
 
     private func updateDynamicIslandIfNeeded(forceStart: Bool) {
+        dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
+        dynamicIsland.mainWindowFocused = isWindowActive
+
         guard settings.dynamicIslandEnabled else {
             dynamicIsland.hide()
             return
@@ -577,23 +600,19 @@ final class AppViewModel: ObservableObject {
             return
         }
 
-        if isWindowActive && !forceStart {
-            dynamicIsland.hide()
+        // hide 策略：前台时隐藏（Transient 仍由 showNotification 强制显示）
+        if isWindowActive && settings.dynamicIslandWhenFocused.lowercased() == "hide" && !forceStart {
+            if dynamicIsland.mode != .transient {
+                dynamicIsland.hide()
+            }
             return
         }
 
-        let title: String
-        switch timerService.mode {
-        case .focus: title = "专注中"
-        case .break: title = "休息中"
-        case .paused: title = "已暂停"
-        default: title = ""
-        }
-
+        let title = DynamicIslandService.title(for: timerService.mode)
         if forceStart || !dynamicIsland.isVisible {
-            dynamicIsland.startCountdown(title: title, remaining: remainingTime)
+            dynamicIsland.startCountdown(title: title, remaining: remainingTime, session: timerService.mode)
         } else {
-            dynamicIsland.updateCountdown(remainingTime)
+            dynamicIsland.updateCountdown(remainingTime, session: timerService.mode)
         }
     }
 

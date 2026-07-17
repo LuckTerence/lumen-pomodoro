@@ -69,9 +69,14 @@ struct SettingsView: View {
                 Toggle("声音提醒", isOn: settingsBinding(\.soundEnabled))
                 Toggle("弹窗提醒", isOn: settingsBinding(\.popupEnabled))
                 Toggle("系统通知", isOn: settingsBinding(\.systemNotificationEnabled))
-                Toggle("灵动岛倒计时", isOn: settingsBinding(\.dynamicIslandEnabled))
-                Text("窗口不在前台时，在屏幕顶部显示倒计时胶囊。")
+                Toggle("灵动岛（主交互）", isOn: settingsBinding(\.dynamicIslandEnabled))
+                Text("顶部胶囊显示倒计时；点击可暂停/继续。切到其它窗口仍显示。")
                     .font(.caption).foregroundStyle(.secondary)
+                Picker("主窗口在前台时", selection: settingsBinding(\.dynamicIslandWhenFocused)) {
+                    Text("淡化缩小").tag("minimize")
+                    Text("保持显示").tag("keep")
+                    Text("隐藏").tag("hide")
+                }
             }
 
             Section("目标") {

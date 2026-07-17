@@ -195,12 +195,13 @@ WeChat, Weixin, 微信, QQ, TikTok, Steam, 网易云音乐, 爱奇艺, 腾讯视
 | `InsightsEnabled` | true | |
 | `DailyReportEnabled` | true | |
 | `ExamCountdownEnabled` | true | |
-| `DynamicIslandEnabled` | true | |
+| `DynamicIslandEnabled` | true | 灵动岛主交互，默认开 |
+| `DynamicIslandWhenFocused` | `"minimize"` | `keep` / `minimize` / `hide` — 主窗前台时岛行为 |
 | `ConfirmExitWhileFocusing` | true | 专注/休息/暂停中退出需确认 |
 | `SessionEndPreNotifySeconds` | 30 | 0=关闭；剩余 ≤ 该秒数时预告一次 |
 | `FullscreenBreakEnabled` | false | 休息时全屏遮罩倒计时 |
 | `StrictModeEnabled` | false | 禁手动关灯、禁提前结束休息；完成时强制置顶 |
-| （预设）`ApplyStrictFocusPreset` | — | 一键：严格 + 全屏休息 + 摄像头 Severe/不可手关/跟随休息 + 退出确认/预告 |
+| （预设）`ApplyStrictFocusPreset` | — | 一键：严格 + 全屏休息 + 岛 keep；摄像头灯默认关（可选） |
 | `Language` | `"system"` | `system` / `zh` / `en` |
 
 ### 3.4 平台专有字段映射

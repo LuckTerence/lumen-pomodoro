@@ -5,30 +5,46 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using LumenPomodoro.Models;
 
 namespace LumenPomodoro.Views;
 
+/// <summary>
+/// 灵动岛：Compact / Expanded / Transient 三态。
+/// </summary>
 public partial class DynamicIslandNotificationWindow : Window
 {
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_APPWINDOW = 0x00040000;
-
     private static readonly IntPtr HWND_TOPMOST = new(-1);
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private const double AutoHideSeconds = 2.5;
+    private const double ExpandIdleSeconds = 4.0;
 
     private bool _forceClose;
     private DispatcherTimer? _autoHideTimer;
+    private DispatcherTimer? _expandIdleTimer;
     private Storyboard? _activeStoryboard;
     private Storyboard? _pulseStoryboard;
-    private bool _isCountdownMode;
-    private int _remainingSeconds;
     private DispatcherTimer? _breathingTimer;
-
-    // 苹果风格颜色 — 不可冻结，因为需要动画 ColorProperty
     private SolidColorBrush? _pillBrush;
+
+    private bool _isCountdownMode;
+    private bool _isExpanded;
+    private bool _isTransient;
+    private int _remainingSeconds = -1;
+    private string _sessionMode = "idle"; // focus | break | paused | idle
+    private string _whenFocused = "minimize";
+    private bool _mainWindowFocused;
+
+    public event Action? PauseRequested;
+    public event Action? ResumeRequested;
+    public event Action? SkipBreakRequested;
+    public event Action? StartFocusRequested;
+    public event Action? OpenMainWindowRequested;
 
     public DynamicIslandNotificationWindow()
     {
@@ -37,54 +53,39 @@ public partial class DynamicIslandNotificationWindow : Window
         SizeChanged += (_, _) => CenterAtScreenTop();
     }
 
-    private const double AutoHideSeconds = 2.5;
+    #region Win32
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
     private static extern int GetWindowLong32(IntPtr hwnd, int index);
-
     [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
     private static extern int SetWindowLong32(IntPtr hwnd, int index, int value);
-
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
     private static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
-
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
     private static extern IntPtr SetWindowLongPtr64(IntPtr hwnd, int index, IntPtr value);
-
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
 
-    private static IntPtr GetWindowLongPtr(IntPtr hwnd, int index)
-    {
-        return IntPtr.Size == 8
-            ? GetWindowLongPtr64(hwnd, index)
-            : new IntPtr(GetWindowLong32(hwnd, index));
-    }
+    private static IntPtr GetWindowLongPtr(IntPtr hwnd, int index) =>
+        IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, index) : new IntPtr(GetWindowLong32(hwnd, index));
 
     private static void SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value)
     {
-        if (IntPtr.Size == 8)
-            SetWindowLongPtr64(hwnd, index, value);
-        else
-            SetWindowLong32(hwnd, index, value.ToInt32());
+        if (IntPtr.Size == 8) SetWindowLongPtr64(hwnd, index, value);
+        else SetWindowLong32(hwnd, index, value.ToInt32());
     }
 
     private void HideFromWindowSwitcher()
     {
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd == IntPtr.Zero) return;
-
         var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64();
         exStyle |= WS_EX_TOOLWINDOW;
         exStyle &= ~WS_EX_APPWINDOW;
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
     }
 
-    /// <summary>
-    /// 重新断言置顶。WPF 的 Topmost 在遇到其他置顶窗口或全屏应用后可能被抢占，
-    /// 因此在显示及倒计时刷新时主动用 SetWindowPos(HWND_TOPMOST) 强制置于顶层。
-    /// </summary>
     private void ReassertTopmost()
     {
         var hwnd = new WindowInteropHelper(this).Handle;
@@ -92,185 +93,318 @@ public partial class DynamicIslandNotificationWindow : Window
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }
 
-    /// <summary>
-    /// 显示一次性通知（苹果风格展开动画）
-    /// </summary>
+    #endregion
+
+    /// <summary>主窗焦点变化 + WhenFocused 策略。</summary>
+    public void ApplyFocusPolicy(bool mainWindowFocused, string whenFocused)
+    {
+        _mainWindowFocused = mainWindowFocused;
+        _whenFocused = string.IsNullOrWhiteSpace(whenFocused) ? "minimize" : whenFocused.Trim().ToLowerInvariant();
+        ApplyVisualPolicy();
+    }
+
+    public void SetSessionMode(TimerMode mode)
+    {
+        _sessionMode = mode switch
+        {
+            TimerMode.Focus => "focus",
+            TimerMode.Break => "break",
+            TimerMode.Paused => "paused",
+            _ => "idle"
+        };
+        RefreshActionButtons();
+    }
+
+    /// <summary>Transient 事件（完成 / 预告 / 走神）。</summary>
     public void ShowNotification(string title, string message)
     {
-        StopAllAnimations();
-        _isCountdownMode = false;
+        StopExpandIdle();
+        _isTransient = true;
+        _isExpanded = false;
+        ActionsPanel.Visibility = Visibility.Collapsed;
 
         TitleBlock.Text = title;
         MessageBlock.Text = message;
         MessageBlock.Visibility = Visibility.Visible;
         CountdownBlock.Visibility = Visibility.Collapsed;
 
-        // 重置颜色
-        _pillBrush ??= new SolidColorBrush(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
+        EnsureBrush();
+        _pillBrush!.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
         PillBorder.Background = _pillBrush;
-        _pillBrush.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
 
         PositionAndShow();
         PlayExpandAnimation();
+        ApplyVisualPolicy(forceShow: true);
 
-        // 2.5 秒后淡出
+        _autoHideTimer?.Stop();
         _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(AutoHideSeconds) };
-        _autoHideTimer.Tick += (s, e) =>
+        _autoHideTimer.Tick += (_, _) =>
         {
-            if (_autoHideTimer == null) return; // 防止双重触发
-            _autoHideTimer.Stop();
+            _autoHideTimer?.Stop();
             _autoHideTimer = null;
-            PlayCollapseAnimation();
+            _isTransient = false;
+            if (_isCountdownMode)
+            {
+                // 回到 Compact 倒计时
+                MessageBlock.Visibility = Visibility.Collapsed;
+                CountdownBlock.Visibility = Visibility.Visible;
+                ApplyVisualPolicy();
+            }
+            else
+            {
+                PlayCollapseAnimation();
+            }
         };
         _autoHideTimer.Start();
     }
 
-    /// <summary>
-    /// 启动倒计时模式（苹果风格呼吸灯 + 颜色渐变）
-    /// </summary>
     public void StartCountdown(string title)
     {
         StopAllAnimations();
         _isCountdownMode = true;
+        _isTransient = false;
+        _isExpanded = false;
         _remainingSeconds = -1;
 
         TitleBlock.Text = title;
         MessageBlock.Visibility = Visibility.Collapsed;
         CountdownBlock.Visibility = Visibility.Visible;
         CountdownBlock.Text = "--:--";
+        ActionsPanel.Visibility = Visibility.Collapsed;
 
-        // 重置颜色
-        _pillBrush ??= new SolidColorBrush(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
+        EnsureBrush();
+        _pillBrush!.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
         PillBorder.Background = _pillBrush;
-        _pillBrush.Color = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
 
         PositionAndShow();
         PlayExpandAnimation();
         StartBreathingAnimation();
+        ApplyVisualPolicy();
     }
 
-    /// <summary>
-    /// 更新倒计时显示（带颜色渐变和脉冲动画）
-    /// </summary>
     public void UpdateCountdown(string remainingTime)
     {
-        if (!_isCountdownMode) return;
+        if (!_isCountdownMode || _isTransient) return;
 
         CountdownBlock.Text = remainingTime;
-
-        // 倒计时期间持续保持置顶，避免被其他置顶窗口抢占
         ReassertTopmost();
 
-        // 解析剩余秒数
-        if (TryParseSeconds(remainingTime, out int seconds))
+        if (TryParseSeconds(remainingTime, out int seconds) && seconds != _remainingSeconds)
         {
-            if (seconds != _remainingSeconds)
-            {
-                _remainingSeconds = seconds;
-                UpdateColorByTime(seconds);
-
-                // 最后 60 秒启动脉冲动画
-                if (seconds == 60)
-                {
-                    StartPulseAnimation();
-                }
-            }
+            _remainingSeconds = seconds;
+            UpdateColorByTime(seconds);
+            if (seconds == 60) StartPulseAnimation();
         }
     }
 
-    /// <summary>
-    /// 隐藏倒计时（苹果风格收起动画）
-    /// </summary>
     public void HideCountdown()
     {
-        if (_isCountdownMode)
+        if (!_isCountdownMode && !IsVisible) return;
+        _isCountdownMode = false;
+        _isExpanded = false;
+        _isTransient = false;
+        StopAllAnimations();
+        PlayCollapseAnimation();
+    }
+
+    private void Island_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (_isTransient) return;
+        if (e.OriginalSource is System.Windows.Controls.Button) return;
+
+        if (!_isCountdownMode && _sessionMode == "idle")
         {
-            _isCountdownMode = false;
-            StopAllAnimations();
-            PlayCollapseAnimation();
+            ToggleExpanded();
+            return;
+        }
+
+        if (_isCountdownMode || _sessionMode is "focus" or "break" or "paused" or "idle")
+            ToggleExpanded();
+    }
+
+    private void ToggleExpanded()
+    {
+        _isExpanded = !_isExpanded;
+        if (_isExpanded)
+        {
+            RefreshActionButtons();
+            ActionsPanel.Visibility = Visibility.Visible;
+            ResetExpandIdle();
+        }
+        else
+        {
+            ActionsPanel.Visibility = Visibility.Collapsed;
+            StopExpandIdle();
+        }
+        PositionAndShow();
+    }
+
+    private void RefreshActionButtons()
+    {
+        PauseResumeButton.Visibility = Visibility.Collapsed;
+        SkipBreakButton.Visibility = Visibility.Collapsed;
+        StartFocusButton.Visibility = Visibility.Collapsed;
+
+        switch (_sessionMode)
+        {
+            case "focus":
+                PauseResumeButton.Content = "暂停";
+                PauseResumeButton.Visibility = Visibility.Visible;
+                break;
+            case "paused":
+                PauseResumeButton.Content = "继续";
+                PauseResumeButton.Visibility = Visibility.Visible;
+                break;
+            case "break":
+                SkipBreakButton.Visibility = Visibility.Visible;
+                break;
+            default:
+                StartFocusButton.Visibility = Visibility.Visible;
+                break;
         }
     }
 
-    #region 动画方法
+    private void PauseResume_Click(object sender, RoutedEventArgs e)
+    {
+        if (_sessionMode == "paused") ResumeRequested?.Invoke();
+        else PauseRequested?.Invoke();
+        CollapseExpanded();
+    }
 
-    /// <summary>
-    /// 苹果风格展开动画 - 从中心展开，弹性效果
-    /// </summary>
+    private void SkipBreak_Click(object sender, RoutedEventArgs e)
+    {
+        SkipBreakRequested?.Invoke();
+        CollapseExpanded();
+    }
+
+    private void StartFocus_Click(object sender, RoutedEventArgs e)
+    {
+        StartFocusRequested?.Invoke();
+        CollapseExpanded();
+    }
+
+    private void OpenMain_Click(object sender, RoutedEventArgs e)
+    {
+        OpenMainWindowRequested?.Invoke();
+        CollapseExpanded();
+    }
+
+    private void CollapseExpanded()
+    {
+        _isExpanded = false;
+        ActionsPanel.Visibility = Visibility.Collapsed;
+        StopExpandIdle();
+    }
+
+    private void ResetExpandIdle()
+    {
+        StopExpandIdle();
+        _expandIdleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ExpandIdleSeconds) };
+        _expandIdleTimer.Tick += (_, _) =>
+        {
+            CollapseExpanded();
+            PositionAndShow();
+        };
+        _expandIdleTimer.Start();
+    }
+
+    private void StopExpandIdle()
+    {
+        _expandIdleTimer?.Stop();
+        _expandIdleTimer = null;
+    }
+
+    private void ApplyVisualPolicy(bool forceShow = false)
+    {
+        if (!IsVisible && !forceShow && !_isCountdownMode && !_isTransient) return;
+
+        // hide when focused
+        if (_mainWindowFocused && _whenFocused == "hide" && !_isTransient)
+        {
+            if (IsVisible) Hide();
+            return;
+        }
+
+        if (!IsVisible && (_isCountdownMode || _isTransient || forceShow))
+            PositionAndShow();
+
+        if (_mainWindowFocused && _whenFocused == "minimize" && !_isTransient && !_isExpanded)
+        {
+            Opacity = 0.55;
+            if (PillBorder.RenderTransform is ScaleTransform st)
+            {
+                st.ScaleX = 0.92;
+                st.ScaleY = 0.92;
+            }
+        }
+        else
+        {
+            Opacity = 1.0;
+            if (PillBorder.RenderTransform is ScaleTransform st)
+            {
+                st.ScaleX = 1.0;
+                st.ScaleY = 1.0;
+            }
+        }
+
+        ReassertTopmost();
+    }
+
+    #region Animation (kept lean)
+
+    private void EnsureBrush()
+    {
+        _pillBrush ??= new SolidColorBrush(Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A));
+    }
+
     private void PlayExpandAnimation()
     {
         var storyboard = new Storyboard();
-
-        // ScaleX: 0.8 → 1.0（弹性）
         var scaleXAnim = new DoubleAnimationUsingKeyFrames();
-        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(0.8, KeyTime.FromPercent(0)));
-        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0.6))
+        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(0.85, KeyTime.FromPercent(0)));
+        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0.7))
         {
-            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 }
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.25 }
         });
-        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0)));
         Storyboard.SetTarget(scaleXAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
         storyboard.Children.Add(scaleXAnim);
 
-        // ScaleY: 0.8 → 1.0（弹性）
         var scaleYAnim = new DoubleAnimationUsingKeyFrames();
-        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(0.8, KeyTime.FromPercent(0)));
-        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0.6))
+        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(0.85, KeyTime.FromPercent(0)));
+        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0.7))
         {
-            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 }
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.25 }
         });
-        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0)));
         Storyboard.SetTarget(scaleYAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
         storyboard.Children.Add(scaleYAnim);
 
-        // Opacity: 0 → 1
-        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
         Storyboard.SetTarget(opacityAnim, this);
         Storyboard.SetTargetProperty(opacityAnim, new PropertyPath(OpacityProperty));
         storyboard.Children.Add(opacityAnim);
 
-        storyboard.Duration = TimeSpan.FromMilliseconds(400);
         _activeStoryboard = storyboard;
         storyboard.Begin();
     }
 
-    /// <summary>
-    /// 苹果风格收起动画 - 向中心收缩，弹性效果
-    /// </summary>
     private void PlayCollapseAnimation()
     {
         var storyboard = new Storyboard();
-
-        // ScaleX: 1.0 → 0.8
-        var scaleXAnim = new DoubleAnimation(1.0, 0.8, TimeSpan.FromMilliseconds(250))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-        };
+        var scaleXAnim = new DoubleAnimation(1.0, 0.85, TimeSpan.FromMilliseconds(200));
         Storyboard.SetTarget(scaleXAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
         storyboard.Children.Add(scaleXAnim);
-
-        // ScaleY: 1.0 → 0.8
-        var scaleYAnim = new DoubleAnimation(1.0, 0.8, TimeSpan.FromMilliseconds(250))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-        };
+        var scaleYAnim = new DoubleAnimation(1.0, 0.85, TimeSpan.FromMilliseconds(200));
         Storyboard.SetTarget(scaleYAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
         storyboard.Children.Add(scaleYAnim);
-
-        // Opacity: 1 → 0
-        var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200))
-        {
-            BeginTime = TimeSpan.FromMilliseconds(100)
-        };
+        var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(180));
         Storyboard.SetTarget(opacityAnim, this);
         Storyboard.SetTargetProperty(opacityAnim, new PropertyPath(OpacityProperty));
         storyboard.Children.Add(opacityAnim);
-
-        storyboard.Duration = TimeSpan.FromMilliseconds(350);
-        storyboard.Completed += (s, e) =>
+        storyboard.Completed += (_, _) =>
         {
             _activeStoryboard = null;
             Hide();
@@ -279,150 +413,95 @@ public partial class DynamicIslandNotificationWindow : Window
         storyboard.Begin();
     }
 
-    /// <summary>
-    /// 苹果风格呼吸灯效果 - 背景透明度周期变化
-    /// </summary>
     private void StartBreathingAnimation()
     {
         StopBreathingAnimation();
-
         _breathingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        bool isHigh = true;
-
-        _breathingTimer.Tick += (s, e) =>
+        var isHigh = true;
+        _breathingTimer.Tick += (_, _) =>
         {
-            if (!_isCountdownMode)
-            {
-                _breathingTimer?.Stop();
-                return;
-            }
-
-            var targetOpacity = isHigh ? 1.0 : 0.85;
-            var anim = new DoubleAnimation(targetOpacity, TimeSpan.FromSeconds(1.5))
+            if (!_isCountdownMode) { _breathingTimer?.Stop(); return; }
+            var target = isHigh ? 1.0 : 0.88;
+            PillBorder.BeginAnimation(OpacityProperty, new DoubleAnimation(target, TimeSpan.FromSeconds(1.4))
             {
                 EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-            };
-            PillBorder.BeginAnimation(OpacityProperty, anim);
+            });
             isHigh = !isHigh;
         };
-
         _breathingTimer.Start();
     }
 
-    /// <summary>
-    /// 停止呼吸灯动画
-    /// </summary>
     private void StopBreathingAnimation()
     {
         _breathingTimer?.Stop();
         _breathingTimer = null;
+        PillBorder.BeginAnimation(OpacityProperty, null);
         PillBorder.Opacity = 1.0;
     }
 
-    /// <summary>
-    /// 苹果风格脉冲动画 - 最后 60 秒轻微缩放
-    /// </summary>
     private void StartPulseAnimation()
     {
-        var storyboard = new Storyboard()
-        {
-            RepeatBehavior = RepeatBehavior.Forever,
-            Duration = TimeSpan.FromSeconds(2)
-        };
-
-        // ScaleX: 1.0 → 1.015 → 1.0
+        _pulseStoryboard?.Stop();
+        var storyboard = new Storyboard { RepeatBehavior = RepeatBehavior.Forever, Duration = TimeSpan.FromSeconds(2) };
         var scaleXAnim = new DoubleAnimationUsingKeyFrames();
         scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0)));
-        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.015, KeyTime.FromPercent(0.5))
-        {
-            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-        });
-        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0))
-        {
-            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-        });
+        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.02, KeyTime.FromPercent(0.5)));
+        scaleXAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0)));
         Storyboard.SetTarget(scaleXAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
         storyboard.Children.Add(scaleXAnim);
-
-        // ScaleY: 1.0 → 1.015 → 1.0
         var scaleYAnim = new DoubleAnimationUsingKeyFrames();
         scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(0)));
-        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.015, KeyTime.FromPercent(0.5))
-        {
-            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-        });
-        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0))
-        {
-            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-        });
+        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.02, KeyTime.FromPercent(0.5)));
+        scaleYAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.0, KeyTime.FromPercent(1.0)));
         Storyboard.SetTarget(scaleYAnim, PillBorder);
         Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
         storyboard.Children.Add(scaleYAnim);
-
         _pulseStoryboard = storyboard;
         storyboard.Begin();
     }
 
-    /// <summary>
-    /// 根据剩余时间更新背景颜色（苹果风格渐变）
-    /// </summary>
     private void UpdateColorByTime(int seconds)
     {
-        Color targetColor;
-
-        if (seconds > 300) // > 5 分钟：深灰
+        Color target;
+        if (seconds > 300)
+            target = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
+        else if (seconds > 60)
         {
-            targetColor = Color.FromArgb(0xE0, 0x1A, 0x1A, 0x1A);
+            var p = (300.0 - seconds) / 240.0;
+            target = Color.FromArgb(0xE0,
+                (byte)(0x1A + (0xF5 - 0x1A) * p),
+                (byte)(0x1A + (0x9E - 0x1A) * p),
+                (byte)(0x1A + (0x0B - 0x1A) * p));
         }
-        else if (seconds > 60) // 1-5 分钟：渐变到橙色
+        else
         {
-            var progress = (300.0 - seconds) / 240.0; // 0 → 1
-            var r = (byte)(0x1A + (0xF5 - 0x1A) * progress);
-            var g = (byte)(0x1A + (0x9E - 0x1A) * progress);
-            var b = (byte)(0x1A + (0x0B - 0x1A) * progress);
-            targetColor = Color.FromArgb(0xE0, r, g, b);
+            var p = (60.0 - seconds) / 60.0;
+            target = Color.FromArgb(0xE0,
+                (byte)(0xF5 + (0xEF - 0xF5) * p),
+                (byte)(0x9E + (0x44 - 0x9E) * p),
+                (byte)(0x0B + (0x44 - 0x0B) * p));
         }
-        else // ≤ 60 秒：渐变到红色
-        {
-            var progress = (60.0 - seconds) / 60.0; // 0 → 1
-            var r = (byte)(0xF5 + (0xEF - 0xF5) * progress);
-            var g = (byte)(0x9E + (0x44 - 0x9E) * progress);
-            var b = (byte)(0x0B + (0x44 - 0x0B) * progress);
-            targetColor = Color.FromArgb(0xE0, r, g, b);
-        }
-
-        // 平滑过渡颜色 — 直接在 SolidColorBrush 上动画 ColorProperty
-        var colorAnim = new ColorAnimation(targetColor, TimeSpan.FromSeconds(1))
-        {
-            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-        };
-        _pillBrush?.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+        EnsureBrush();
+        _pillBrush!.BeginAnimation(SolidColorBrush.ColorProperty,
+            new ColorAnimation(target, TimeSpan.FromSeconds(0.8)));
     }
 
     #endregion
 
-    #region 辅助方法
-
     private void PositionAndShow()
     {
-        // 确保 RenderTransform 存在
-        if (PillBorder.RenderTransform == null || PillBorder.RenderTransform is not ScaleTransform)
+        if (PillBorder.RenderTransform is not ScaleTransform)
         {
             PillBorder.RenderTransform = new ScaleTransform(1, 1);
             PillBorder.RenderTransformOrigin = new Point(0.5, 0.5);
         }
 
-        // 测量真实尺寸
         Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         Arrange(new Rect(DesiredSize));
         UpdateLayout();
-
-        // 定位：屏幕顶部居中
         CenterAtScreenTop();
-
         if (!IsVisible) Show();
-
         ReassertTopmost();
     }
 
@@ -437,22 +516,18 @@ public partial class DynamicIslandNotificationWindow : Window
     {
         _autoHideTimer?.Stop();
         _autoHideTimer = null;
-
+        StopExpandIdle();
         _activeStoryboard?.Stop();
         _activeStoryboard = null;
-
         _pulseStoryboard?.Stop();
         _pulseStoryboard = null;
-
         StopBreathingAnimation();
-
-        // 重置变换
         if (PillBorder.RenderTransform is ScaleTransform scale)
         {
-            scale.ScaleX = 1.0;
-            scale.ScaleY = 1.0;
+            scale.ScaleX = 1;
+            scale.ScaleY = 1;
         }
-        PillBorder.Opacity = 1.0;
+        PillBorder.Opacity = 1;
     }
 
     private static bool TryParseSeconds(string timeStr, out int seconds)
@@ -485,6 +560,4 @@ public partial class DynamicIslandNotificationWindow : Window
         }
         base.OnClosing(e);
     }
-
-    #endregion
 }

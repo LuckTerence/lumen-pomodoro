@@ -128,6 +128,26 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _dynamicIslandEnabled = true;
 
+    /// <summary>keep / minimize / hide</summary>
+    [ObservableProperty]
+    private string _dynamicIslandWhenFocused = "minimize";
+
+    /// <summary>0=minimize 1=keep 2=hide（设置页 ComboBox）</summary>
+    [ObservableProperty]
+    private int _dynamicIslandWhenFocusedIndex;
+
+    partial void OnDynamicIslandWhenFocusedIndexChanged(int value)
+    {
+        var mapped = value switch
+        {
+            1 => "keep",
+            2 => "hide",
+            _ => "minimize"
+        };
+        if (DynamicIslandWhenFocused != mapped)
+            DynamicIslandWhenFocused = mapped;
+    }
+
     [ObservableProperty]
     private bool _confirmExitWhileFocusing = true;
 
@@ -274,6 +294,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         DailyReportEnabled = settings.DailyReportEnabled;
         ExamCountdownEnabled = settings.ExamCountdownEnabled;
         DynamicIslandEnabled = settings.DynamicIslandEnabled;
+        DynamicIslandWhenFocused = string.IsNullOrWhiteSpace(settings.DynamicIslandWhenFocused)
+            ? "minimize"
+            : settings.DynamicIslandWhenFocused.Trim().ToLowerInvariant();
+        DynamicIslandWhenFocusedIndex = DynamicIslandWhenFocused switch
+        {
+            "keep" => 1,
+            "hide" => 2,
+            _ => 0
+        };
         ConfirmExitWhileFocusing = settings.ConfirmExitWhileFocusing;
         SessionEndPreNotifySeconds = settings.SessionEndPreNotifySeconds;
         FullscreenBreakEnabled = settings.FullscreenBreakEnabled;
@@ -420,6 +449,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             DailyReportEnabled = DailyReportEnabled,
             ExamCountdownEnabled = ExamCountdownEnabled,
             DynamicIslandEnabled = DynamicIslandEnabled,
+            DynamicIslandWhenFocused = DynamicIslandWhenFocused,
             ConfirmExitWhileFocusing = ConfirmExitWhileFocusing,
             SessionEndPreNotifySeconds = SessionEndPreNotifySeconds,
             FullscreenBreakEnabled = FullscreenBreakEnabled,

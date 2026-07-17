@@ -102,12 +102,21 @@ public partial class MainWindow : Window
     {
         _viewModel.IsWindowActive = true;
         GlassBorder.Opacity = 1.0;
+        ApplyIslandFocusPolicy(focused: true);
     }
 
     private void MainWindow_Deactivated(object? sender, EventArgs e)
     {
         _viewModel.IsWindowActive = false;
         GlassBorder.Opacity = 0.85;
+        ApplyIslandFocusPolicy(focused: false);
+    }
+
+    private void ApplyIslandFocusPolicy(bool focused)
+    {
+        if (_dynamicIslandWindow == null) return;
+        _dynamicIslandWindow.ApplyFocusPolicy(focused, _viewModel.AppSettings.DynamicIslandWhenFocused);
+        _dynamicIslandWindow.SetSessionMode(_viewModel.CurrentStatus);
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -190,8 +199,8 @@ public partial class MainWindow : Window
     private void OnTopmostChanged(object? sender, EventArgs e)
     {
         _viewModel.IsWindowTopmost = Topmost;
-        if (Topmost)
-            _dynamicIslandWindow?.HideCountdown();
+        // 置顶时不再强制藏岛；由 WhenFocused 策略统一处理
+        ApplyIslandFocusPolicy(IsActive);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -257,12 +266,18 @@ public partial class MainWindow : Window
 
     private void ShowInAppNotification(string title, string message)
     {
-        GetDynamicIslandWindow().ShowNotification(title, message);
+        // 完成 / 预告 / 走神等走 Transient
+        var island = GetDynamicIslandWindow();
+        island.SetSessionMode(_viewModel.CurrentStatus);
+        island.ShowNotification(title, message);
     }
 
     private void StartCountdown(string title)
     {
-        GetDynamicIslandWindow().StartCountdown(title);
+        var island = GetDynamicIslandWindow();
+        island.SetSessionMode(_viewModel.CurrentStatus);
+        island.StartCountdown(title);
+        ApplyIslandFocusPolicy(IsActive);
     }
 
     private DynamicIslandNotificationWindow GetDynamicIslandWindow()
@@ -270,12 +285,51 @@ public partial class MainWindow : Window
         if (_dynamicIslandWindow != null) return _dynamicIslandWindow;
 
         _dynamicIslandWindow = new DynamicIslandNotificationWindow { Owner = this };
+        WireIslandActions(_dynamicIslandWindow);
         return _dynamicIslandWindow;
+    }
+
+    private void WireIslandActions(DynamicIslandNotificationWindow island)
+    {
+        island.PauseRequested += () =>
+        {
+            if (_viewModel.PauseCommand.CanExecute(null))
+                _viewModel.PauseCommand.Execute(null);
+            island.SetSessionMode(_viewModel.CurrentStatus);
+        };
+        island.ResumeRequested += () =>
+        {
+            if (_viewModel.ResumeCommand.CanExecute(null))
+                _viewModel.ResumeCommand.Execute(null);
+            island.SetSessionMode(_viewModel.CurrentStatus);
+        };
+        island.SkipBreakRequested += () =>
+        {
+            if (_viewModel.SkipBreakCommand.CanExecute(null))
+                _viewModel.SkipBreakCommand.Execute(null);
+            island.SetSessionMode(_viewModel.CurrentStatus);
+        };
+        island.StartFocusRequested += () =>
+        {
+            if (_viewModel.StartFocusCommand.CanExecute(null))
+                _viewModel.StartFocusCommand.Execute(null);
+            island.SetSessionMode(_viewModel.CurrentStatus);
+        };
+        island.OpenMainWindowRequested += () =>
+        {
+            if (WindowState == WindowState.Minimized)
+                WindowState = WindowState.Normal;
+            Show();
+            Activate();
+        };
     }
 
     private void UpdateCountdown(string remainingTime)
     {
-        _dynamicIslandWindow?.UpdateCountdown(remainingTime);
+        if (_dynamicIslandWindow == null) return;
+        _dynamicIslandWindow.SetSessionMode(_viewModel.CurrentStatus);
+        _dynamicIslandWindow.UpdateCountdown(remainingTime);
+        ApplyIslandFocusPolicy(IsActive);
     }
 
     private void StopCountdown()

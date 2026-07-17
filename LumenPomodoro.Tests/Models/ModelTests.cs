@@ -101,9 +101,11 @@ public class ModelTests
         Assert.False(settings.StrictModeEnabled);
 
         settings.ApplyStandardFocusPreset();
-        Assert.True(settings.CameraAlertEnabled);
+        // v0.5：标准场景以灵动岛为主，摄像头灯默认关
+        Assert.False(settings.CameraAlertEnabled);
+        Assert.True(settings.DynamicIslandEnabled);
         Assert.True(settings.FocusGuardEnabled);
-        Assert.Equal(CameraAlertLevel.Medium, settings.CameraAlertLevel);
+        Assert.Equal(CameraAlertLevel.Medium, settings.FocusGuardAlertLevel);
         Assert.False(settings.StrictModeEnabled);
     }
 

@@ -71,6 +71,8 @@ struct Settings: Codable, Equatable {
     var insightsEnabled: Bool = true
     var dailyReportEnabled: Bool = true
     var dynamicIslandEnabled: Bool = true
+    /// keep | minimize | hide — 主窗口在前台时岛的行为
+    var dynamicIslandWhenFocused: String = "minimize"
     var lastReportShownDate: Date?
     /// 计时进行中退出需确认
     var confirmExitWhileFocusing: Bool = true
@@ -93,6 +95,8 @@ struct Settings: Codable, Equatable {
     mutating func applyLightFocusPreset() {
         strictModeEnabled = false
         fullscreenBreakEnabled = false
+        dynamicIslandEnabled = true
+        dynamicIslandWhenFocused = "minimize"
         cameraAlertEnabled = false
         cameraAlertCanManualClose = true
         focusGuardEnabled = false
@@ -106,11 +110,10 @@ struct Settings: Codable, Equatable {
     mutating func applyStandardFocusPreset() {
         strictModeEnabled = false
         fullscreenBreakEnabled = false
-        cameraAlertEnabled = true
-        cameraAlertMode = .untilConfirm
-        cameraAlertLevel = .medium
+        dynamicIslandEnabled = true
+        dynamicIslandWhenFocused = "minimize"
+        cameraAlertEnabled = false
         cameraAlertCanManualClose = true
-        cameraFollowBreakEnabled = true
         focusGuardEnabled = true
         focusGuardAlertLevel = .medium
         confirmExitWhileFocusing = true
@@ -122,15 +125,14 @@ struct Settings: Codable, Equatable {
         systemNotificationEnabled = true
     }
 
-    /// 严格专注一键预设：严格 + 全屏休息 + 摄像头灯（不改时长/任务）
+    /// 严格专注：严格 + 全屏休息 + 岛 keep（灯可选，默认关）
     mutating func applyStrictFocusPreset() {
         strictModeEnabled = true
         fullscreenBreakEnabled = true
-        cameraAlertEnabled = true
-        cameraAlertMode = .untilConfirm
-        cameraAlertLevel = .severe
+        dynamicIslandEnabled = true
+        dynamicIslandWhenFocused = "keep"
+        cameraAlertEnabled = false
         cameraAlertCanManualClose = false
-        cameraFollowBreakEnabled = true
         focusGuardEnabled = true
         focusGuardAlertLevel = .severe
         confirmExitWhileFocusing = true
@@ -214,6 +216,7 @@ struct Settings: Codable, Equatable {
         case insightsEnabled = "InsightsEnabled"
         case dailyReportEnabled = "DailyReportEnabled"
         case dynamicIslandEnabled = "DynamicIslandEnabled"
+        case dynamicIslandWhenFocused = "DynamicIslandWhenFocused"
         case lastReportShownDate = "LastReportShownDate"
         case confirmExitWhileFocusing = "ConfirmExitWhileFocusing"
         case sessionEndPreNotifySeconds = "SessionEndPreNotifySeconds"
@@ -265,6 +268,7 @@ struct Settings: Codable, Equatable {
         insightsEnabled = try c.decodeIfPresent(Bool.self, forKey: .insightsEnabled) ?? true
         dailyReportEnabled = try c.decodeIfPresent(Bool.self, forKey: .dailyReportEnabled) ?? true
         dynamicIslandEnabled = try c.decodeIfPresent(Bool.self, forKey: .dynamicIslandEnabled) ?? true
+        dynamicIslandWhenFocused = try c.decodeIfPresent(String.self, forKey: .dynamicIslandWhenFocused) ?? "minimize"
         lastReportShownDate = try c.decodeIfPresent(Date.self, forKey: .lastReportShownDate)
         confirmExitWhileFocusing = try c.decodeIfPresent(Bool.self, forKey: .confirmExitWhileFocusing) ?? true
         sessionEndPreNotifySeconds = try c.decodeIfPresent(Int.self, forKey: .sessionEndPreNotifySeconds) ?? 30
@@ -314,6 +318,7 @@ struct Settings: Codable, Equatable {
         try c.encode(insightsEnabled, forKey: .insightsEnabled)
         try c.encode(dailyReportEnabled, forKey: .dailyReportEnabled)
         try c.encode(dynamicIslandEnabled, forKey: .dynamicIslandEnabled)
+        try c.encode(dynamicIslandWhenFocused, forKey: .dynamicIslandWhenFocused)
         try c.encodeIfPresent(lastReportShownDate, forKey: .lastReportShownDate)
         try c.encode(confirmExitWhileFocusing, forKey: .confirmExitWhileFocusing)
         try c.encode(sessionEndPreNotifySeconds, forKey: .sessionEndPreNotifySeconds)

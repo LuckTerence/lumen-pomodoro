@@ -427,13 +427,26 @@
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding ExamCountdownEnabled}" VerticalAlignment="Center" />
                     </Grid>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="灵动岛（主交互）" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="顶部胶囊显示倒计时；点击可暂停/继续/结束休息。切到其它窗口仍显示。" FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DynamicIslandEnabled}" VerticalAlignment="Center" />
+                    </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="灵动岛通知" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="窗口最小化时在屏幕角落显示浮动倒计时" FontSize="11" Foreground="#6B7280" />
+                            <TextBlock Text="主窗口在前台时" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="minimize=淡化 · keep=保持 · hide=隐藏" FontSize="11" Foreground="#6B7280" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DynamicIslandEnabled}" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" Width="120" VerticalAlignment="Center"
+                                  SelectedIndex="{Binding DynamicIslandWhenFocusedIndex}">
+                            <ComboBoxItem Content="淡化缩小" />
+                            <ComboBoxItem Content="保持显示" />
+                            <ComboBoxItem Content="隐藏" />
+                        </ComboBox>
                     </Grid>
                 </StackPanel>
             </Border>
