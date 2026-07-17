@@ -712,6 +712,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Tasks = tasks;
         if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
             SelectedTask = Tasks.Any() ? Tasks.First() : null;
+        IslandTasksChanged?.Invoke();
     }
 
     public void ReloadTasks()
@@ -719,7 +720,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Tasks = _storageService.LoadTasks();
         if (SelectedTask == null || !Tasks.Any(t => t.Id == SelectedTask.Id))
             SelectedTask = Tasks.Any() ? Tasks.First() : null;
+        IslandTasksChanged?.Invoke();
     }
+
+    /// <summary>灵动岛选任务（仅建议在 Idle 调用）。</summary>
+    public void SelectTaskById(string taskId)
+    {
+        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task == null) return;
+        SelectedTask = task;
+        AppSettings.LastSelectedTaskId = task.Id;
+        _storageService.SaveSettings(AppSettings);
+        IslandTasksChanged?.Invoke();
+    }
+
+    /// <summary>岛上任务列表/选中项变化时通知 View 刷新胶囊。</summary>
+    public event Action? IslandTasksChanged;
 
     // ── Formatting ──
 

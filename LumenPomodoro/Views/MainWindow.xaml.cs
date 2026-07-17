@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -75,6 +76,9 @@ public partial class MainWindow : Window
         _viewModel.FullscreenBreakHideRequested += () =>
             Dispatcher.BeginInvoke(HideFullscreenBreak);
 
+        _viewModel.IslandTasksChanged += () =>
+            Dispatcher.BeginInvoke(SyncIslandTasksAndIdle);
+
         if (_viewModel.AppSettings.TrayEnabled)
         {
             _trayService = _serviceProvider.GetRequiredService<ITrayService>();
@@ -103,6 +107,7 @@ public partial class MainWindow : Window
         _viewModel.IsWindowActive = true;
         GlassBorder.Opacity = 1.0;
         ApplyIslandFocusPolicy(focused: true);
+        SyncIslandTasksAndIdle();
     }
 
     private void MainWindow_Deactivated(object? sender, EventArgs e)
@@ -110,6 +115,7 @@ public partial class MainWindow : Window
         _viewModel.IsWindowActive = false;
         GlassBorder.Opacity = 0.85;
         ApplyIslandFocusPolicy(focused: false);
+        SyncIslandTasksAndIdle();
     }
 
     private void ApplyIslandFocusPolicy(bool focused)
@@ -117,6 +123,28 @@ public partial class MainWindow : Window
         if (_dynamicIslandWindow == null) return;
         _dynamicIslandWindow.ApplyFocusPolicy(focused, _viewModel.AppSettings.DynamicIslandWhenFocused);
         _dynamicIslandWindow.SetSessionMode(_viewModel.CurrentStatus);
+    }
+
+    private void SyncIslandTasksAndIdle()
+    {
+        if (!_viewModel.AppSettings.DynamicIslandEnabled) return;
+
+        var island = GetDynamicIslandWindow();
+        var chips = _viewModel.Tasks
+            .Take(8)
+            .Select(t => new DynamicIslandNotificationWindow.IslandTaskChip(
+                t.Id, t.Name, string.IsNullOrWhiteSpace(t.Color) ? "#3B82F6" : t.Color));
+        island.SetTasks(chips, _viewModel.SelectedTask?.Id);
+        island.SetSessionMode(_viewModel.CurrentStatus);
+
+        // Idle：失焦时展示待命岛（可点开选任务 + 开始）
+        if (_viewModel.CurrentStatus == Models.TimerMode.Idle && !IsActive)
+        {
+            var mins = Math.Max(1, _viewModel.AppSettings.WorkMinutes);
+            var label = _viewModel.SelectedTask?.Name ?? "选择任务";
+            island.ShowIdleReady(label, $"{mins:D2}:00");
+            ApplyIslandFocusPolicy(focused: false);
+        }
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -275,6 +303,11 @@ public partial class MainWindow : Window
     private void StartCountdown(string title)
     {
         var island = GetDynamicIslandWindow();
+        var chips = _viewModel.Tasks
+            .Take(8)
+            .Select(t => new DynamicIslandNotificationWindow.IslandTaskChip(
+                t.Id, t.Name, string.IsNullOrWhiteSpace(t.Color) ? "#3B82F6" : t.Color));
+        island.SetTasks(chips, _viewModel.SelectedTask?.Id);
         island.SetSessionMode(_viewModel.CurrentStatus);
         island.StartCountdown(title);
         ApplyIslandFocusPolicy(IsActive);
@@ -315,6 +348,11 @@ public partial class MainWindow : Window
                 _viewModel.StartFocusCommand.Execute(null);
             island.SetSessionMode(_viewModel.CurrentStatus);
         };
+        island.TaskSelected += taskId =>
+        {
+            _viewModel.SelectTaskById(taskId);
+            SyncIslandTasksAndIdle();
+        };
         island.OpenMainWindowRequested += () =>
         {
             if (WindowState == WindowState.Minimized)
@@ -327,6 +365,11 @@ public partial class MainWindow : Window
     private void UpdateCountdown(string remainingTime)
     {
         if (_dynamicIslandWindow == null) return;
+        var chips = _viewModel.Tasks
+            .Take(8)
+            .Select(t => new DynamicIslandNotificationWindow.IslandTaskChip(
+                t.Id, t.Name, string.IsNullOrWhiteSpace(t.Color) ? "#3B82F6" : t.Color));
+        _dynamicIslandWindow.SetTasks(chips, _viewModel.SelectedTask?.Id);
         _dynamicIslandWindow.SetSessionMode(_viewModel.CurrentStatus);
         _dynamicIslandWindow.UpdateCountdown(remainingTime);
         ApplyIslandFocusPolicy(IsActive);

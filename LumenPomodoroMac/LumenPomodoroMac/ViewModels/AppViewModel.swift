@@ -100,10 +100,22 @@ final class AppViewModel: ObservableObject {
         dynamicIsland.onResume = { [weak self] in self?.togglePause() }
         dynamicIsland.onSkipBreak = { [weak self] in self?.skipBreak() }
         dynamicIsland.onStartFocus = { [weak self] in self?.startFocus() }
+        dynamicIsland.onSelectTask = { [weak self] id in
+            guard let self, let task = self.tasks.first(where: { $0.id == id }) else { return }
+            self.selectTask(task)
+            self.syncIslandTasks()
+        }
         dynamicIsland.onOpenMain = {
             NSApplication.shared.activate(ignoringOtherApps: true)
             NSApplication.shared.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
         }
+    }
+
+    private func syncIslandTasks() {
+        let chips = tasks.prefix(8).map {
+            IslandTaskItem(id: $0.id, name: $0.name, color: $0.color.isEmpty ? "#3B82F6" : $0.color)
+        }
+        dynamicIsland.setTasks(Array(chips), selectedId: selectedTask?.id)
     }
 
     var cameraStatusDisplay: String {
@@ -151,6 +163,7 @@ final class AppViewModel: ObservableObject {
         isWindowActive = true
         dynamicIsland.mainWindowFocused = true
         dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
+        syncIslandTasks()
         updateDynamicIslandIfNeeded(forceStart: false)
     }
 
@@ -158,6 +171,7 @@ final class AppViewModel: ObservableObject {
         isWindowActive = false
         dynamicIsland.mainWindowFocused = false
         dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
+        syncIslandTasks()
         updateDynamicIslandIfNeeded(forceStart: true)
     }
 
@@ -588,14 +602,9 @@ final class AppViewModel: ObservableObject {
     private func updateDynamicIslandIfNeeded(forceStart: Bool) {
         dynamicIsland.whenFocused = settings.dynamicIslandWhenFocused
         dynamicIsland.mainWindowFocused = isWindowActive
+        syncIslandTasks()
 
         guard settings.dynamicIslandEnabled else {
-            dynamicIsland.hide()
-            return
-        }
-
-        let activeModes: Set<TimerMode> = [.focus, .break, .paused]
-        guard activeModes.contains(timerService.mode) else {
             dynamicIsland.hide()
             return
         }
@@ -608,11 +617,31 @@ final class AppViewModel: ObservableObject {
             return
         }
 
-        let title = DynamicIslandService.title(for: timerService.mode)
+        let mode = timerService.mode
+        let activeModes: Set<TimerMode> = [.focus, .break, .paused]
+
+        // Idle：失焦时显示待命岛（选任务 + 开始）
+        if mode == .idle {
+            if !isWindowActive || forceStart {
+                let label = selectedTask?.name ?? "选择任务"
+                let ready = String(format: "%02d:00", max(1, settings.workMinutes))
+                dynamicIsland.showIdleReady(taskLabel: label, readyTime: ready)
+            } else if settings.dynamicIslandWhenFocused.lowercased() == "hide" {
+                dynamicIsland.hide()
+            }
+            return
+        }
+
+        guard activeModes.contains(mode) else {
+            dynamicIsland.hide()
+            return
+        }
+
+        let title = DynamicIslandService.title(for: mode)
         if forceStart || !dynamicIsland.isVisible {
-            dynamicIsland.startCountdown(title: title, remaining: remainingTime, session: timerService.mode)
+            dynamicIsland.startCountdown(title: title, remaining: remainingTime, session: mode)
         } else {
-            dynamicIsland.updateCountdown(remainingTime, session: timerService.mode)
+            dynamicIsland.updateCountdown(remainingTime, session: mode)
         }
     }
 
