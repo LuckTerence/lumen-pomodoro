@@ -197,10 +197,10 @@ public struct Settings: Codable, Equatable {
         }
     }
 
-    /// 摄像头灯可读状态
+    /// 摄像头灯可读状态（高级可选；非主卖点）
     public func cameraStatusDisplay(isActive: Bool, raw: String) -> String {
         if !cameraAlertEnabled {
-            return "摄像头灯：关闭（设置中可开启，仅作硬件提醒）"
+            return "摄像头灯：关闭（高级选项，默认不用）"
         }
         if isActive {
             let base = raw.isEmpty ? "摄像头灯：亮着 — 该休息了" : "摄像头灯：亮着 — \(raw)"

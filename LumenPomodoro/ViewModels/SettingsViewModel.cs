@@ -358,7 +358,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ApplyStandardFocusPreset() => ApplyScenePresetAndSave("standard", "标准");
 
-    /// <summary>一键应用：严格模式 + 全屏休息 + 摄像头灯等。</summary>
+    /// <summary>一键应用：严格模式 + 全屏休息 + 岛 keep（灯保持关）。</summary>
     [RelayCommand]
     private void ApplyStrictFocusPreset() => ApplyScenePresetAndSave("strict", "严格专注");
 

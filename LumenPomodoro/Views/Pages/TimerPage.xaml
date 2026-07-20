@@ -304,8 +304,9 @@
 
                 <!-- ===== 底部统计信息 ===== -->
                     <StackPanel Width="240" Margin="0,24,0,0" HorizontalAlignment="Center">
-                    <!-- 摄像头灯可读状态（始终展示简短说明） -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12" MaxWidth="280">
+                    <!-- 摄像头灯状态：仅高级选项开启时展示，避免干扰「岛主路径」 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12" MaxWidth="280"
+                                Visibility="{Binding IsCameraAlertEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Ellipse x:Name="CameraAlertDot" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">

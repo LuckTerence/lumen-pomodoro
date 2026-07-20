@@ -22,7 +22,10 @@ struct TimerView: View {
             }
 
             controlSection
-            cameraStatusSection
+            // 方案 B：灯为高级可选；未开启时不在主计时页展示，避免干扰岛主路径
+            if viewModel.settings.cameraAlertEnabled {
+                cameraStatusSection
+            }
             statsFooter
         }
         .padding(24)

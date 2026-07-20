@@ -65,7 +65,7 @@ public partial class OnboardingWindow : Window
         else
             _settings.ApplyStandardFocusPreset();
 
-        // 标准/严格会开摄像头：视为已看过隐私页
+        // 场景预设默认不开灯；若用户曾手动开过灯再走引导，保留隐私确认状态
         if (_settings.CameraAlertEnabled)
             _settings.HasShownCameraPrivacyNotice = true;
     }

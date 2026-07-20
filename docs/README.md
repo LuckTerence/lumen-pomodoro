@@ -4,7 +4,8 @@
 
 | 文档 | 说明 |
 |------|------|
-| [PRD.md](./PRD.md) | 产品需求与边界 |
+| [PRD.md](./PRD.md) | 产品需求与边界（**V3 方案 B：灵动岛优先**） |
+| [roadmap-dynamic-island.md](./roadmap-dynamic-island.md) | 灵动岛规格与演示路径 |
 | [github-about.md](./github-about.md) | GitHub 仓库简介文案 |
 | [release-v0.2.0.md](./release-v0.2.0.md) | v0.2.0 发布说明 |
 
@@ -31,8 +32,9 @@
 
 ## 建议阅读顺序（多端迭代）
 
-1. PRD（产品原则）  
-2. benchmark-10-projects（学什么、复用什么）  
-3. cross-platform-contract（数据与行为单一真相源）  
-4. focus-guard-stretchly-alignment（防走神落地任务）  
-5. macos-code-review（Mac P0 修复清单）  
+1. PRD（**方案 B：岛主交互 / 灯高级可选**）  
+2. roadmap-dynamic-island（岛三态与 15 秒演示）  
+3. benchmark-10-projects（学什么、复用什么）  
+4. cross-platform-contract（数据与行为单一真相源）  
+5. core-path-checklist（发版验收）  
+ 

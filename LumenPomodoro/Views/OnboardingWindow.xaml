@@ -15,14 +15,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- 步骤 0：灵动岛 -->
+            <!-- 步骤 0：灵动岛（主卖点） -->
             <StackPanel x:Name="StepWhy" Grid.Row="0">
-                <TextBlock Text="欢迎使用 Lumen Pomodoro" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
-                <TextBlock Text="第 1 / 3 步" FontSize="12" Foreground="#6B7280" Margin="0,0,0,20" />
+                <TextBlock Text="切窗口也不丢" FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
+                <TextBlock Text="第 1 / 3 步 · 顶栏胶囊随时控番茄" FontSize="12" Foreground="#6B7280" Margin="0,0,0,20" />
                 <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="#CBD5E1" LineHeight="22"
                            Text="专注时，你几乎不用一直开着主窗口。"/>
                 <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="#CBD5E1" LineHeight="22" Margin="0,12,0,0"
-                           Text="屏幕顶部会有一颗「灵动岛」胶囊：显示倒计时，点一下可以暂停、继续或结束休息。切到别的窗口，它也还在。"/>
+                           Text="屏幕顶部会有一颗「灵动岛」胶囊：显示倒计时，点一下可以暂停、继续、选任务。切到别的窗口，它也还在。"/>
                 <Border Background="#1A1A1A" CornerRadius="20" Padding="20,12" Margin="0,24,0,0" HorizontalAlignment="Left">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="专注中" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -30,7 +30,7 @@
                     </StackPanel>
                 </Border>
                 <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#64748B" LineHeight="18" Margin="0,16,0,0"
-                           Text="演示：开始专注 → 切到其它窗口 → 看顶部岛继续走时。"/>
+                           Text="15 秒演示：开始专注 → 切到其它窗口 → 看顶部岛继续走时 → 点岛暂停。"/>
             </StackPanel>
 
             <!-- 步骤 1：隐私 / 本地 -->
@@ -41,8 +41,8 @@
                            Text="数据只存在本机。不做账号，不做云同步。"/>
                 <TextBlock FontSize="14" Foreground="#E2E8F0" LineHeight="26" Margin="0,12,0,0">
                     <Run Text="• 专注记录与设置保存在本地"/><LineBreak/>
-                    <Run Text="• 默认用灵动岛提醒，不依赖手机"/><LineBreak/>
-                    <Run Text="• 摄像头灯为可选增强（设置中开启）"/><LineBreak/>
+                    <Run Text="• 默认用灵动岛控番茄，不依赖手机"/><LineBreak/>
+                    <Run Text="• 摄像头灯在设置「高级」中可选，默认关闭"/><LineBreak/>
                     <Run Text="• 若开启灯：不拍照、不录像、不上传"/>
                 </TextBlock>
             </StackPanel>
@@ -60,7 +60,7 @@
                              FontSize="13" Content="严格专注 — 岛 + 全屏休息 + 不可提前结束"/>
 
                 <TextBlock TextWrapping="Wrap" FontSize="13" Foreground="#94A3B8" LineHeight="20" Margin="0,18,0,0"
-                           Text="这就是你的岛：开始专注后，顶栏胶囊就是主控台。摄像头灯可在设置里按需打开。"/>
+                           Text="开始专注后，顶栏胶囊就是主控台。摄像头灯属于高级选项，可在设置底部按需打开。"/>
             </StackPanel>
 
             <Grid Grid.Row="1" Margin="0,24,0,0">

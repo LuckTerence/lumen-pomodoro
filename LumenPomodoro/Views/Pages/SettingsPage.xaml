@@ -20,7 +20,39 @@
         <StackPanel Margin="24,16,24,96" MaxWidth="560" HorizontalAlignment="Center">
 
             <!-- 标题 -->
-            <TextBlock Text="设置" FontSize="21" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,20" />
+            <TextBlock Text="设置" FontSize="21" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,8" />
+            <TextBlock Text="主交互是顶栏灵动岛：切窗口也不丢。摄像头灯在底部「高级」中按需开启。"
+                       FontSize="12" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,20" />
+
+            <!-- ===== 灵动岛（主交互） ===== -->
+            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="灵动岛（主交互）" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,4" />
+                    <TextBlock Text="顶栏胶囊显示倒计时；点击可暂停 / 继续 / 选任务。切到其它窗口仍显示。"
+                               FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" Margin="0,0,0,16" />
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="启用灵动岛" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="建议保持开启——这是本产品的主操作入口" FontSize="11" Foreground="#6B7280" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DynamicIslandEnabled}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="主窗口在前台时" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="淡化=仍可见不抢戏 · 保持=完整显示 · 隐藏=失焦再出现" FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Width="120" VerticalAlignment="Center"
+                                  SelectedIndex="{Binding DynamicIslandWhenFocusedIndex}">
+                            <ComboBoxItem Content="淡化缩小" />
+                            <ComboBoxItem Content="保持显示" />
+                            <ComboBoxItem Content="隐藏" />
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
             <!-- ===== 计时 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
@@ -177,95 +209,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- ===== 摄像头 ===== -->
-            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="摄像头" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,16" />
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="启用摄像头提醒" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="专注结束后点亮摄像头指示灯提醒休息" FontSize="11" Foreground="#6B7280" />
-                        </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" VerticalAlignment="Center" />
-                    </Grid>
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="摄像头权限" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="灯不亮时，请确认 Windows 已允许本应用使用摄像头" FontSize="11" Foreground="#6B7280" />
-                        </StackPanel>
-                        <Button Grid.Column="1" Content="打开系统设置" Command="{Binding OpenCameraPrivacySettingsCommand}"
-                                Padding="12,6" Cursor="Hand" Background="#334155" Foreground="White" BorderThickness="0" />
-                    </Grid>
-                    <StackPanel Visibility="{Binding CameraAlertEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="提醒模式" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
-                            <ComboBox Grid.Column="1" Width="180"
-                                      SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
-                                <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                                <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                                <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                            </ComboBox>
-                        </Grid>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="固定亮灯时长（秒）" FontSize="13" Foreground="#B3FFFFFF" />
-                            </StackPanel>
-                            <ui:NumberBox Grid.Column="1" Value="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="300" />
-                        </Grid>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="休息期间亮灯" FontSize="13" Foreground="#B3FFFFFF" />
-                            </StackPanel>
-                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraFollowBreakEnabled}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="允许手动关闭" FontSize="13" Foreground="#B3FFFFFF" />
-                            </StackPanel>
-                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertCanManualClose}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="提醒强度" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
-                            <ComboBox Grid.Column="1" Width="180"
-                                      SelectedValue="{Binding CameraAlertLevel}" SelectedValuePath="Tag">
-                                <ComboBoxItem Content="仅指示灯" Tag="{x:Static models:CameraAlertLevel.Light}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                                <ComboBoxItem Content="指示灯 + 弹窗" Tag="{x:Static models:CameraAlertLevel.Medium}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                                <ComboBoxItem Content="指示灯 + 弹窗 + 置顶" Tag="{x:Static models:CameraAlertLevel.Severe}" Foreground="#B3FFFFFF" Background="#3327272A" />
-                            </ComboBox>
-                        </Grid>
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="防走神检测" FontSize="13" Foreground="#B3FFFFFF" />
-                            </StackPanel>
-                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PresenceDetectionEnabled}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,14" Visibility="{Binding PresenceDetectionEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="离开检测时长（秒）" FontSize="13" Foreground="#B3FFFFFF" />
-                            </StackPanel>
-                            <ui:NumberBox Grid.Column="1" Value="{Binding PresenceDetectionSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="3" Maximum="30" />
-                        </Grid>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="摄像头选择" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
-                            <ComboBox Grid.Column="1" Width="180"
-                                      ItemsSource="{Binding AvailableCameras}"
-                                      SelectedIndex="{Binding SelectedCameraIndex}"
-                                      Foreground="#B3FFFFFF" />
-                        </Grid>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
             <!-- ===== 提醒 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
@@ -367,7 +310,7 @@
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="严格模式" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="禁止手动关摄像头灯、禁止提前结束休息；完成时强制置顶" FontSize="11" Foreground="#6B7280" />
+                            <TextBlock Text="禁止提前结束休息；若已开摄像头灯则禁止手动关灯；完成时强制置顶" FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding StrictModeEnabled}" VerticalAlignment="Center" />
                     </Grid>
@@ -396,12 +339,12 @@
                 </StackPanel>
             </Border>
 
-            <!-- ===== 实验功能 ===== -->
+            <!-- ===== 可选模块 ===== -->
             <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="实验功能" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock Text="可选模块" FontSize="14" FontWeight="SemiBold"
                                Foreground="#B3FFFFFF" Margin="0,0,0,4" />
-                    <TextBlock Text="以下功能可以单独开关，关闭后相关数据和界面将被隐藏"
+                    <TextBlock Text="关闭后相关界面将被隐藏，不影响岛与计时主路径"
                                FontSize="11" Foreground="#4B5563" Margin="0,0,0,16" />
                     <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
@@ -419,7 +362,7 @@
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DailyReportEnabled}" VerticalAlignment="Center" />
                     </Grid>
-                    <Grid Margin="0,0,0,14">
+                    <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="考试倒计时" FontSize="13" Foreground="#B3FFFFFF" />
@@ -427,27 +370,98 @@
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding ExamCountdownEnabled}" VerticalAlignment="Center" />
                     </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 高级 · 摄像头灯（可选） ===== -->
+            <Border Background="#3327272A" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="高级 · 摄像头灯（可选）" FontSize="14" FontWeight="SemiBold" Foreground="#B3FFFFFF" Margin="0,0,0,4" />
+                    <TextBlock Text="非主路径。开启后，专注结束时点亮本机摄像头指示灯作硬件提醒；不拍照、不录像、不上传。"
+                               FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" Margin="0,0,0,16" />
                     <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="灵动岛（主交互）" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="顶部胶囊显示倒计时；点击可暂停/继续/结束休息。切到其它窗口仍显示。" FontSize="11" Foreground="#6B7280" TextWrapping="Wrap" />
+                            <TextBlock Text="启用摄像头灯提醒" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="默认关闭；仅在你需要更强休息提示时开启" FontSize="11" Foreground="#6B7280" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding DynamicIslandEnabled}" VerticalAlignment="Center" />
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertEnabled}" VerticalAlignment="Center" />
                     </Grid>
-                    <Grid>
+                    <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="主窗口在前台时" FontSize="13" Foreground="#B3FFFFFF" />
-                            <TextBlock Text="minimize=淡化 · keep=保持 · hide=隐藏" FontSize="11" Foreground="#6B7280" />
+                            <TextBlock Text="摄像头权限" FontSize="13" Foreground="#B3FFFFFF" />
+                            <TextBlock Text="灯不亮时，请确认 Windows 已允许本应用使用摄像头" FontSize="11" Foreground="#6B7280" />
                         </StackPanel>
-                        <ComboBox Grid.Column="1" Width="120" VerticalAlignment="Center"
-                                  SelectedIndex="{Binding DynamicIslandWhenFocusedIndex}">
-                            <ComboBoxItem Content="淡化缩小" />
-                            <ComboBoxItem Content="保持显示" />
-                            <ComboBoxItem Content="隐藏" />
-                        </ComboBox>
+                        <Button Grid.Column="1" Content="打开系统设置" Command="{Binding OpenCameraPrivacySettingsCommand}"
+                                Padding="12,6" Cursor="Hand" Background="#334155" Foreground="White" BorderThickness="0" />
                     </Grid>
+                    <StackPanel Visibility="{Binding CameraAlertEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="提醒模式" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" Width="180"
+                                      SelectedValue="{Binding CameraAlertMode}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="固定时长" Tag="{x:Static models:CameraAlertMode.FixedDuration}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="直到确认" Tag="{x:Static models:CameraAlertMode.UntilConfirm}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="跟随休息" Tag="{x:Static models:CameraAlertMode.FollowBreak}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="固定亮灯时长（秒）" FontSize="13" Foreground="#B3FFFFFF" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding CameraFixedOnSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="1" Maximum="300" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="休息期间亮灯" FontSize="13" Foreground="#B3FFFFFF" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraFollowBreakEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="允许手动关闭" FontSize="13" Foreground="#B3FFFFFF" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraAlertCanManualClose}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="提醒强度" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" Width="180"
+                                      SelectedValue="{Binding CameraAlertLevel}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="仅指示灯" Tag="{x:Static models:CameraAlertLevel.Light}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="指示灯 + 弹窗" Tag="{x:Static models:CameraAlertLevel.Medium}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                                <ComboBoxItem Content="指示灯 + 弹窗 + 置顶" Tag="{x:Static models:CameraAlertLevel.Severe}" Foreground="#B3FFFFFF" Background="#3327272A" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="在位检测（实验）" FontSize="13" Foreground="#B3FFFFFF" />
+                                <TextBlock Text="与摄像头灯联动的额外检测，一般用户可忽略" FontSize="11" Foreground="#6B7280" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding PresenceDetectionEnabled}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,14" Visibility="{Binding PresenceDetectionEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="离开检测时长（秒）" FontSize="13" Foreground="#B3FFFFFF" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding PresenceDetectionSeconds, UpdateSourceTrigger=PropertyChanged}" MinWidth="70" Minimum="3" Maximum="30" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="摄像头选择" FontSize="13" Foreground="#B3FFFFFF" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" Width="180"
+                                      ItemsSource="{Binding AvailableCameras}"
+                                      SelectedIndex="{Binding SelectedCameraIndex}"
+                                      Foreground="#B3FFFFFF" />
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

@@ -7,6 +7,29 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Text("主交互是顶栏灵动岛：切窗口也不丢。摄像头灯在底部「高级」中按需开启。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // MARK: 灵动岛（主交互）
+            Section {
+                Toggle("启用灵动岛", isOn: settingsBinding(\.dynamicIslandEnabled))
+                Text("建议保持开启——这是本产品的主操作入口。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("主窗口在前台时", selection: settingsBinding(\.dynamicIslandWhenFocused)) {
+                    Text("淡化缩小").tag("minimize")
+                    Text("保持显示").tag("keep")
+                    Text("隐藏").tag("hide")
+                }
+            } header: {
+                Text("灵动岛（主交互）")
+            } footer: {
+                Text("顶栏胶囊显示倒计时；点击可暂停 / 继续 / 选任务。切到其它窗口仍显示。")
+            }
+
             Section("专注时长") {
                 Stepper("工作 \(viewModel.settings.workMinutes) 分钟",
                         value: settingsBinding(\.workMinutes), in: 5...120, step: 5)
@@ -16,26 +39,6 @@ struct SettingsView: View {
                         value: settingsBinding(\.longBreakMinutes), in: 5...60, step: 5)
                 Stepper("每 \(viewModel.settings.longBreakInterval) 个番茄长休息",
                         value: settingsBinding(\.longBreakInterval), in: 2...8)
-            }
-
-            Section("摄像头提醒") {
-                Toggle("启用摄像头指示灯提醒",
-                       isOn: settingsBinding(\.cameraAlertEnabled))
-                Picker("提醒模式", selection: settingsBinding(\.cameraAlertMode)) {
-                    Text("固定时长").tag(CameraAlertMode.fixedDuration)
-                    Text("直到确认").tag(CameraAlertMode.untilConfirm)
-                    Text("跟随休息").tag(CameraAlertMode.followBreak)
-                }
-                if viewModel.settings.cameraAlertMode == .fixedDuration {
-                    Stepper("亮灯 \(viewModel.settings.cameraFixedOnSeconds) 秒",
-                            value: settingsBinding(\.cameraFixedOnSeconds), in: 30...600, step: 30)
-                }
-                Toggle("休息期间保持亮灯",
-                       isOn: settingsBinding(\.cameraFollowBreakEnabled))
-                Toggle("允许手动关闭",
-                       isOn: settingsBinding(\.cameraAlertCanManualClose))
-                Text("Lumen Pomodoro 不把摄像头当作采集设备使用，只借用 Mac 摄像头绿色指示灯作为本地硬件提醒。")
-                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("防走神") {
@@ -70,14 +73,6 @@ struct SettingsView: View {
                 Toggle("声音提醒", isOn: settingsBinding(\.soundEnabled))
                 Toggle("弹窗提醒", isOn: settingsBinding(\.popupEnabled))
                 Toggle("系统通知", isOn: settingsBinding(\.systemNotificationEnabled))
-                Toggle("灵动岛（主交互）", isOn: settingsBinding(\.dynamicIslandEnabled))
-                Text("顶部胶囊显示倒计时；点击可暂停/继续。切到其它窗口仍显示。")
-                    .font(.caption).foregroundStyle(.secondary)
-                Picker("主窗口在前台时", selection: settingsBinding(\.dynamicIslandWhenFocused)) {
-                    Text("淡化缩小").tag("minimize")
-                    Text("保持显示").tag("keep")
-                    Text("隐藏").tag("hide")
-                }
             }
 
             Section("目标") {
@@ -89,7 +84,7 @@ struct SettingsView: View {
                         value: settingsBinding(\.weeklyGoalMinutes), in: 120...10080, step: 60)
             }
 
-            Section("功能开关") {
+            Section("可选模块") {
                 Toggle("学习洞察", isOn: settingsBinding(\.insightsEnabled))
                 Toggle("每日复盘报告", isOn: settingsBinding(\.dailyReportEnabled))
                 Toggle("考试倒计时", isOn: settingsBinding(\.examCountdownEnabled))
@@ -121,7 +116,7 @@ struct SettingsView: View {
                 Text("开始休息时覆盖全屏倒计时，减少继续工作的诱惑。")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("严格模式", isOn: settingsBinding(\.strictModeEnabled))
-                Text("禁止手动关摄像头灯、禁止提前结束休息；完成专注时强制前置窗口。")
+                Text("禁止提前结束休息；若已开摄像头灯则禁止手动关灯；完成专注时强制前置窗口。")
                     .font(.caption).foregroundStyle(.secondary)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -142,13 +137,39 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+            }
+
+            // MARK: 高级 · 摄像头灯
+            Section {
+                Toggle("启用摄像头灯提醒",
+                       isOn: settingsBinding(\.cameraAlertEnabled))
+                Text("默认关闭。仅在你需要更强休息提示时开启。")
+                    .font(.caption).foregroundStyle(.secondary)
+                if viewModel.settings.cameraAlertEnabled {
+                    Picker("提醒模式", selection: settingsBinding(\.cameraAlertMode)) {
+                        Text("固定时长").tag(CameraAlertMode.fixedDuration)
+                        Text("直到确认").tag(CameraAlertMode.untilConfirm)
+                        Text("跟随休息").tag(CameraAlertMode.followBreak)
+                    }
+                    if viewModel.settings.cameraAlertMode == .fixedDuration {
+                        Stepper("亮灯 \(viewModel.settings.cameraFixedOnSeconds) 秒",
+                                value: settingsBinding(\.cameraFixedOnSeconds), in: 30...600, step: 30)
+                    }
+                    Toggle("休息期间保持亮灯",
+                           isOn: settingsBinding(\.cameraFollowBreakEnabled))
+                    Toggle("允许手动关闭",
+                           isOn: settingsBinding(\.cameraAlertCanManualClose))
                     Button("打开摄像头系统设置") {
                         viewModel.openCameraPrivacySettings()
                     }
                     .buttonStyle(.bordered)
-                    .font(.caption)
                 }
-                .padding(.top, 4)
+            } header: {
+                Text("高级 · 摄像头灯（可选）")
+            } footer: {
+                Text("非主路径。开启后借用本机摄像头绿色指示灯作硬件提醒；不拍照、不录像、不上传。")
             }
         }
         .formStyle(.grouped)

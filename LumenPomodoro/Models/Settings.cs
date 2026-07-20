@@ -104,7 +104,7 @@ public class Settings
     public bool DailyReportEnabled { get; set; } = true;
     public bool ExamCountdownEnabled { get; set; } = true;
 
-    /// <summary>顶部灵动岛（产品主交互）。默认开启。</summary>
+    /// <summary>顶部灵动岛——产品主卖点与默认主交互。默认开启。</summary>
     public bool DynamicIslandEnabled { get; set; } = true;
 
     /// <summary>
@@ -126,7 +126,7 @@ public class Settings
     public bool FullscreenBreakEnabled { get; set; } = false;
 
     /// <summary>
-    /// 严格模式：禁止手动关摄像头灯、禁止提前结束休息；
+    /// 严格模式：禁止提前结束休息；若已开摄像头灯则禁止手动关灯；
     /// 完成专注时按 Severe 强度置顶。默认 false。
     /// </summary>
     public bool StrictModeEnabled { get; set; } = false;
@@ -141,7 +141,7 @@ public class Settings
     /// <summary>休息中是否允许提前结束（严格模式强制否）。</summary>
     public bool EffectiveAllowEndBreakEarly => !StrictModeEnabled;
 
-    /// <summary>轻松：岛 + 声音/通知，不强制灯与防走神。</summary>
+    /// <summary>轻松：岛 + 声音/通知，少打扰（方案 B：灯始终默认关）。</summary>
     public void ApplyLightFocusPreset()
     {
         StrictModeEnabled = false;
@@ -158,7 +158,7 @@ public class Settings
         SystemNotificationEnabled = true;
     }
 
-    /// <summary>标准：灵动岛主交互 + 防走神；摄像头灯可选（默认关）。</summary>
+    /// <summary>标准：灵动岛主交互 + 防走神；摄像头灯保持关闭（高级选项）。</summary>
     public void ApplyStandardFocusPreset()
     {
         StrictModeEnabled = false;
@@ -178,7 +178,7 @@ public class Settings
     }
 
     /// <summary>
-    /// 严格专注：严格模式 + 全屏休息 + 岛常驻感更强；摄像头灯仍可选。
+    /// 严格专注：严格模式 + 全屏休息 + 岛 keep；摄像头灯仍默认关（高级可选）。
     /// 不覆盖时长、任务、黑名单等个人配置。
     /// </summary>
     public void ApplyStrictFocusPreset()
@@ -220,13 +220,13 @@ public class Settings
     }
 }
 
-/// <summary>摄像头提醒状态的可读文案（UI / 引导用）。</summary>
+/// <summary>摄像头灯状态文案（高级可选；非主卖点）。</summary>
 public static class CameraAlertStatusText
 {
     public static string Describe(bool cameraEnabled, bool isActive, string? rawStatus, bool canManualClose)
     {
         if (!cameraEnabled)
-            return "摄像头灯：关闭（设置中可开启，仅作硬件提醒）";
+            return "摄像头灯：关闭（高级选项，默认不用）";
         if (isActive)
         {
             var baseText = string.IsNullOrWhiteSpace(rawStatus)
