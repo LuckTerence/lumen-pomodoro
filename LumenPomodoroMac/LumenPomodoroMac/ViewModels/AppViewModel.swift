@@ -24,6 +24,8 @@ final class AppViewModel: ObservableObject {
     @Published var isWindowActive = true
     @Published var showFullscreenBreak = false
     @Published var fullscreenBreakTitle = "休息时间"
+    /// 今日计划（峰值时段排程 A2），由存储读入并在增删后刷新以驱动 UI。
+    @Published var dailyPlan = DailyPlan()
 
     let timerService = TimerService()
     let cameraService = CameraService()
@@ -179,6 +181,7 @@ final class AppViewModel: ObservableObject {
     func reloadData() {
         tasks = storage.loadTasks()
         todayStats = storage.todayStats()
+        dailyPlan = storage.loadDailyPlan()
         completedSessionsToday = todayStats.completedPomodoros
 
         if let lastId = settings.lastSelectedTaskId,
@@ -293,6 +296,26 @@ final class AppViewModel: ObservableObject {
         timerService.startFocus(minutes: settings.workMinutes)
         focusGuard.start(settings: settings, resetSessionCounters: true)
         updateDynamicIslandIfNeeded(forceStart: true)
+    }
+
+    /// 峰值时段排程（A2）：把黄金时段洞察建议的科目时段加入今日计划。
+    func addToPlan(_ action: SuggestedAction) {
+        var plan = storage.loadDailyPlan()
+        plan.blocks.append(PlannedBlock(
+            taskName: action.taskName,
+            hour: action.preferredHour,
+            durationMinutes: settings.workMinutes
+        ))
+        storage.saveDailyPlan(plan)
+        dailyPlan = storage.loadDailyPlan()
+    }
+
+    /// 峰值时段排程（A2）：从今日计划移除指定时段块。
+    func removePlanBlock(_ blockId: String) {
+        var plan = storage.loadDailyPlan()
+        plan.blocks.removeAll { $0.id == blockId }
+        storage.saveDailyPlan(plan)
+        dailyPlan = storage.loadDailyPlan()
     }
 
     func togglePause() {

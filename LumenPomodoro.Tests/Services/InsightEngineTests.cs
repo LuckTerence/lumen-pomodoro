@@ -293,4 +293,28 @@ public class InsightEngineTests
         Assert.Equal("数学", actionInsight!.Action!.TaskName);
         Assert.Contains("数学", actionInsight.Action.ActionLabel);
     }
+
+    [Fact]
+    public void GetInsights_PeakHour_ReturnsScheduleBlockAction()
+    {
+        // 峰值时段排程（A2）：黄金时段洞察应返回可加入今日计划的 ScheduleBlock 动作
+        var tasks = new List<TaskItem> { new() { Name = "数学" }, new() { Name = "英语" }, new() { Name = "政治" } };
+        var sessions = new List<FocusSession>();
+        // 数学在 9:00 形成最明显峰值（avgMinutes 最高）
+        for (int i = 0; i < 5; i++)
+            sessions.Add(new FocusSession { Completed = true, EndTime = DateTime.Today.AddDays(-i).AddHours(9), TaskName = "数学", FocusMinutes = 30 });
+        for (int i = 0; i < 4; i++)
+            sessions.Add(new FocusSession { Completed = true, EndTime = DateTime.Today.AddDays(-i).AddHours(14), TaskName = "英语", FocusMinutes = 25 });
+        for (int i = 0; i < 3; i++)
+            sessions.Add(new FocusSession { Completed = true, EndTime = DateTime.Today.AddDays(-i).AddHours(20), TaskName = "政治", FocusMinutes = 20 });
+
+        var insights = _engine.GetInsights(sessions, tasks);
+        var peak = insights.FirstOrDefault(x => x.Type == InsightType.PeakHour);
+        Assert.NotNull(peak);
+        Assert.NotNull(peak!.Action);
+        Assert.Equal(SuggestedActionKind.ScheduleBlock, peak.Action!.Kind);
+        Assert.Equal(9, peak.Action.PreferredHour);
+        Assert.False(string.IsNullOrEmpty(peak.Action.TaskName));
+        Assert.Contains("9:00", peak.Action.ActionLabel);
+    }
 }

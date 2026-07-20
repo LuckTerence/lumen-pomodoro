@@ -20,8 +20,9 @@ public class StorageService : IStorageService, IDisposable
     private readonly string _tasksFile;
     private readonly string _sessionsFile;
     private readonly string _schemaFile;
+    private readonly string _dailyPlanFile;
 
-    private const int CurrentSchemaVersion = 1;
+    private const int CurrentSchemaVersion = 2;
 
     // sessions.json 保留的最大会话条数：超出后裁剪最早的会话，限制文件体积与反序列化开销。
     // 该上限足够大（约 27 年每日使用），裁剪最早会话在极端情况下可能影响超长历史的连胜统计，
@@ -55,6 +56,7 @@ public class StorageService : IStorageService, IDisposable
         _tasksFile = Path.Combine(_appDataPath, "tasks.json");
         _sessionsFile = Path.Combine(_appDataPath, "sessions.json");
         _schemaFile = Path.Combine(_appDataPath, "_schema.json");
+        _dailyPlanFile = Path.Combine(_appDataPath, "dailyplan.json");
 
         RunMigrations();
 
@@ -138,9 +140,9 @@ public class StorageService : IStorageService, IDisposable
             case 1:
                 MigrateV0ToV1();
                 break;
-            // case 2:
-            //     MigrateV1ToV2();
-            //     break;
+            case 2:
+                MigrateV1ToV2();
+                break;
             default:
                 Log.Warning("未实现 V{Version} 的迁移步骤，已跳过", version);
                 break;
@@ -166,6 +168,26 @@ public class StorageService : IStorageService, IDisposable
             catch (Exception ex)
             {
                 Log.Warning(ex, "V0→V1 迁移 settings.json 失败，将保留原文件");
+            }
+        }
+    }
+
+    private void MigrateV1ToV2()
+    {
+        // V1→V2 引入 dailyplan.json（今日计划，峰值时段排程 A2 使用）。
+        // 旧端无此文件，初始化一个空的今日计划，避免首次读取时缺文件报错。
+        if (!File.Exists(_dailyPlanFile))
+        {
+            try
+            {
+                var plan = new DailyPlan { Date = DateTime.Today, Blocks = [] };
+                var content = JsonSerializer.Serialize(plan, IndentedOptions);
+                AtomicWriteAllText(_dailyPlanFile, content);
+                Log.Information("V1→V2 迁移：初始化 dailyplan.json");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "V1→V2 迁移 dailyplan.json 失败，将首次读取时再初始化");
             }
         }
     }
@@ -638,6 +660,50 @@ public class StorageService : IStorageService, IDisposable
             _cacheDate = DateTime.Today;
 
             return stats;
+        }
+    }
+
+    /// <summary>
+    /// 读取今日计划。若文件缺失或存储的日期不是今天，则返回一个新的「今日」空计划
+    /// （按日期重置：跨天后旧的计划自然失效，下一次保存即落盘为今天）。
+    /// </summary>
+    public DailyPlan LoadDailyPlan()
+    {
+        lock (_fileLock)
+        {
+            try
+            {
+                if (File.Exists(_dailyPlanFile))
+                {
+                    var content = File.ReadAllText(_dailyPlanFile);
+                    var plan = JsonSerializer.Deserialize<DailyPlan>(content);
+                    if (plan != null && plan.Date.Date == DateTime.Today)
+                        return plan;
+                }
+            }
+            catch (JsonException ex)
+            {
+                Log.Warning(ex, "dailyplan.json 解析失败，返回今日空计划");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "读取 dailyplan.json 失败，返回今日空计划");
+            }
+            return new DailyPlan { Date = DateTime.Today, Blocks = [] };
+        }
+    }
+
+    /// <summary>
+    /// 写入今日计划；写入前将日期归正为今天，确保「跨天重置」语义。
+    /// </summary>
+    public void SaveDailyPlan(DailyPlan plan)
+    {
+        lock (_fileLock)
+        {
+            plan.Date = DateTime.Today;
+            CreateBackup(_dailyPlanFile);
+            var content = JsonSerializer.Serialize(plan, IndentedOptions);
+            AtomicWriteAllText(_dailyPlanFile, content);
         }
     }
 

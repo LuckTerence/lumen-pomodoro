@@ -457,4 +457,57 @@ public class StorageServiceTests : IDisposable
             if (Directory.Exists(path)) Directory.Delete(path, true);
         }
     }
+
+    [Fact]
+    public void DailyPlan_SaveAndLoad_RoundTrips()
+    {
+        // 峰值时段排程（A2）：今日计划的写入与读取应保持一致
+        var plan = new DailyPlan { Date = DateTime.Today, Blocks = new List<PlannedBlock>() };
+        plan.Blocks.Add(new PlannedBlock { TaskName = "数学", Hour = 9, DurationMinutes = 25 });
+        _storageService.SaveDailyPlan(plan);
+
+        var loaded = _storageService.LoadDailyPlan();
+        Assert.Equal(1, loaded.Blocks.Count);
+        Assert.Equal("数学", loaded.Blocks[0].TaskName);
+        Assert.Equal(9, loaded.Blocks[0].Hour);
+        Assert.Equal(25, loaded.Blocks[0].DurationMinutes);
+    }
+
+    [Fact]
+    public void DailyPlan_LoadOnDifferentDay_ReturnsEmptyTodayPlan()
+    {
+        // 跨天重置：存储的日期不是今天时，返回今日空计划（不污染历史）
+        var yesterday = DateTime.Today.AddDays(-1);
+        var plan = new DailyPlan { Date = yesterday, Blocks = new List<PlannedBlock> { new() { TaskName = "旧", Hour = 8 } } };
+        _storageService.SaveDailyPlan(plan);
+
+        var loaded = _storageService.LoadDailyPlan();
+        Assert.Equal(DateTime.Today, loaded.Date);
+        Assert.Empty(loaded.Blocks);
+    }
+
+    [Fact]
+    public void RunMigrations_V1_CreatesDailyPlanFile()
+    {
+        // 数据来自 V1（无 dailyplan.json）：迁移到 V2 应初始化 dailyplan.json
+        var path = Path.Combine(Path.GetTempPath(), "LumenPomodoro.Tests", "mig_v1_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, "_schema.json"),
+                System.Text.Json.JsonSerializer.Serialize(new { schema_version = 1, updated_at = DateTime.Now.ToString("O") }));
+            File.Delete(Path.Combine(path, "dailyplan.json"));
+
+            _ = new StorageService(path);
+
+            Assert.True(File.Exists(Path.Combine(path, "dailyplan.json")), "迁移 V1→V2 应生成 dailyplan.json");
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(path, "_schema.json")));
+            Assert.True(doc.RootElement.TryGetProperty("schema_version", out var v));
+            Assert.Equal(2, v.GetInt32());
+        }
+        finally
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, true);
+        }
+    }
 }

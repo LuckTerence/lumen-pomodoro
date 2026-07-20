@@ -48,6 +48,31 @@ public class SuggestedAction
     }
 }
 
+/// <summary>
+/// 今日计划中的一个时段块。配合「峰值时段排程」（A2）：
+/// 洞察建议把某科目排到某个时段，落盘到 dailyplan.json，形成可执行的今日计划。
+/// </summary>
+public class PlannedBlock
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>关联科目名</summary>
+    public string TaskName { get; set; } = string.Empty;
+    /// <summary>计划时段（0-23）</summary>
+    public int Hour { get; set; }
+    /// <summary>计划专注分钟（默认取单次工作分钟）</summary>
+    public int DurationMinutes { get; set; }
+}
+
+/// <summary>
+/// 某一天的专注计划；按日期存储，跨天后自动重置。
+/// 该对象会落盘（dailyplan.json），故触发 schema 迁移（V2）。
+/// </summary>
+public class DailyPlan
+{
+    public DateTime Date { get; set; } = DateTime.Today;
+    public List<PlannedBlock> Blocks { get; set; } = [];
+}
+
 public class Insight
 {
     public string Title { get; set; } = string.Empty;

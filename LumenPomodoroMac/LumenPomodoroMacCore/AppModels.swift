@@ -428,6 +428,49 @@ public struct FocusSession: Codable, Identifiable {
     }
 }
 
+/// 今日计划中的一个时段块。配合「峰值时段排程」（A2）：
+/// 洞察建议把某科目排到某个时段，落盘到 dailyplan.json，形成可执行的今日计划。
+public struct PlannedBlock: Codable, Identifiable {
+    public var id: String
+    /// 关联科目名
+    public var taskName: String
+    /// 计划时段（0-23）
+    public var hour: Int
+    /// 计划专注分钟（默认取单次工作分钟）
+    public var durationMinutes: Int
+
+    public init(id: String = UUID().uuidString, taskName: String = "", hour: Int = 0, durationMinutes: Int = 25) {
+        self.id = id
+        self.taskName = taskName
+        self.hour = hour
+        self.durationMinutes = durationMinutes
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case taskName = "TaskName"
+        case hour = "Hour"
+        case durationMinutes = "DurationMinutes"
+    }
+}
+
+/// 某一天的专注计划；按日期存储，跨天后自动重置。
+/// 该对象会落盘（dailyplan.json），故触发 schema 迁移（V2）。
+public struct DailyPlan: Codable {
+    public var date: Date
+    public var blocks: [PlannedBlock]
+
+    public init(date: Date = Date(), blocks: [PlannedBlock] = []) {
+        self.date = date
+        self.blocks = blocks
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case date = "Date"
+        case blocks = "Blocks"
+    }
+}
+
 public struct DailyStats {
     public var completedPomodoros: Int = 0
     public var totalFocusMinutes: Int = 0

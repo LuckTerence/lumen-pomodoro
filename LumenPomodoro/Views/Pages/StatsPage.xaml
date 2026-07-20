@@ -14,6 +14,8 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:NonEmptyToVisibleConverter x:Key="NonEmptyToVisibleConverter" />
             <converters:SuggestedActionToVisibilityConverter x:Key="SuggestedActionToVisibilityConverter" />
+            <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter" />
+            <converters:EmptyToVisibleConverter x:Key="EmptyToVisibleConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -334,7 +336,7 @@
                                         <Button Margin="0,8,0,0" Padding="16,8" Cursor="Hand"
                                                 Command="{Binding DataContext.StartFocusTaskCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding Action.TaskName}"
-                                                Visibility="{Binding Action, Converter={StaticResource SuggestedActionToVisibilityConverter}}">
+                                                Visibility="{Binding Action, Converter={StaticResource SuggestedActionToVisibilityConverter}, ConverterParameter=StartFocus}">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{StaticResource AccentBaseBrush}" CornerRadius="16" Padding="{TemplateBinding Padding}">
@@ -344,11 +346,56 @@
                                             </Button.Template>
                                             <TextBlock Text="{Binding Action.ActionLabel}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
                                         </Button>
+                                        <!-- 洞察→行动闭环（A2）：峰值时段一键加入今日计划 -->
+                                        <Button Margin="0,8,0,0" Padding="16,8" Cursor="Hand"
+                                                Command="{Binding DataContext.ScheduleBlockCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding Action}"
+                                                Visibility="{Binding Action, Converter={StaticResource SuggestedActionToVisibilityConverter}, ConverterParameter=ScheduleBlock}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{StaticResource AccentSubtleBrush}" BorderBrush="{StaticResource AccentBaseBrush}" BorderThickness="1" CornerRadius="16" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                            <TextBlock Text="{Binding Action.ActionLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}" />
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 今日计划（峰值时段排程 A2） ===== -->
+            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="16" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="今日计划" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding TodayPlan.Blocks}"
+                                  Visibility="{Binding TodayPlan.Blocks.Count, Converter={StaticResource ZeroToCollapsedConverter}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{StaticResource AccentSubtleBrush}" CornerRadius="8" Padding="8,4" Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding Hour, StringFormat='{}{0:00}:00'}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBaseBrush}" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="{Binding TaskName}" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <Button Grid.Column="2" Content="✕" FontSize="12" Cursor="Hand" Background="Transparent" BorderThickness="0"
+                                            Foreground="{StaticResource TextTertiaryBrush}"
+                                            Command="{Binding DataContext.RemovePlanBlockCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding Id}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="还没有安排，点击上方洞察的「加入今日」试试" FontSize="12" Foreground="{StaticResource TextTertiaryBrush}"
+                               Visibility="{Binding TodayPlan.Blocks.Count, Converter={StaticResource EmptyToVisibleConverter}}" />
                 </StackPanel>
             </Border>
 

@@ -306,6 +306,32 @@ public partial class MainViewModel : ObservableObject, IDisposable
         StartFocus();
     }
 
+    /// <summary>
+    /// 峰值时段排程（A2）：把一个时段块加入今日计划。
+    /// 时段块以指定科目名与时段（0-23）加入，时长默认取单次工作分钟。
+    /// </summary>
+    public void AddToPlan(string taskName, int hour)
+    {
+        var plan = _storageService.LoadDailyPlan();
+        plan.Blocks.Add(new PlannedBlock
+        {
+            TaskName = taskName,
+            Hour = hour,
+            DurationMinutes = AppSettings.WorkMinutes
+        });
+        _storageService.SaveDailyPlan(plan);
+    }
+
+    /// <summary>
+    /// 峰值时段排程（A2）：从今日计划移除指定时段块。
+    /// </summary>
+    public void RemovePlanBlock(string blockId)
+    {
+        var plan = _storageService.LoadDailyPlan();
+        plan.Blocks.RemoveAll(b => b.Id == blockId);
+        _storageService.SaveDailyPlan(plan);
+    }
+
     [RelayCommand]
     private void Pause()
     {

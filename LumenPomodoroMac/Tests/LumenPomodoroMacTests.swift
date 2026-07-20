@@ -119,6 +119,7 @@ final class LumenPomodoroMacTests: XCTestCase {
     // MARK: - 洞察→行动闭环（A1）
 
     func testGetInsights_WeakSubject_ReturnsStartFocusAction() {
+        let calendar = Calendar.current
         let tasks = [TaskItem(name: "数学"), TaskItem(name: "英语")]
         var sessions: [FocusSession] = []
         // 数学：近 7 天 5 次（日均 5/7 < 1 阈值 → 弱科目）；英语：近 7 天 10 次（不触发）
@@ -137,5 +138,72 @@ final class LumenPomodoroMacTests: XCTestCase {
         let actionInsight = insights.first { $0.action?.kind == .startFocus }
         XCTAssertNotNil(actionInsight, "弱科目洞察应返回开始专注动作")
         XCTAssertEqual(actionInsight?.action?.taskName, "数学")
+    }
+
+    // MARK: - 峰值时段排程（A2）
+
+    func testGetInsights_PeakHour_ReturnsScheduleBlockAction() {
+        let calendar = Calendar.current
+        let tasks = [TaskItem(name: "数学"), TaskItem(name: "英语"), TaskItem(name: "政治")]
+        var sessions: [FocusSession] = []
+        // 数学在 9:00 形成最明显峰值（avgMinutes 最高）
+        for i in 0..<5 {
+            let day = calendar.date(byAdding: .day, value: -i, to: Date())!
+            let end = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)!
+            sessions.append(FocusSession(taskName: "数学", startTime: end.addingTimeInterval(-1500), endTime: end, focusMinutes: 30, completed: true))
+        }
+        for i in 0..<4 {
+            let day = calendar.date(byAdding: .day, value: -i, to: Date())!
+            let end = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: day)!
+            sessions.append(FocusSession(taskName: "英语", startTime: end.addingTimeInterval(-1500), endTime: end, focusMinutes: 25, completed: true))
+        }
+        for i in 0..<3 {
+            let day = calendar.date(byAdding: .day, value: -i, to: Date())!
+            let end = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: day)!
+            sessions.append(FocusSession(taskName: "政治", startTime: end.addingTimeInterval(-1500), endTime: end, focusMinutes: 20, completed: true))
+        }
+
+        let insights = InsightEngine.getInsights(from: sessions, tasks: tasks)
+        let peak = insights.first { $0.type == .peakHour }
+        XCTAssertNotNil(peak, "应生成黄金时段洞察")
+        XCTAssertEqual(peak?.action?.kind, .scheduleBlock, "黄金时段洞察应返回 ScheduleBlock 动作")
+        XCTAssertEqual(peak?.action?.preferredHour, 9, "preferredHour 应为峰值 9")
+        XCTAssertFalse(peak?.action?.taskName.isEmpty ?? true, "taskName 不应为空")
+    }
+
+    func testDailyPlanSaveAndLoadRoundTrip() throws {
+        let tmp = makeTempDir()
+        let storage = StorageService(baseDirectory: tmp)
+
+        var plan = storage.loadDailyPlan()
+        XCTAssertTrue(plan.blocks.isEmpty, "全新计划应为空")
+        plan.blocks.append(PlannedBlock(taskName: "数学", hour: 9, durationMinutes: 25))
+        storage.saveDailyPlan(plan)
+
+        let reloaded = storage.loadDailyPlan()
+        XCTAssertEqual(reloaded.blocks.count, 1)
+        XCTAssertEqual(reloaded.blocks.first?.taskName, "数学")
+        XCTAssertEqual(reloaded.blocks.first?.hour, 9)
+        XCTAssertEqual(reloaded.blocks.first?.durationMinutes, 25)
+    }
+
+    func testMigrationV1CreatesDailyPlan() throws {
+        let tmp = makeTempDir()
+        let appDir = tmp.appendingPathComponent("LumenPomodoro")
+        try FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+
+        // 模拟 V1 数据：_schema.json 为 1，且无 dailyplan.json
+        let meta: [String: Any] = ["schema_version": 1, "updated_at": ISO8601DateFormatter().string(from: Date())]
+        try JSONSerialization.data(withJSONObject: meta, options: .prettyPrinted)
+            .write(to: appDir.appendingPathComponent("_schema.json"), options: .atomic)
+        try? FileManager.default.removeItem(at: appDir.appendingPathComponent("dailyplan.json"))
+
+        _ = StorageService(baseDirectory: tmp)
+
+        let dpURL = appDir.appendingPathComponent("dailyplan.json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dpURL.path), "迁移 V1→V2 应生成 dailyplan.json")
+
+        let schemaDoc = try JSONSerialization.jsonObject(with: Data(contentsOf: appDir.appendingPathComponent("_schema.json"))) as? [String: Any]
+        XCTAssertEqual(schemaDoc?["schema_version"] as? Int, 2)
     }
 }

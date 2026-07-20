@@ -203,12 +203,25 @@ public class InsightEngine : IInsightEngine
         var bestHour = hourGroups.OrderByDescending(x => x.AvgMinutes).FirstOrDefault();
         if (bestHour != null)
         {
+            // 峰值时段排程（A2）：建议把「主科目」排到黄金时段，附 ScheduleBlock 动作
+            var mainSubject = completed
+                .GroupBy(s => s.TaskName)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault()?.Key
+                ?? tasks.FirstOrDefault()?.Name
+                ?? string.Empty;
+
             insights.Add(new Insight
             {
                 Title = "你的黄金时段",
                 Description = $"{bestHour.Hour}:00 左右是你效率最高的时段，平均每次专注 {(int)bestHour.AvgMinutes} 分钟。",
                 Type = InsightType.PeakHour,
-                ActionHint = "试试把最重要科目安排在这个时段"
+                ActionHint = "试试把最重要科目安排在这个时段",
+                Action = new SuggestedAction(
+                    SuggestedActionKind.ScheduleBlock,
+                    $"加入今日 {bestHour.Hour}:00",
+                    taskName: mainSubject,
+                    preferredHour: bestHour.Hour)
             });
         }
 

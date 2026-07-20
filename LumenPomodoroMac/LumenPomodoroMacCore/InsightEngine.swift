@@ -170,11 +170,26 @@ public enum InsightEngine {
             .filter { $0.0 >= 0 && $0.1 >= minSessionsForInsight }
 
         if let bestHour = hourGroups.max(by: { $0.avgMinutes < $1.avgMinutes }) {
+            // 峰值时段排程（A2）：建议把「主科目」排到黄金时段，附 scheduleBlock 动作
+            let mainSubject = completed
+                .map { $0.taskName.isEmpty ? "未分类" : $0.taskName }
+                .reduce(into: [:]) { counts, name in counts[name, default: 0] += 1 }
+                .max { $0.value < $1.value }?
+                .key
+                ?? tasks.first?.name
+                ?? ""
+
             insights.append(Insight(
                 title: "你的黄金时段",
                 description: "\(bestHour.hour):00 左右是你效率最高的时段，平均每次专注 \(Int(bestHour.avgMinutes)) 分钟。",
                 actionHint: "试试把最重要科目安排在这个时段",
-                type: .peakHour
+                type: .peakHour,
+                action: SuggestedAction(
+                    kind: .scheduleBlock,
+                    actionLabel: "加入今日 \(bestHour.hour):00",
+                    taskName: mainSubject,
+                    preferredHour: bestHour.hour
+                )
             ))
         }
 

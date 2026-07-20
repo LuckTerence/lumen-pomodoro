@@ -504,6 +504,9 @@ public partial class MainWindow : Window
             page.RequestNavigateToTasks += () => mainWindow?.NavigateToPage(typeof(TasksPage));
             // 洞察→行动闭环（A1）：弱科目「现在专注」按钮 → 直接以该科目开始专注
             statsVM.StartFocusCallback = name => _viewModel.StartFocusWithTask(name);
+            // 峰值时段排程（A2）：黄金时段「加入今日」按钮 → 写入今日计划
+            statsVM.ScheduleBlockCallback = (name, hour) => _viewModel.AddToPlan(name, hour);
+            statsVM.RemovePlanBlockCallback = blockId => _viewModel.RemovePlanBlock(blockId);
             return page;
         }
 

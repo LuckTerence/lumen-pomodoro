@@ -57,6 +57,9 @@ public partial class StatsViewModel : ObservableObject
     private List<Insight> _insights = [];
 
     [ObservableProperty]
+    private DailyPlan _todayPlan = new();
+
+    [ObservableProperty]
     private List<GoalProgress> _goalProgress = [];
 
     [ObservableProperty]
@@ -93,6 +96,43 @@ public partial class StatsViewModel : ObservableObject
     {
         if (!string.IsNullOrWhiteSpace(taskName))
             StartFocusCallback?.Invoke(taskName.Trim());
+    }
+
+    /// <summary>
+    /// 由宿主（MainWindow）注入：把时段块加入今日计划（峰值时段排程 A2）。
+    /// </summary>
+    public Action<string, int>? ScheduleBlockCallback { get; set; }
+
+    /// <summary>
+    /// 由宿主（MainWindow）注入：从今日计划移除指定时段块（A2）。
+    /// </summary>
+    public Action<string>? RemovePlanBlockCallback { get; set; }
+
+    /// <summary>
+    /// 洞察→行动闭环（A2）：把黄金时段洞察建议的科目时段加入今日计划。
+    /// 经回调写入存储后，从存储重载 TodayPlan 以刷新 UI。
+    /// </summary>
+    [RelayCommand]
+    public void ScheduleBlock(SuggestedAction? action)
+    {
+        if (action != null)
+        {
+            ScheduleBlockCallback?.Invoke(action.TaskName, action.PreferredHour);
+            TodayPlan = _storageService.LoadDailyPlan();
+        }
+    }
+
+    /// <summary>
+    /// 从今日计划移除一个时段块（A2）。
+    /// </summary>
+    [RelayCommand]
+    public void RemovePlanBlock(string? blockId)
+    {
+        if (!string.IsNullOrWhiteSpace(blockId))
+        {
+            RemovePlanBlockCallback?.Invoke(blockId.Trim());
+            TodayPlan = _storageService.LoadDailyPlan();
+        }
     }
 
     // 过滤条件
@@ -285,6 +325,7 @@ public partial class StatsViewModel : ObservableObject
         TaskBreakdown = _insightEngine.GetTaskBreakdown(completedSessions, periodStart, periodEnd, tasks);
         WeeklyTrend = _insightEngine.GetWeeklyTrend(completedSessions);
         Insights = _insightEngine.GetInsights(completedSessions, tasks);
+        TodayPlan = _storageService.LoadDailyPlan();
 
         var settings = _storageService.LoadSettings();
 

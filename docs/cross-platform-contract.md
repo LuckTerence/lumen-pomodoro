@@ -1,6 +1,6 @@
 # 跨端数据与行为契约
 
-> 文档版本：2026-07-17 · SchemaVersion **1**  
+> 文档版本：2026-07-20 · SchemaVersion **2**  
 > 参考：Flowkeeper `doc/data-model` / `events` 结构、YAPA-2 Shared 分层、Open Pomodoro Format  
 > 实现源：`LumenPomodoro/Models/*`、`LumenPomodoroMac/.../AppModels.swift`、`StorageService`
 
@@ -45,6 +45,7 @@
 | `settings.json` | 用户设置 | JSON；属性名 **PascalCase**（与 C# 默认一致） |
 | `tasks.json` | 任务列表 | JSON 数组 |
 | `sessions.json` | 专注会话列表 | JSON 数组 |
+| `dailyplan.json` | 今日计划（峰值时段排程，A2） | JSON；按日期重置 |
 
 ### 2.3 `_schema.json`
 
@@ -63,7 +64,7 @@
 **迁移规则：**
 
 - 启动时若 `schema_version < CurrentSchemaVersion`，按序执行 `Vn → Vn+1`。
-- 当前 `CurrentSchemaVersion = 1`；V0→V1 仅写元数据，无字段破坏性变更。
+- 当前 `CurrentSchemaVersion = 2`；V0→V1 仅写元数据，无字段破坏性变更；V1→V2 新增 `dailyplan.json`（今日计划，峰值时段排程 A2）。
 - 未知更高版本：只读降级或提示升级 App，禁止静默写坏数据。
 
 ---
@@ -203,6 +204,29 @@ WeChat, Weixin, 微信, QQ, TikTok, Steam, 网易云音乐, 爱奇艺, 腾讯视
 | `StrictModeEnabled` | false | 禁手动关灯、禁提前结束休息；完成时强制置顶 |
 | （预设）`ApplyStrictFocusPreset` | — | 一键：严格 + 全屏休息 + 岛 keep；摄像头灯默认关（可选） |
 | `Language` | `"system"` | `system` / `zh` / `en` |
+
+### 3.3.6 DailyPlan（`dailyplan.json`，峰值时段排程 A2）
+
+| 字段 (JSON) | 类型 | 必填 | 默认 | 说明 |
+|-------------|------|------|------|------|
+| `Date` | string (Date) | 是 | today | 计划所属日期；跨天自动失效，下一次保存落盘为今天 |
+| `Blocks` | `PlannedBlock[]` | 是 | `[]` | 当日时段块列表 |
+
+**PlannedBlock：**
+
+| 字段 (JSON) | 类型 | 必填 | 默认 | 说明 |
+|-------------|------|------|------|------|
+| `Id` | string | 是 | UUID | 主键（删除用） |
+| `TaskName` | string | 是 | `""` | 关联科目名 |
+| `Hour` | int | 是 | 0 | 计划时段（0–23） |
+| `DurationMinutes` | int | 是 | 25 | 计划专注分钟（默认取单次工作分钟） |
+
+**约束：**
+
+- `dailyplan.json` 由 V1→V2 迁移初始化（空计划）；旧端无此文件时不报错。
+- 读取时若 `Date != 今天`，返回今日空计划（跨天重置语义）。
+- 写入前 `Date` 归正为今天。
+- 两端 `PlannedBlock` 字段对齐；Swift 侧用 `CodingKeys` 映射 PascalCase（`Id`/`TaskName`/`Hour`/`DurationMinutes`）。
 
 ### 3.4 平台专有字段映射
 
@@ -384,7 +408,7 @@ LumenPomodoroMac
 | 托盘 vs 菜单栏 | Tray* | MenuBar* | 文档化，不强制同字段 |
 | 设置落盘 | ViewModel 保存 | SettingsView `settingsBinding` 整结构赋值 + `saveSettings` | 已加固（2026-07） |
 | AnimationEnabled | 有 | 解码可缺省 | 统一默认 true |
-| 洞察可执行动作 | `Insight.Action`（`SuggestedAction`：StartFocus/ScheduleBlock/AdjustDuration/OpenSettings） | `Insight.action`（同结构） | 双端一致；弱科目(TaskCompletion)返回 `StartFocus` 动作。**运行时计算、不入 JSON，无 schema 影响** |
+| 洞察可执行动作 | `Insight.Action`（`SuggestedAction`：StartFocus/ScheduleBlock/AdjustDuration/OpenSettings） | `Insight.action`（同结构） | 双端一致；弱科目(TaskCompletion)返回 `StartFocus` 动作，黄金时段(PeakHour)返回 `ScheduleBlock` 动作。**`SuggestedAction` 本身运行时计算、不入 JSON；但 `ScheduleBlock` 的落盘结果写入 `dailyplan.json`（schema V2）** |
 
 ---
 
@@ -393,6 +417,7 @@ LumenPomodoroMac
 | Schema | 变更 |
 |--------|------|
 | 1 | 初版：本文件描述的全部字段 |
+| 2 | 新增 `dailyplan.json`（今日计划，峰值时段排程 A2）；`DailyPlan`/`PlannedBlock` 模型（§3.3.6） |
 
 变更流程：
 

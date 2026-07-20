@@ -81,15 +81,37 @@ public class NonEmptyToVisibleConverter : IValueConverter
 }
 
 /// <summary>
-/// 洞察动作按钮可见性：仅当动作为「开始专注」时显示。
-/// 配合「洞察→行动闭环」（A1）——其它动作类型（如 ScheduleBlock）暂未接入 UI。
+/// 集合为空时显示，非空时折叠。用于「今日计划」空状态提示（A2）。
+/// </summary>
+public class EmptyToVisibleConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int count)
+            return count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        return System.Windows.Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 洞察动作按钮可见性：仅当动作类型为指定种类时显示（通过 ConverterParameter 指定，
+/// 默认 StartFocus）。配合「洞察→行动闭环」（A1/A2）——不同动作类型渲染不同按钮。
 /// </summary>
 public class SuggestedActionToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is SuggestedAction action && action.Kind == SuggestedActionKind.StartFocus)
-            return System.Windows.Visibility.Visible;
+        if (value is SuggestedAction action)
+        {
+            var targetKind = parameter as string ?? nameof(SuggestedActionKind.StartFocus);
+            if (Enum.TryParse<SuggestedActionKind>(targetKind, out var kind) && action.Kind == kind)
+                return System.Windows.Visibility.Visible;
+        }
         return System.Windows.Visibility.Collapsed;
     }
 

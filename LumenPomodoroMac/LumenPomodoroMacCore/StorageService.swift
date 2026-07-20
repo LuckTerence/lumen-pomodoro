@@ -15,9 +15,10 @@ public final class StorageService {
     private var tasksURL: URL { appSupportURL.appendingPathComponent("tasks.json") }
     private var sessionsURL: URL { appSupportURL.appendingPathComponent("sessions.json") }
     private var schemaVersionURL: URL { appSupportURL.appendingPathComponent("_schema.json") }
+    private var dailyPlanURL: URL { appSupportURL.appendingPathComponent("dailyplan.json") }
 
     /// 当前数据 schema 版本，需与 Windows 端及 docs/cross-platform-contract.md 对齐。
-    private let currentSchemaVersion = 1
+    private let currentSchemaVersion = 2
 
     /// 默认使用 Application Support/LumenPomodoro；测试可传入临时目录以隔离真实数据。
     public init(baseDirectory: URL? = nil) {
@@ -87,8 +88,8 @@ public final class StorageService {
         switch version {
         case 1:
             migrateV0ToV1()
-        // case 2:
-        //     migrateV1ToV2()
+        case 2:
+            migrateV1ToV2()
         default:
             NSLog("[StorageService] 未实现 V\(version) 的迁移步骤，已跳过")
         }
@@ -130,6 +131,14 @@ public final class StorageService {
         if let updated = try? JSONSerialization.data(withJSONObject: doc, options: .prettyPrinted) {
             try? updated.write(to: settingsURL, options: .atomic)
         }
+    }
+
+    private func migrateV1ToV2() {
+        // V1→V2 引入 dailyplan.json（今日计划，峰值时段排程 A2 使用）。
+        // 旧端无此文件，初始化一个空的今日计划，避免首次读取时缺文件报错。
+        guard !fileManager.fileExists(atPath: dailyPlanURL.path) else { return }
+        let plan = DailyPlan(date: Date(), blocks: [])
+        save(plan, to: dailyPlanURL)
     }
 
 
@@ -200,6 +209,24 @@ public final class StorageService {
             totalFocusMinutes: minutes,
             currentStreak: streak
         )
+    }
+
+    /// 读取今日计划（峰值时段排程 A2）。若文件缺失或存储的日期不是今天，
+    /// 返回一个新的「今日」空计划（按日期重置）。
+    public func loadDailyPlan() -> DailyPlan {
+        let calendar = Calendar.current
+        if let plan = load(from: dailyPlanURL, as: DailyPlan.self),
+           calendar.isDate(plan.date, inSameDayAs: Date()) {
+            return plan
+        }
+        return DailyPlan(date: Date(), blocks: [])
+    }
+
+    /// 写入今日计划；写入前将日期归正为今天，确保「跨天重置」语义。
+    public func saveDailyPlan(_ plan: DailyPlan) {
+        var plan = plan
+        plan.date = Date()
+        save(plan, to: dailyPlanURL)
     }
 
     public func sessionsForLastDays(_ days: Int) -> [FocusSession] {

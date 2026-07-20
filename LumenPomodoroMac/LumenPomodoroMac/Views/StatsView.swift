@@ -49,8 +49,51 @@ struct StatsView: View {
                                         .buttonStyle(.borderedProminent)
                                         .controlSize(.small)
                                     }
+                                    // 洞察→行动闭环（A2）：峰值时段一键加入今日计划
+                                    if let action = insight.action, action.kind == .scheduleBlock {
+                                        Button(action: { viewModel.addToPlan(action) }) {
+                                            Text(action.actionLabel)
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(Color.accentColor)
+                                        .controlSize(.small)
+                                    }
                                 }
                                 if index < insights.count - 1 { Divider() }
+                            }
+                        }
+                        .padding(4)
+                    }
+                }
+
+                GroupBox("今日计划") {
+                    if viewModel.dailyPlan.blocks.isEmpty {
+                        Text("还没有安排，点击上方洞察的「加入今日」试试")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(4)
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(viewModel.dailyPlan.blocks) { block in
+                                HStack {
+                                    Text(String(format: "%02d:00", block.hour))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Color.accentColor)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                                    Text(block.taskName)
+                                        .font(.callout)
+                                    Spacer()
+                                    Button(action: { viewModel.removePlanBlock(block.id) }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
                         }
                         .padding(4)
