@@ -39,6 +39,16 @@ struct StatsView: View {
                                     if !insight.actionHint.isEmpty {
                                         Text(insight.actionHint).font(.caption2).foregroundStyle(Color.accentColor)
                                     }
+                                    // 洞察→行动闭环（A1）：弱科目一键开始专注
+                                    if let action = insight.action, action.kind == .startFocus {
+                                        Button(action: { viewModel.startFocus(with: action.taskName) }) {
+                                            Text(action.actionLabel)
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .controlSize(.small)
+                                    }
                                 }
                                 if index < insights.count - 1 { Divider() }
                             }

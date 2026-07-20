@@ -274,4 +274,23 @@ public class InsightEngineTests
         var result = SessionScoringController.ShouldShowStreakEncouragement(sessions);
         Assert.False(result);
     }
+
+    [Fact]
+    public void GetInsights_WeakSubject_ReturnsStartFocusAction()
+    {
+        // 洞察→行动闭环（A1）：弱科目应返回可一键开始专注的结构化动作
+        var tasks = new List<TaskItem> { new() { Name = "数学" }, new() { Name = "英语" } };
+        var sessions = new List<FocusSession>();
+        // 数学：近 7 天 5 次（日均 5/7 < 1 阈值 → 弱科目）；英语：近 7 天 10 次（不触发）
+        for (int i = 0; i < 5; i++)
+            sessions.Add(new FocusSession { Completed = true, EndTime = DateTime.Today.AddDays(-i).AddHours(9), TaskName = "数学", FocusMinutes = 25 });
+        for (int i = 0; i < 10; i++)
+            sessions.Add(new FocusSession { Completed = true, EndTime = DateTime.Today.AddDays(-i).AddHours(14), TaskName = "英语", FocusMinutes = 25 });
+
+        var insights = _engine.GetInsights(sessions, tasks);
+        var actionInsight = insights.FirstOrDefault(x => x.Action != null && x.Action.Kind == SuggestedActionKind.StartFocus);
+        Assert.NotNull(actionInsight);
+        Assert.Equal("数学", actionInsight!.Action!.TaskName);
+        Assert.Contains("数学", actionInsight.Action.ActionLabel);
+    }
 }

@@ -282,6 +282,30 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsWindowTopmost, AppSettings.DynamicIslandEnabled);
     }
 
+    /// <summary>
+    /// 洞察→行动闭环（A1）：以指定科目名直接开始一次专注。
+    /// 用于弱科目洞察的「现在专注」按钮——找不到精确匹配时回退到首个任务。
+    /// </summary>
+    public void StartFocusWithTask(string taskName)
+    {
+        if (string.IsNullOrWhiteSpace(taskName)) return;
+
+        var match = Tasks.FirstOrDefault(t => string.Equals(t.Name, taskName, StringComparison.CurrentCultureIgnoreCase))
+                    ?? (taskName == "未分类"
+                        ? Tasks.FirstOrDefault(t => string.Equals(t.Name, "未分类", StringComparison.CurrentCultureIgnoreCase))
+                        : null)
+                    ?? Tasks.FirstOrDefault();
+
+        if (match == null)
+        {
+            MessageBox.Show(Properties.LocalizedStrings.NoTaskSelected, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        SelectedTask = match;
+        StartFocus();
+    }
+
     [RelayCommand]
     private void Pause()
     {

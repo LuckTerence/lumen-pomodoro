@@ -82,6 +82,19 @@ public partial class StatsViewModel : ObservableObject
 
     public bool HasAchievements => Achievements.Count > 0;
 
+    /// <summary>
+    /// 由宿主（MainWindow）注入：点击洞察动作按钮时回调到 MainViewModel 开始专注。
+    /// 用于「洞察→行动闭环」（A1）。
+    /// </summary>
+    public Action<string>? StartFocusCallback { get; set; }
+
+    [RelayCommand]
+    public void StartFocusTask(string? taskName)
+    {
+        if (!string.IsNullOrWhiteSpace(taskName))
+            StartFocusCallback?.Invoke(taskName.Trim());
+    }
+
     // 过滤条件
     [ObservableProperty]
     private DateTime? _filterDateFrom;

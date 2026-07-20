@@ -148,6 +148,7 @@ public enum InsightEngine {
         }
 
         let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
         var hourGroups: [(hour: Int, count: Int, avgMinutes: Double, avgQuality: Double)] = []
         let groupedByHour = Dictionary(grouping: completed) { session -> Int in
             guard let endTime = session.endTime else { return -1 }
@@ -195,6 +196,33 @@ public enum InsightEngine {
                 actionHint: "",
                 type: .streak
             ))
+        }
+
+        // 弱科目提醒（与 Win 对齐）：最近 7 天日均低于阈值的科目，给出一键开始专注动作
+        let cutoff = calendar.date(byAdding: .day, value: -taskAttentionDays, to: today) ?? today
+        let cutoffDay = calendar.startOfDay(for: cutoff)
+        let last7Days = completed.filter { session in
+            guard let end = session.endTime else { return false }
+            return calendar.startOfDay(for: end) >= cutoffDay
+        }
+        if !last7Days.isEmpty && !tasks.isEmpty {
+            let taskAvgs = Dictionary(grouping: last7Days) { $0.taskName.isEmpty ? "未分类" : $0.taskName }
+                .map { name, group in (name: name, avg: Double(group.count) / Double(taskAttentionDays)) }
+                .filter { $0.avg < taskAttentionAvgThreshold }
+                .sorted { $0.avg < $1.avg }
+            if let taskAvg = taskAvgs.first {
+                let taskName = taskAvg.name
+                let totalForTask = completed.filter { ($0.taskName.isEmpty ? "未分类" : $0.taskName) == taskName }.count
+                if totalForTask >= taskAttentionMinTotal {
+                    insights.append(Insight(
+                        title: "需要关注",
+                        description: "「\(taskName)」最近 7 天平均每天只有 \(String(format: "%.1f", taskAvg.avg)) 个番茄钟，考虑增加投入。",
+                        actionHint: "今天就先从这个科目开始吧",
+                        type: .taskCompletion,
+                        action: SuggestedAction(kind: .startFocus, actionLabel: "现在专注「\(taskName)」", taskName: taskName)
+                    ))
+                }
+            }
         }
 
         let total = completed.count

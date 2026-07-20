@@ -259,6 +259,17 @@ final class AppViewModel: ObservableObject {
     func startFocus() {
         guard let task = selectedTask ?? tasks.first else { return }
         selectedTask = task
+        startFocus(with: task.name)
+    }
+
+    /// 洞察→行动闭环（A1）：以指定科目名直接开始一次专注。
+    /// 用于弱科目洞察的「现在专注」按钮——找不到精确匹配时回退到首个任务。
+    func startFocus(with taskName: String) {
+        let match = tasks.first { $0.name == taskName }
+            ?? (taskName == "未分类" ? tasks.first { $0.name == "未分类" } : nil)
+            ?? tasks.first
+        guard let task = match else { return }
+        selectedTask = task
 
         if settings.cameraAlertEnabled && !settings.hasShownCameraPrivacyNotice {
             showPrivacySheet = true

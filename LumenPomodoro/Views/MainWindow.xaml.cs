@@ -502,6 +502,8 @@ public partial class MainWindow : Window
             var page = new StatsPage(statsVM, exportSvc);
             var mainWindow = (MainWindow?)Application.Current.MainWindow;
             page.RequestNavigateToTasks += () => mainWindow?.NavigateToPage(typeof(TasksPage));
+            // 洞察→行动闭环（A1）：弱科目「现在专注」按钮 → 直接以该科目开始专注
+            statsVM.StartFocusCallback = name => _viewModel.StartFocusWithTask(name);
             return page;
         }
 

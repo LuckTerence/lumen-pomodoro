@@ -28,6 +28,46 @@ public enum InsightType: String, Codable {
     case motivation = "Motivation"
 }
 
+/// 洞察可触发的结构化动作类型。UI 据此渲染真实按钮，形成「洞察→行动」闭环，
+/// 而非仅展示 actionHint 文案。
+public enum SuggestedActionKind: String, Codable {
+    /// 立即以指定科目开始一次专注
+    case startFocus = "StartFocus"
+    /// 把科目排到今日的某个时段（配合 DailyPlan，A2 使用）
+    case scheduleBlock = "ScheduleBlock"
+    /// 建议调整单次专注时长（分钟）
+    case adjustDuration = "AdjustDuration"
+    /// 跳转到某个设置项
+    case openSettings = "OpenSettings"
+}
+
+/// 洞察附带的可执行动作。替代纯文本的 actionHint，使 UI 能渲染真实按钮。
+/// 该对象为运行时计算产物，不入 JSON，故不触发 schema 迁移。
+public struct SuggestedAction: Codable, Identifiable {
+    public let id = UUID()
+    public var kind: SuggestedActionKind
+    /// 按钮文案，如「现在专注「数学」」
+    public var actionLabel: String
+    /// 关联科目名（startFocus / scheduleBlock 使用）
+    public var taskName: String
+    /// 建议时段（0-23），无则 -1（scheduleBlock 使用）
+    public var preferredHour: Int
+    /// 建议时长（分钟），无则 0（adjustDuration 使用）
+    public var targetMinutes: Int
+    /// 目标设置键（openSettings 使用）
+    public var settingKey: String
+
+    public init(kind: SuggestedActionKind, actionLabel: String,
+                taskName: String = "", preferredHour: Int = -1, targetMinutes: Int = 0, settingKey: String = "") {
+        self.kind = kind
+        self.actionLabel = actionLabel
+        self.taskName = taskName
+        self.preferredHour = preferredHour
+        self.targetMinutes = targetMinutes
+        self.settingKey = settingKey
+    }
+}
+
 public struct Settings: Codable, Equatable {
     public var schemaVersion: Int = 1
     public var workMinutes: Int = 25
@@ -429,12 +469,15 @@ public struct Insight: Identifiable {
     public var description: String
     public var actionHint: String
     public var type: InsightType
+    /// 结构化可执行动作；为 nil 时 UI 仅展示说明
+    public var action: SuggestedAction?
 
-    public init(title: String, description: String, actionHint: String, type: InsightType) {
+    public init(title: String, description: String, actionHint: String, type: InsightType, action: SuggestedAction? = nil) {
         self.title = title
         self.description = description
         self.actionHint = actionHint
         self.type = type
+        self.action = action
     }
 }
 

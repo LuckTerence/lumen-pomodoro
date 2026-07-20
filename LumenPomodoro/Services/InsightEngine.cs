@@ -329,7 +329,9 @@ public class InsightEngine : IInsightEngine
                         Title = "需要关注",
                         Description = $"「{taskAvg.Name}」最近 7 天平均每天只有 {taskAvg.Avg:F1} 个番茄钟，考虑增加投入。",
                         Type = InsightType.TaskCompletion,
-                        ActionHint = "今天就先从这个科目开始吧"
+                        ActionHint = "今天就先从这个科目开始吧",
+                        // 洞察→行动闭环：弱科目一键开始专注
+                        Action = new SuggestedAction(SuggestedActionKind.StartFocus, $"现在专注「{taskName}」", taskName: taskName)
                     });
                 }
             }

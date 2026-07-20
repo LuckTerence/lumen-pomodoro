@@ -384,6 +384,7 @@ LumenPomodoroMac
 | 托盘 vs 菜单栏 | Tray* | MenuBar* | 文档化，不强制同字段 |
 | 设置落盘 | ViewModel 保存 | SettingsView `settingsBinding` 整结构赋值 + `saveSettings` | 已加固（2026-07） |
 | AnimationEnabled | 有 | 解码可缺省 | 统一默认 true |
+| 洞察可执行动作 | `Insight.Action`（`SuggestedAction`：StartFocus/ScheduleBlock/AdjustDuration/OpenSettings） | `Insight.action`（同结构） | 双端一致；弱科目(TaskCompletion)返回 `StartFocus` 动作。**运行时计算、不入 JSON，无 schema 影响** |
 
 ---
 

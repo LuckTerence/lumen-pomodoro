@@ -1,11 +1,61 @@
 namespace LumenPomodoro.Models;
 
+/// <summary>
+/// 洞察可触发的结构化动作类型。UI 据此渲染真实按钮，形成「洞察→行动」闭环，
+/// 而非仅展示 ActionHint 文案。
+/// </summary>
+public enum SuggestedActionKind
+{
+    /// <summary>立即以指定科目开始一次专注</summary>
+    StartFocus,
+    /// <summary>把科目排到今日的某个时段（配合 DailyPlan，A2 使用）</summary>
+    ScheduleBlock,
+    /// <summary>建议调整单次专注时长（分钟）</summary>
+    AdjustDuration,
+    /// <summary>跳转到某个设置项</summary>
+    OpenSettings
+}
+
+/// <summary>
+/// 洞察附带的可执行动作。替代纯文本的 ActionHint，使 UI 能渲染真实按钮。
+/// 该对象为运行时计算产物，不入 JSON，故不触发 schema 迁移。
+/// </summary>
+public class SuggestedAction
+{
+    public SuggestedActionKind Kind { get; set; }
+    /// <summary>按钮文案，如「现在专注「数学」」</summary>
+    public string ActionLabel { get; set; } = string.Empty;
+    /// <summary>关联科目名（StartFocus / ScheduleBlock 使用）</summary>
+    public string TaskName { get; set; } = string.Empty;
+    /// <summary>建议时段（0-23），无则 -1（ScheduleBlock 使用）</summary>
+    public int PreferredHour { get; set; } = -1;
+    /// <summary>建议时长（分钟），无则 0（AdjustDuration 使用）</summary>
+    public int TargetMinutes { get; set; }
+    /// <summary>目标设置键（OpenSettings 使用）</summary>
+    public string SettingKey { get; set; } = string.Empty;
+
+    public SuggestedAction() { }
+
+    public SuggestedAction(SuggestedActionKind kind, string actionLabel,
+        string taskName = "", int preferredHour = -1, int targetMinutes = 0, string settingKey = "")
+    {
+        Kind = kind;
+        ActionLabel = actionLabel;
+        TaskName = taskName;
+        PreferredHour = preferredHour;
+        TargetMinutes = targetMinutes;
+        SettingKey = settingKey;
+    }
+}
+
 public class Insight
 {
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ActionHint { get; set; } = string.Empty;
     public InsightType Type { get; set; }
+    /// <summary>结构化可执行动作；为 null 时 UI 仅展示说明</summary>
+    public SuggestedAction? Action { get; set; }
 }
 
 public enum InsightType

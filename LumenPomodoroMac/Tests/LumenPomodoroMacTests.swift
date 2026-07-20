@@ -115,4 +115,27 @@ final class LumenPomodoroMacTests: XCTestCase {
         }
         XCTAssertEqual(InsightEngine.calculateStreak(from: sessions), 1)
     }
+
+    // MARK: - 洞察→行动闭环（A1）
+
+    func testGetInsights_WeakSubject_ReturnsStartFocusAction() {
+        let tasks = [TaskItem(name: "数学"), TaskItem(name: "英语")]
+        var sessions: [FocusSession] = []
+        // 数学：近 7 天 5 次（日均 5/7 < 1 阈值 → 弱科目）；英语：近 7 天 10 次（不触发）
+        for i in 0..<5 {
+            let day = calendar.date(byAdding: .day, value: -i, to: Date())!
+            let end = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)!
+            sessions.append(FocusSession(taskName: "数学", startTime: end.addingTimeInterval(-1500), endTime: end, focusMinutes: 25, completed: true))
+        }
+        for i in 0..<10 {
+            let day = calendar.date(byAdding: .day, value: -i, to: Date())!
+            let end = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: day)!
+            sessions.append(FocusSession(taskName: "英语", startTime: end.addingTimeInterval(-1500), endTime: end, focusMinutes: 25, completed: true))
+        }
+
+        let insights = InsightEngine.getInsights(from: sessions, tasks: tasks)
+        let actionInsight = insights.first { $0.action?.kind == .startFocus }
+        XCTAssertNotNil(actionInsight, "弱科目洞察应返回开始专注动作")
+        XCTAssertEqual(actionInsight?.action?.taskName, "数学")
+    }
 }
