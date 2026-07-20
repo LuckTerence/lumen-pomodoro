@@ -409,6 +409,7 @@ LumenPomodoroMac
 | 设置落盘 | ViewModel 保存 | SettingsView `settingsBinding` 整结构赋值 + `saveSettings` | 已加固（2026-07） |
 | AnimationEnabled | 有 | 解码可缺省 | 统一默认 true |
 | 洞察可执行动作 | `Insight.Action`（`SuggestedAction`：StartFocus/ScheduleBlock/AdjustDuration/OpenSettings） | `Insight.action`（同结构） | 双端一致；弱科目(TaskCompletion)返回 `StartFocus` 动作，黄金时段(PeakHour)返回 `ScheduleBlock` 动作。**`SuggestedAction` 本身运行时计算、不入 JSON；但 `ScheduleBlock` 的落盘结果写入 `dailyplan.json`（schema V2）** |
+| 动作去重与反馈（A3） | `InsightEngine.SuppressActedActions`：今日已排程/已专注则隐藏对应动作；点击后 `MainViewModel` 弹应用内提示 | `InsightEngine.suppressActedActions`：同逻辑；点击后 Dynamic Island + 系统通知 | 双端一致：避免同一动作反复提示（去重），并对点击给出反馈 |
 
 ---
 

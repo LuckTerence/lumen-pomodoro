@@ -91,7 +91,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public string CameraStatus => _cameraAlert.Status;
     public bool IsCameraAlertActive => _cameraAlert.IsActive;
 
-    /// <summary>计时页展示的可读摄像头状态（含关闭/待命/异常）。</summary>
+    /// <summary>高级选项：摄像头灯是否开启。关闭时计时页不展示灯状态，避免干扰主路径。</summary>
+    public bool IsCameraAlertEnabled => AppSettings.CameraAlertEnabled;
+
+    /// <summary>计时页展示的可读摄像头状态（仅灯开启时展示）。</summary>
     public string CameraStatusDisplay => Models.CameraAlertStatusText.Describe(
         AppSettings.CameraAlertEnabled,
         IsCameraAlertActive,
@@ -320,6 +323,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
             DurationMinutes = AppSettings.WorkMinutes
         });
         _storageService.SaveDailyPlan(plan);
+        // 动作反馈（A3）：加入成功后弹出应用内提示
+        _notifications.ShowInApp("已加入今日计划", $"{hour:00}:00 {taskName}", AppSettings.PopupEnabled);
     }
 
     /// <summary>
@@ -752,6 +757,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         _cameraAlert.Initialize(AppSettings);
         OnPropertyChanged(nameof(CameraStatusDisplay));
+        OnPropertyChanged(nameof(IsCameraAlertEnabled));
         OnPropertyChanged(nameof(IsInsightsEnabled));
         OnPropertyChanged(nameof(IsDailyReportEnabled));
         OnPropertyChanged(nameof(IsDynamicIslandEnabled));

@@ -324,8 +324,17 @@ public partial class StatsViewModel : ObservableObject
         HourlyData = _insightEngine.GetHourlyDistribution(completedSessions, periodStart, periodEnd);
         TaskBreakdown = _insightEngine.GetTaskBreakdown(completedSessions, periodStart, periodEnd, tasks);
         WeeklyTrend = _insightEngine.GetWeeklyTrend(completedSessions);
-        Insights = _insightEngine.GetInsights(completedSessions, tasks);
+        var insights = _insightEngine.GetInsights(completedSessions, tasks);
         TodayPlan = _storageService.LoadDailyPlan();
+
+        // 动作去重（A3）：若洞察动作今日已达成，则隐藏其按钮，避免反复提示
+        var todaysFocusedTasks = new HashSet<string>(
+            _storageService.LoadSessions()
+                .Where(s => s.Completed && s.EndTime.HasValue && s.EndTime.Value.Date == DateTime.Today)
+                .Select(s => s.TaskName),
+            StringComparer.OrdinalIgnoreCase);
+        InsightEngine.SuppressActedActions(insights, TodayPlan, todaysFocusedTasks);
+        Insights = insights.ToList();
 
         var settings = _storageService.LoadSettings();
 

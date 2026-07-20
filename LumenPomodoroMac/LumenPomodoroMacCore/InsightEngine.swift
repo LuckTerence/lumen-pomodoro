@@ -262,6 +262,28 @@ public enum InsightEngine {
         return Array(insights.prefix(maxInsightCount))
     }
 
+    /// 动作去重（A3）：若某洞察的结构化动作「今日已经达成」，则清空其 action，使 UI 不再反复提示。
+    /// 纯函数，不依赖存储：调用方传入今日计划与今日已专注科目集合。
+    /// - ScheduleBlock：今日计划中已存在同科目时段块 → 视为已安排
+    /// - StartFocus：该科目今日已有完成专注 → 视为今日已专注
+    public static func suppressActedActions(_ insights: [Insight], todayPlan: DailyPlan, todaysFocusedTaskNames: Set<String>) -> [Insight] {
+        insights.map { insight in
+            var copy = insight
+            guard let action = copy.action else { return copy }
+            let done: Bool
+            switch action.kind {
+            case .scheduleBlock:
+                done = todayPlan.blocks.contains { $0.taskName == action.taskName }
+            case .startFocus:
+                done = todaysFocusedTaskNames.contains(action.taskName)
+            default:
+                done = false
+            }
+            if done { copy.action = nil }
+            return copy
+        }
+    }
+
     public static func getGoalProgress(from sessions: [FocusSession], dailyGoalMinutes: Int, weeklyGoalMinutes: Int) -> [GoalProgress] {
         let completed = completedSessions(from: sessions)
         let calendar = Calendar.current

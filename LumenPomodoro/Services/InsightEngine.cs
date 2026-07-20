@@ -375,6 +375,31 @@ public class InsightEngine : IInsightEngine
         return insights.Take(MaxInsightCount).ToList();
     }
 
+    /// <summary>
+    /// 动作去重（A3）：若某洞察的结构化动作「今日已经达成」，则清空其 Action，使 UI 不再反复提示。
+    /// 纯函数，不依赖存储：调用方传入今日计划与今日已专注科目集合。
+    /// <list type="bullet">
+    ///   <item>ScheduleBlock：今日计划中已存在同科目时段块 → 视为已安排</item>
+    ///   <item>StartFocus：该科目今日已有完成专注 → 视为今日已专注</item>
+    /// </list>
+    /// </summary>
+    public static void SuppressActedActions(List<Insight> insights, DailyPlan todayPlan, HashSet<string> todaysFocusedTasks)
+    {
+        foreach (var insight in insights)
+        {
+            if (insight.Action == null) continue;
+            var action = insight.Action;
+            var done = action.Kind switch
+            {
+                SuggestedActionKind.ScheduleBlock => todayPlan.Blocks.Any(b =>
+                    string.Equals(b.TaskName, action.TaskName, StringComparison.OrdinalIgnoreCase)),
+                SuggestedActionKind.StartFocus => todaysFocusedTasks.Contains(action.TaskName),
+                _ => false
+            };
+            if (done) insight.Action = null;
+        }
+    }
+
     public static int CalculateStreak(List<FocusSession> completed)
     {
         if (completed.Count == 0) return 0;

@@ -317,4 +317,60 @@ public class InsightEngineTests
         Assert.False(string.IsNullOrEmpty(peak.Action.TaskName));
         Assert.Contains("9:00", peak.Action.ActionLabel);
     }
+
+    [Fact]
+    public void SuppressActedActions_HidesScheduleBlock_WhenPlannedToday()
+    {
+        // 动作去重（A3）：今日计划已包含该科目时段块 → ScheduleBlock 动作被隐藏
+        var insights = new List<Insight>
+        {
+            new() {
+                Title = "你的黄金时段", Type = InsightType.PeakHour,
+                Action = new SuggestedAction(SuggestedActionKind.ScheduleBlock, "加入今日 9:00", taskName: "数学", preferredHour: 9)
+            }
+        };
+        var plan = new DailyPlan { Date = DateTime.Today, Blocks = new List<PlannedBlock> { new() { TaskName = "数学", Hour = 9 } } };
+
+        InsightEngine.SuppressActedActions(insights, plan, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+
+        Assert.Null(insights[0].Action);
+    }
+
+    [Fact]
+    public void SuppressActedActions_HidesStartFocus_WhenFocusedToday()
+    {
+        // 动作去重（A3）：该科目今日已有完成专注 → StartFocus 动作被隐藏
+        var insights = new List<Insight>
+        {
+            new() {
+                Title = "需要关注", Type = InsightType.TaskCompletion,
+                Action = new SuggestedAction(SuggestedActionKind.StartFocus, "现在专注「数学」", taskName: "数学")
+            }
+        };
+        var plan = new DailyPlan { Date = DateTime.Today, Blocks = new() };
+        var focused = new HashSet<string> { "数学" };
+
+        InsightEngine.SuppressActedActions(insights, plan, focused);
+
+        Assert.Null(insights[0].Action);
+    }
+
+    [Fact]
+    public void SuppressActedActions_KeepsAction_WhenNotActedToday()
+    {
+        // 动作去重（A3）：今日未达成时，动作应保留
+        var insights = new List<Insight>
+        {
+            new() {
+                Title = "你的黄金时段", Type = InsightType.PeakHour,
+                Action = new SuggestedAction(SuggestedActionKind.ScheduleBlock, "加入今日 9:00", taskName: "数学", preferredHour: 9)
+            }
+        };
+        var emptyPlan = new DailyPlan { Date = DateTime.Today, Blocks = new() };
+
+        InsightEngine.SuppressActedActions(insights, emptyPlan, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+
+        Assert.NotNull(insights[0].Action);
+        Assert.Equal(SuggestedActionKind.ScheduleBlock, insights[0].Action!.Kind);
+    }
 }

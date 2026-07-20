@@ -171,6 +171,39 @@ final class LumenPomodoroMacTests: XCTestCase {
         XCTAssertFalse(peak?.action?.taskName.isEmpty ?? true, "taskName 不应为空")
     }
 
+    // MARK: - 动作去重（A3）
+
+    func testSuppressActedActions_HidesScheduleBlock_WhenPlannedToday() {
+        let insight = Insight(
+            title: "你的黄金时段", description: "", actionHint: "",
+            type: .peakHour,
+            action: SuggestedAction(kind: .scheduleBlock, actionLabel: "加入今日 9:00", taskName: "数学", preferredHour: 9))
+        let plan = DailyPlan(date: Date(), blocks: [PlannedBlock(taskName: "数学", hour: 9)])
+        let result = InsightEngine.suppressActedActions([insight], todayPlan: plan, todaysFocusedTaskNames: [])
+        XCTAssertNil(result.first?.action, "今日已排程该科目，ScheduleBlock 动作应被隐藏")
+    }
+
+    func testSuppressActedActions_HidesStartFocus_WhenFocusedToday() {
+        let insight = Insight(
+            title: "需要关注", description: "", actionHint: "",
+            type: .taskCompletion,
+            action: SuggestedAction(kind: .startFocus, actionLabel: "现在专注「数学」", taskName: "数学"))
+        let plan = DailyPlan(date: Date(), blocks: [])
+        let result = InsightEngine.suppressActedActions([insight], todayPlan: plan, todaysFocusedTaskNames: ["数学"])
+        XCTAssertNil(result.first?.action, "今日已专注该科目，StartFocus 动作应被隐藏")
+    }
+
+    func testSuppressActedActions_KeepsAction_WhenNotActedToday() {
+        let insight = Insight(
+            title: "你的黄金时段", description: "", actionHint: "",
+            type: .peakHour,
+            action: SuggestedAction(kind: .scheduleBlock, actionLabel: "加入今日 9:00", taskName: "数学", preferredHour: 9))
+        let plan = DailyPlan(date: Date(), blocks: [])
+        let result = InsightEngine.suppressActedActions([insight], todayPlan: plan, todaysFocusedTaskNames: [])
+        XCTAssertNotNil(result.first?.action, "今日未达成，动作应保留")
+        XCTAssertEqual(result.first?.action?.kind, .scheduleBlock)
+    }
+
     func testDailyPlanSaveAndLoadRoundTrip() throws {
         let tmp = makeTempDir()
         let storage = StorageService(baseDirectory: tmp)

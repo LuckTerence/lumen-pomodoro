@@ -30,7 +30,7 @@ struct StatsView: View {
 
                 if viewModel.settings.insightsEnabled {
                     GroupBox("学习洞察") {
-                        let insights = InsightEngine.getInsights(from: sessions, tasks: viewModel.tasks)
+                        let insights = viewModel.displayedInsights
                         VStack(alignment: .leading, spacing: 10) {
                             ForEach(Array(insights.enumerated()), id: \.offset) { index, insight in
                                 VStack(alignment: .leading, spacing: 4) {

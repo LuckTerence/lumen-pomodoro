@@ -308,6 +308,24 @@ final class AppViewModel: ObservableObject {
         ))
         storage.saveDailyPlan(plan)
         dailyPlan = storage.loadDailyPlan()
+        // 动作反馈（A3）：加入成功后岛 + 系统通知
+        let label = String(format: "%02d:00", action.preferredHour)
+        dynamicIsland.showNotification(title: "已加入今日计划", message: "\(label) \(action.taskName)")
+        NotificationService.shared.show(title: "已加入今日计划", body: "\(label) \(action.taskName)", enabled: settings.systemNotificationEnabled && !isWindowActive)
+    }
+
+    /// 供统计页使用的洞察列表：在引擎结果上做「动作去重」（A3），
+    /// 今日已达成（已排程 / 已专注）的动作不再提示。
+    var displayedInsights: [Insight] {
+        let allSessions = storage.loadSessions()
+        let todays = Set(allSessions
+            .filter { $0.completed && Calendar.current.isDate($0.startTime, inSameDayAs: Date()) }
+            .map { $0.taskName.isEmpty ? "未分类" : $0.taskName })
+        return InsightEngine.suppressActedActions(
+            InsightEngine.getInsights(from: allSessions, tasks: tasks),
+            todayPlan: dailyPlan,
+            todaysFocusedTaskNames: todays
+        )
     }
 
     /// 峰值时段排程（A2）：从今日计划移除指定时段块。
