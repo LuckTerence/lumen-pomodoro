@@ -467,7 +467,7 @@ public class StorageServiceTests : IDisposable
         _storageService.SaveDailyPlan(plan);
 
         var loaded = _storageService.LoadDailyPlan();
-        Assert.Equal(1, loaded.Blocks.Count);
+        Assert.Single(loaded.Blocks);
         Assert.Equal("数学", loaded.Blocks[0].TaskName);
         Assert.Equal(9, loaded.Blocks[0].Hour);
         Assert.Equal(25, loaded.Blocks[0].DurationMinutes);
